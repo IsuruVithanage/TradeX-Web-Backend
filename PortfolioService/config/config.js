@@ -7,7 +7,7 @@ const dataSource = new typeorm.DataSource({
     port: 5432,
     username: "postgres",
     password: "database12345",
-    database: "alertService",
+    database: "portfolioService",
     synchronize: true,
     logging : true,
     entities: [path.join(__dirname , ".." , "models/**/*.js")],

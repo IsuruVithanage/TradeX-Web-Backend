@@ -16,7 +16,7 @@ const getAllAlerts = async (req, res) => {
                 },
                 order: {
                     coin: 'ASC',
-                    alertId: 'ASC'
+                    condition: 'ASC'
                 }
             });
             
