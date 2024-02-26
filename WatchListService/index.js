@@ -2,11 +2,11 @@ const express = require("express");
 const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
-const assetRouter = require("./routes/AssetRoutes");
+const watchlistRouter = require("./routes/WatchListRoutes");
 
 app.use(express.json());
 app.use(cors());
-app.use("/portfolio/asset", assetRouter);
+app.use("/watchList",watchlisRouter);
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
@@ -22,17 +22,16 @@ app.use((error, req, res) => {
     });
 });
 
-
 dataSource.initialize()
 
 .then(() => {
     console.log("Database connected!!");
 
-    app.listen(8004, () => {
-        console.log("Portfolio Service running on Port 8081");
+    app.listen(8006, () => {
+        console.log("User Service running on Port 8081");
     })
 })
 
 .catch((err) => {
-    console.log(err);
+    console.log(err)
 })
