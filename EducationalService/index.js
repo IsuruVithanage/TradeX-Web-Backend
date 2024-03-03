@@ -2,11 +2,11 @@ const express = require("express");
 const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
-const userRouter = require("./routes/UserRoutes");
+const eduRouter = require("./routes/EduRoutes");
 
 app.use(express.json());
 app.use(cors());
-app.use("/user",userRouter);
+app.use("/education",eduRouter);
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
@@ -24,14 +24,14 @@ app.use((error, req, res) => {
 
 dataSource.initialize()
 
-.then(() => {
-    console.log("Database connected!!");
+    .then(() => {
+        console.log("Database connected!!");
 
-    app.listen(8001, () => {
-        console.log("User Service running on Port 8081");
+        app.listen(8002, () => {
+            console.log("User Service running on Port 8081");
+        })
     })
-})
 
-.catch((err) => {
-    console.log(err)
-})
+    .catch((err) => {
+        console.log(err)
+    })

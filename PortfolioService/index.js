@@ -32,7 +32,7 @@ dataSource.initialize()
 .then(() => {
     console.log("Database connected!!");
 
-    app.listen(8081, () => {
+    app.listen(8004, () => {
         console.log("Portfolio Service running on Port 8081");
     })
 })
