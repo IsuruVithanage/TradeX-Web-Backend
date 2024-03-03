@@ -3,10 +3,14 @@ const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
 const assetRouter = require("./routes/AssetRoutes");
+const PortfolioValueRouter = require("./routes/PortfolioValueRoutes");
+const TransactionHistoryRouter = require("./routes/TransactionHistoryRoutes");
 
 app.use(express.json());
 app.use(cors());
 app.use("/portfolio/asset", assetRouter);
+app.use("/portfolio/value", PortfolioValueRouter);
+app.use("/portfolio/history", TransactionHistoryRouter);
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
