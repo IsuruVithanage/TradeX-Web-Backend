@@ -1,9 +1,9 @@
 const dataSource = require("../config/config");
 const assetRepo = dataSource.getRepository("Asset");
+const getPortfolioValueData = require("./PortfolioValueController").getPortfolioValueData;
 
 const getAllAssets = async (req, res) => {
     const wallet = req.params.wallet;
-    console.log(wallet);
     try {
         if (!req.query.userId) {
             res.status(404).json({ message: 'User Id not found' });
@@ -16,17 +16,20 @@ const getAllAssets = async (req, res) => {
                 },
             });
 
-            let updatedAssets = getOverviewAssets(assets);
+            let updatedAssets = {
+                historyData : await getPortfolioValueData(req, null)
+            } 
+
 
             switch (wallet){
                 case 'overview' :
-                    updatedAssets = getOverviewAssets(assets);
+                    updatedAssets = {...updatedAssets, ...getOverviewAssets(assets)};
                     break;
                 case 'trading' :
-                    updatedAssets = getTradingAssets(assets);
+                    updatedAssets = {...updatedAssets, ...getTradingAssets(assets)};
                     break;
                 case 'funding' :
-                    updatedAssets = getFundingAssets(assets);
+                    updatedAssets = {...updatedAssets, ...getFundingAssets(assets)};
                     break;
                 default :
                     updatedAssets = assets;
@@ -71,10 +74,24 @@ const getOverviewAssets = (assets) => {
         return [...accumulator, updatedAsset];
     }, []);
 
+
+    const percentages = updatedAssets.map(asset => ({
+        coinName: asset.symbol,
+        percentage: (asset.value / portfolioValue) * 100
+    })).concat({ 
+        coinName: 'USD', 
+        percentage: (usdBalance / portfolioValue) * 100   
+    });
+
+
+    updatedAssets.sort((a, b) => b.value - a.value);
+    percentages.sort((a, b) => b.percentage - a.percentage);
+
     return({
         usdBalance: usdBalance,
         portfolioValue: portfolioValue,
-        assets: updatedAssets
+        assets: updatedAssets,
+        percentages: percentages
     });
 
 }
@@ -119,6 +136,8 @@ const getTradingAssets = (assets) => {
         return [...accumulator, updatedAsset];
     }, []);
 
+    updatedAssets.sort((a, b) => b.value - a.value);
+
     return({
         usdBalance: usdBalance,
         portfolioValue: portfolioValue,
@@ -157,10 +176,18 @@ const getFundingAssets = (assets) => {
         return [...accumulator, updatedAsset];
     }, []);
 
+    updatedAssets.sort((a, b) => b.value - a.value);
+
     return({
         usdBalance: usdBalance,
         portfolioValue: portfolioValue,
-        assets: updatedAssets
+        assets: [
+            {   
+                symbol: 'USD',
+                fundingBalance: usdBalance,
+            },
+            ...updatedAssets
+        ]
     });
 
 }
@@ -190,28 +217,31 @@ const addAsset = async (req, res) => {
 
 const updateAsset = async (req, res) => {
     try {
-        const assetToUpdate = await assetRepo.findOne({
-            where: {
-                assetId: req.query.assetId,
-            },
-        })
+        // const assetToUpdate = await assetRepo.findOne({
+        //     where: {
+        //         assetId: req.query.assetId,
+        //     },
+        // })
 
-        if (!assetToUpdate) {
-            res.status(404).json({message: 'Asset not found'});
-        } 
+        // if (!assetToUpdate) {
+        //     res.status(404).json({message: 'Asset not found'});
+        // } 
         
-        else {
-            assetRepo.merge(assetToUpdate, req.body);
-            await assetRepo.save(assetToUpdate);
+        // else {
+        //     assetRepo.merge(assetToUpdate, req.body);
+        //     await assetRepo.save(assetToUpdate);
 
-            const updatedAssets = await getAllAssets({ 
-                query: { 
-                    userId: req.body.userId,
-                }
-            }, res );
+        //     const updatedAssets = await getAllAssets({ 
+        //         query: { 
+        //             userId: req.body.userId,
+        //         }
+        //     }, res );
 
-            res.status(200).json(updatedAssets);
-        }
+        //     res.status(200).json(updatedAssets);
+        // }
+
+
+        res.status(200).json(req.body);
     } 
     
     catch (error) {
