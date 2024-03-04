@@ -1,14 +1,14 @@
 const express = require('express');
-const controller = require("../controllers/AssetController");
+const AssetController = require("../controllers/AssetController");
 const router = express.Router();
 
-router.get("/:wallet", controller.getAllAssets);
+router.get("/:wallet", AssetController.getAllAssets);
 
-router.post("/", controller.addAsset);
+router.post("/", AssetController.addAsset);
 
-router.put("/", controller.updateAsset);
+router.put("/", AssetController.updateAsset);
 
-router.delete("/", controller.deleteAsset);
+router.delete("/", AssetController.deleteAsset);
 
 
 module.exports = router
