@@ -25,7 +25,7 @@ module.exports = new EntitySchema({
             type: "varchar",
         },
         correct_answer: {
-            type: "varchar",
+            type: "int",
         },
     },
 })
