@@ -4,209 +4,162 @@ const assetRepo = dataSource.getRepository("Asset");
 const getPortfolioValueData = require("./PortfolioValueController").getPortfolioValueData;
 const updateTransactionHistory = require("./TransactionHistoryController").updateTransactionHistory;
 
-const getAllAssets = async (userId) => {
+
+const getPortfolioData = async (req, res) => {
     try {
+        const userId = req.query.userId;	
+        const wallet = req.params.wallet;
+        let usdBalance = 0;
+        let portfolioValue = 0;
+        let percentages = [];
+
+
+        if ( wallet !== 'overview' && wallet !== 'trading' && wallet !== 'funding') {
+            return res.status(400).json({ message: 'Invalid request' });
+        }
+
         if (!userId) {
-            throw { 
-                status: 404,
-                message: 'User Id not found' 
-            };
+            return res.status(404).json({ message: 'User Id not found' });
         } 
+
+        const assets = await assetRepo.find({
+            where: {
+                userId: userId,
+            },
+        });
         
-        else {
-            const assets = await assetRepo.find({
-                where: {
-                    userId: userId,
-                },
+
+        
+        await axios
+            .get(
+                'https://api.binance.com/api/v3/ticker/price?symbols=' + 
+                "[\"" + assets
+                .filter(asset => asset.symbol !== 'USD')
+                .map(asset => `${asset.symbol}USDT`)
+                .join('\",\"') + "\"]"
+            )
+
+            .then((res) => {
+                assets.map(asset => {
+                    if (asset.symbol !== 'USD') {
+                        const marketPrice = res.data.find(data => data.symbol === asset.symbol + 'USDT');
+                        asset.marketPrice = (marketPrice) ? parseFloat(marketPrice.price): 0;
+                    }
+                });
+            })
+
+            .catch((error) => {
+                console.log("\nError getting markrt prices:", error);
+
+                assets.map(asset => {
+                    if (asset.symbol !== 'USD') {
+                        asset.marketPrice = 0;
+                    }
+                });
             });
 
-            return assets;
-        }
-    }
-    
-    catch (error) {
-        throw  {
-            status: error.status || 500,
-            message: error.message || 'Internal Server Error'
-        };
-    }
-}
 
 
+        let updatedAssets = assets.map(asset => {
+            let updatedAsset = {};
+            let totalBalance = 0;
 
-
-const getOverviewAssets = async (req, res) => {
-    try {
-        const assets = await getAllAssets(req.query.userId);
-        let portfolioValue = 0;
-        let usdBalance = 0;
-
-        const updatedAssets = assets.reduce((accumulator, asset) => {
-            const totalBalance = asset.tradingBalance + asset.holdingBalance + asset.fundingBalance;
+            switch(wallet){
+                case 'overview':
+                    totalBalance = asset.tradingBalance + asset.holdingBalance + asset.fundingBalance;
+                    asset.tradingBalance += asset.holdingBalance;
+                    break;
+                case 'trading':
+                    totalBalance = asset.tradingBalance + asset.holdingBalance;
+                    break;
+                case 'funding':
+                    totalBalance = asset.fundingBalance;
+                    break;
+            }
 
             if (asset.symbol === 'USD') {
                 usdBalance = totalBalance;
                 portfolioValue += totalBalance;
-                return accumulator;
+
+                if(wallet !== 'overview'){
+                    updatedAsset.marketPrice = "- - -";
+                    updatedAsset.value = totalBalance;
+                    updatedAsset.ROI = "- - -";
+                    updatedAsset.RoiColor = '#FFFFFF';
+                }
             }
-        
-            const marketPrice = 1000;
-            portfolioValue += ( totalBalance * marketPrice );
-        
-            const updatedAsset = {
-                symbol: asset.symbol,
-                tradingBalance: asset.tradingBalance + asset.holdingBalance,
-                fundingBalance: asset.fundingBalance,
-                totalBalance: totalBalance,
-                marketPrice: `$ ${marketPrice.toFixed(2)}`,
-                value: (totalBalance * marketPrice)
-            };
-        
-            return [...accumulator, updatedAsset];
-        }, []);
+
+            else {
+                updatedAsset.marketPrice = `$ ${asset.marketPrice}`;
+                updatedAsset.value = ( totalBalance * asset.marketPrice );
+                portfolioValue += updatedAsset.value;
+
+                if(wallet !== 'overview'){
+                    const ROI = ( asset.marketPrice - asset.AvgPurchasePrice ) * ( 100 / asset.AvgPurchasePrice );
+                    updatedAsset.ROI = `${ROI.toFixed(2)} %`;
+                    updatedAsset.RoiColor = ( ROI > 0 ) ? '#21DB9A' : ( ROI < 0 ) ? '#FF0000' : '#FFFFFF';
+                } 
+            }
+
+            if(wallet !== 'overview' || asset.symbol !== 'USD'){
+                updatedAsset.symbol = asset.symbol;
+                updatedAsset.tradingBalance = asset.tradingBalance;
+                updatedAsset.holdingBalance = asset.holdingBalance;
+                updatedAsset.fundingBalance = asset.fundingBalance;
+                updatedAsset.totalBalance = totalBalance;
+            }
+
+            if(Object.keys(updatedAsset).length > 0){
+                return updatedAsset;
+            }else{
+                return null;
+            }
+        })
+        .filter(asset => asset !== null)
+        .sort((a, b) => b.value - a.value);
 
 
-        const percentages = updatedAssets.map(asset => ({
-            coinName: asset.symbol,
-            percentage: (asset.value / portfolioValue) * 100
-        })).concat({ 
-            coinName: 'USD', 
-            percentage: (usdBalance / portfolioValue) * 100   
-        });
 
+        if(wallet !== 'overview'){
+            updatedAssets = [ 
+                updatedAssets.find(asset => asset.symbol === 'USD'), 
+                ...updatedAssets.filter(asset => asset.symbol !== 'USD') 
+            ];
+        }
+        else{
+            percentages = updatedAssets
+                .map(asset => ({
+                    coinName: asset.symbol,
+                    percentage: (asset.value / portfolioValue) * 100
+                }))
 
-        updatedAssets.sort((a, b) => b.value - a.value);
-        percentages.sort((a, b) => b.percentage - a.percentage);
+                .concat({ 
+                    coinName: 'USD', 
+                    percentage: (usdBalance / portfolioValue) * 100   
+                })
+
+                .sort((a, b) => b.percentage - a.percentage);
+        }
+
 
         res.status(200).json({
             usdBalance: usdBalance,
             portfolioValue: portfolioValue,
             assets: updatedAssets,
-            percentages: percentages,
-            historyData : await getPortfolioValueData(req, null)
-        });
+            ...(wallet === 'overview' ? { 
+                percentages: percentages, 
+                historyData: await getPortfolioValueData(req) 
+            } : {})
+        }); 
     }
-    
     catch (error) {
-        console.log("\nError getting overview assets:", error);
-        res.status(error.status || 500).json({ message: error.message });
+        console.log("\nError getting PortfolioData:", error);
+        res.status(error.status || 500).json({message: error.message});
     }
 }
 
 
 
-const getTradingAssets = async (req, res) => {
-    try {
-        const assets = await getAllAssets(req.query.userId);
-        let portfolioValue = 0;
-        let usdBalance = 0;
-        let usdAssetData = {};
-
-        const updatedAssets = assets.reduce((accumulator, asset) => {
-            const totalBalance = asset.tradingBalance + asset.holdingBalance;
-
-            if (asset.symbol === 'USD') {
-                usdBalance = totalBalance;
-                portfolioValue += totalBalance;
-                usdAssetData = {
-                    symbol: asset.symbol,
-                    tradingBalance: asset.tradingBalance,
-                    holdingBalance: asset.holdingBalance,
-                    marketPrice: "- - -",
-                    value: totalBalance,
-                    ROI: "- - -",
-                    RoiColor: '#FFFFFF'
-                }
-                return accumulator;
-            }
-        
-            const marketPrice = 1000;
-            const ROI = ( marketPrice - asset.AvgPurchasePrice ) * ( 100 / asset.AvgPurchasePrice )
-            portfolioValue += ( totalBalance * marketPrice );
-        
-            const updatedAsset = {
-                symbol: asset.symbol,
-                tradingBalance: asset.tradingBalance,
-                holdingBalance: asset.holdingBalance,
-                marketPrice: `$ ${marketPrice.toFixed(2)}`,
-                value: totalBalance * marketPrice,
-                ROI: `${ROI.toFixed(2)} %`,
-                RoiColor: ( ROI > 0 ) ? '#21DB9A' : ( ROI < 0 ) ? '#FF0000' : '#FFFFFF'
-            };
-        
-            return [...accumulator, updatedAsset];
-        }, []);
-
-        updatedAssets.sort((a, b) => b.value - a.value);
-
-        res.status(200).json({
-            usdBalance: usdBalance,
-            portfolioValue: portfolioValue,
-            assets: [
-                usdAssetData,
-                ...updatedAssets
-            ]
-        });
-    }
-
-    catch (error) {
-        console.log("\nError getting trading assets:", error);
-        res.status(error.status || 500).json({ message: error.message });
-    }
-}
-
-
-
-const getFundingAssets = async (req, res) => {
-    try {
-        const assets = await getAllAssets(req.query.userId);
-        let portfolioValue = 0;
-        let usdBalance = 0;
-
-        const updatedAssets = assets.reduce((accumulator, asset) => {
-            if (asset.symbol === 'USD') {
-                usdBalance = asset.fundingBalance;
-                portfolioValue += asset.fundingBalance;
-                return accumulator;
-            }
-        
-            const marketPrice = 1000;
-            const ROI = ( marketPrice - asset.AvgPurchasePrice ) * ( 100 / asset.AvgPurchasePrice )
-            portfolioValue += ( asset.fundingBalance * marketPrice );
-        
-            const updatedAsset = {
-                symbol: asset.symbol,
-                fundingBalance: asset.fundingBalance,
-                marketPrice: `$ ${marketPrice.toFixed(2)}`,
-                value: asset.fundingBalance * marketPrice,
-                ROI: `${ROI.toFixed(2)} %`,
-                RoiColor: ( ROI > 0 ) ? '#21DB9A' : ( ROI < 0 ) ? '#FF0000' : '#FFFFFF'
-            };
-        
-            return [...accumulator, updatedAsset];
-        }, []);
-
-        updatedAssets.sort((a, b) => b.value - a.value);
-
-        res.status(200).json({
-            usdBalance: usdBalance,
-            portfolioValue: portfolioValue,
-            assets: [
-                {   
-                    symbol: 'USD',
-                    fundingBalance: usdBalance,
-                    value: usdBalance,
-                },
-                ...updatedAssets
-            ]
-        });
-    }
-
-    catch (error) {
-        console.log("\nError getting funding assets:", error);
-        res.status(error.status || 500).json({ message: error.message });
-    }
-}
 
 
 
@@ -228,6 +181,9 @@ const addAsset = async (req, res) => {
         res.status(500).json({message: error.message});
     }
 };
+
+
+
 
 
 
@@ -298,8 +254,8 @@ const tranferAsset = async (req, res) => {
                 
 
                 req.body.sendingWallet === 'tradingWallet' ? 
-                await getTradingAssets(req, res) : 
-                await getFundingAssets(req, res);
+                await getPortfolioData({ ...req, params: { ...req.params, wallet: "trading" } }, res) : 
+                await getPortfolioData({ ...req, params: { ...req.params, wallet: "funding" } }, res);
             }
         }
     } 
@@ -309,6 +265,9 @@ const tranferAsset = async (req, res) => {
         res.status(error.status || 500).json({message: error.message});
     }
 };
+
+
+
 
 
 
@@ -333,16 +292,16 @@ const CheckAssetForDelete = async (userId, coin) => {
     
     catch (error) {
         console.log("\nError deleting asset:", error);
-        res.status(500).json({message: error.message});
     }
 };
 
 
+
+
+
+
 module.exports = {
-    getOverviewAssets,
-    getTradingAssets,
-    getFundingAssets,
+    getPortfolioData,
     addAsset,
-    tranferAsset,
-    CheckAssetForDelete
+    tranferAsset
 };
