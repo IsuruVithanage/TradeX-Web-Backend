@@ -1,19 +1,19 @@
 const express = require('express');
 const dataSource = require("../config/config");
 
-const getAllUsers = async (req, res) => {
-    const userRepo = dataSource.getRepository("Admin");
+const getAllQuestions = async (req, res) => {
+    const userRepo = dataSource.getRepository("Question");
     res.json(await userRepo.find());
 };
 
-const saveUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("Admin");
+const saveQuestion = async (req, res) => {
+    const userRepo = dataSource.getRepository("Question");
     const usersave = userRepo.save(req.body);
     res.json(usersave);
 };
 
-const deleteUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("Admin");
+const deleteQuestion = async (req, res) => {
+    const userRepo = dataSource.getRepository("Question");
     const userId = req.params.id;
 
     try {
@@ -24,11 +24,11 @@ const deleteUser = async (req, res) => {
         })
 
         if (!userToDelete) {
-            return res.status(404).json({message: 'User not found'});
+            return res.status(404).json({message: 'Question not found'});
         }
 
         await userRepo.remove(userToDelete);
-        res.json({message: 'User deleted successfully'});
+        res.json({message: 'Question deleted successfully'});
     } catch (error) {
         console.error("Error deleting user:", error);
         res.status(500).json({message: 'Internal server error'});
@@ -37,7 +37,7 @@ const deleteUser = async (req, res) => {
 
 
 module.exports = {
-    getAllUsers,
-    saveUser,
-    deleteUser
+    getAllQuestions,
+    saveQuestion,
+    deleteQuestion
 }
