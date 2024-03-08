@@ -6,6 +6,7 @@ const assetRouter = require("./routes/AssetRoutes");
 const PortfolioValueRouter = require("./routes/PortfolioValueRoutes");
 const TransactionHistoryRouter = require("./routes/TransactionHistoryRoutes");
 
+
 app.use(express.json());
 app.use(cors());
 app.use("/portfolio/asset", assetRouter);
@@ -33,7 +34,7 @@ dataSource.initialize()
     console.log("Database connected!!");
 
     app.listen(8004, () => {
-        console.log("Portfolio Service running on Port 8081");
+        console.log("Portfolio Service running on Port 8004");
     })
 })
 
