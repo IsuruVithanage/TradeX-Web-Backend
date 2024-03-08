@@ -1,7 +1,7 @@
 const dataSource = require("../config/config");
 const PortfolioValueRepo = dataSource.getRepository("PortfolioValue");
 
-const getPortfolioValueData = async (req, res) => {
+const getPortfolioValueData = async (req) => {
     try {
         if (!req.query.userId) {
             res.status(404).json({ message: 'User Id not found' });
@@ -28,21 +28,12 @@ const getPortfolioValueData = async (req, res) => {
             dailyValueData.forEach(data => { data.time = new Date(data.time).toISOString().split('T')[0]; });
             weeklyValueData.forEach(data => { data.time = new Date(data.time).toISOString().split('T')[0]; });
 
-
             
-            if (res) {
-                res.status(200).json({
-                    Hourly: hourlyValueData,
-                    Daily: dailyValueData,
-                    Weekly: weeklyValueData
-                });
-            } else {
-                return({
-                    Hourly: hourlyValueData,
-                    Daily: dailyValueData,
-                    Weekly: weeklyValueData
-                });
-            }
+            return({
+                Hourly: hourlyValueData,
+                Daily: dailyValueData,
+                Weekly: weeklyValueData
+            });
         }
     }
     
