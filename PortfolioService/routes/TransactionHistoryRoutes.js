@@ -3,9 +3,7 @@ const TransactionHistoryController = require("../controllers/TransactionHistoryC
 const router = express.Router();
 
 
-router.get("/", TransactionHistoryController.getTransactionHistoryData);
-
-router.put("/", TransactionHistoryController.updateTransactionHistoryData);
+router.get("/", TransactionHistoryController.getTransactionHistory);
 
 
 module.exports = router
