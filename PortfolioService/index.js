@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
+const createTriggerFunction = require('./Triggers/checkAndDeleteAssets');
 const assetRouter = require("./routes/AssetRoutes");
 const PortfolioValueRouter = require("./routes/PortfolioValueRoutes");
 const TransactionHistoryRouter = require("./routes/TransactionHistoryRoutes");
@@ -31,6 +32,7 @@ app.use((error, req, res) => {
 dataSource.initialize()
 
 .then(() => {
+    //createTriggerFunction();
     console.log("Database connected!!");
 
     app.listen(8004, () => {

@@ -11,7 +11,6 @@ const dataSource = new typeorm.DataSource({
     synchronize: true,
     logging : true,
     entities: [path.join(__dirname , ".." , "models/**/*.js")],
-})
-
+});
 
 module.exports = dataSource;
