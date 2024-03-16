@@ -357,7 +357,7 @@ const deductAsset = async (req, res) => {
                 assetToDeduct[deductionSource] -= req.body.quantity;
 
                 await assetRepo.save(assetToDeduct);
-                await CheckAssetForDelete(req.body.userId, req.body.coin);
+                // await CheckAssetForDelete(req.body.userId, req.body.coin);
 
                 res.status(200).json({
                     coin: assetToDeduct.symbol,
@@ -441,7 +441,7 @@ const transferAsset = async (req, res) => {
 
                 await assetRepo.save(assetToTransfer);
                 await updateTransactionHistory(req.body);
-                await CheckAssetForDelete(req.body.userId, req.body.coin);
+                //await CheckAssetForDelete(req.body.userId, req.body.coin);
             }
             
 
