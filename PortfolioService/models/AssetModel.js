@@ -4,31 +4,31 @@ module.exports = new EntitySchema({
     name: "Asset",
     tableName: "asset",
     columns: {
-        assetId: {
-            primary: true,
-            type: "int",
-            generated: true,
-        },
         userId: {
+            primary: true,
             type: "int",
             nullable: false,
         },
         symbol: {
+            primary: true,
             type: "varchar",
             length: 10,
             nullable: false,
         },
         tradingBalance: {
             type: "float",
-            nullable: true,
+            default: 0,
+            nullable: false,
         },
         holdingBalance: {
             type: "float",
-            nullable: true,
+            default: 0,
+            nullable: false,
         },
         fundingBalance: {
             type: "float",
-            nullable: true,
+            default: 0,
+            nullable: false,
         },
         AvgPurchasePrice: {
             type: "float",

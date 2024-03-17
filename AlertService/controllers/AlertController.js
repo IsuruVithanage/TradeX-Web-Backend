@@ -1,4 +1,3 @@
-const { run } = require("googleapis/build/src/apis/run");
 const dataSource = require("../config/config");
 const alertRepo = dataSource.getRepository("Alert");
 
