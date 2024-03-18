@@ -2,7 +2,7 @@ const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
     name: "Admin",
-    tableName: "Admin",
+    tableName: "admin",
     columns: {
         AdminId: {
             primary: true,
@@ -12,14 +12,17 @@ module.exports = new EntitySchema({
         AdminName: {
             type: "varchar",
         },
-        email: {
+        Date: {
             type: "varchar",
         },
-        password: {
+        NIC: {
             type: "varchar",
         },
-        contact: {
+        Contact: {
             type: "varchar",
+        },
+        Age: {
+            type: "int",
         },
     },
 })

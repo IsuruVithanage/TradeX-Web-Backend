@@ -1,43 +1,43 @@
 const express = require('express');
 const dataSource = require("../config/config");
 
-const getAllUsers = async (req, res) => {
-    const userRepo = dataSource.getRepository("Admin");
-    res.json(await userRepo.find());
+const getAllAdmins = async (req, res) => {
+    const AdminRepo = dataSource.getRepository("Admin");
+    res.json(await AdminRepo.find());
 };
 
-const saveUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("Admin");
-    const usersave = userRepo.save(req.body);
-    res.json(usersave);
+const saveAdmin = async (req, res) => {
+    const AdminRepo = dataSource.getRepository("Admin");
+    const Adminsave = AdminRepo.save(req.body);
+    res.json(Adminsave);
 };
 
-const deleteUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("Admin");
-    const userId = req.params.id;
+const deleteAdmin = async (req, res) => {
+    const AdminRepo = dataSource.getRepository("Admin");
+    const AdminId = req.params.id;
 
     try {
-        const userToDelete = await userRepo.findOne({
+        const AdminToDelete = await AdminRepo.findOne({
             where: {
-                userId: userId,
+                AdminId: AdminId,
             },
         })
 
-        if (!userToDelete) {
-            return res.status(404).json({message: 'User not found'});
+        if (!AdminToDelete) {
+            return res.status(404).json({message: 'Admin not found'});
         }
 
-        await userRepo.remove(userToDelete);
-        res.json({message: 'User deleted successfully'});
+        await AdminRepo.remove(AdminToDelete);
+        res.json({message: 'Admin deleted successfully'});
     } catch (error) {
-        console.error("Error deleting user:", error);
+        console.error("Error deleting Admin:", error);
         res.status(500).json({message: 'Internal server error'});
     }
 };
 
 
 module.exports = {
-    getAllUsers,
-    saveUser,
-    deleteUser
+    getAllAdmins,
+    saveAdmin,
+    deleteAdmin
 }
