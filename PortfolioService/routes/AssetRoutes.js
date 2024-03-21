@@ -1,14 +1,19 @@
 const express = require('express');
-const controller = require("../controllers/AssetController");
+const AssetController = require("../controllers/AssetController");
 const router = express.Router();
 
-router.get("/:wallet", controller.getAllAssets);
+router.get("/:wallet", AssetController.getPortfolioData);       // get all portfolio data - portfolio
 
-router.post("/", controller.addAsset);
+router.get("/:userId/:coin", AssetController.getBalance);       // get balance of coins - trading platform
 
-router.put("/", controller.updateAsset);
+router.put("/", AssetController.transferAsset);                 // transfer assets between internal wallets - portfolio
 
-router.delete("/", controller.deleteAsset);
+router.put("/hold", AssetController.holdAsset);                 // hold a asset's balance - trading platform
+
+router.post("/:actionType", AssetController.addAsset);          // add after buy or transfer from external wallet
+
+router.post("/deduct/:source", AssetController.deductAsset);    // deduct after sell - trading platform
+
 
 
 module.exports = router

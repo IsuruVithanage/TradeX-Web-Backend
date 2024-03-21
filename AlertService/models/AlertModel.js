@@ -36,4 +36,4 @@ module.exports = new EntitySchema({
             nullable: false,
         },
     },
-})
+});

@@ -25,11 +25,11 @@ app.use((error, req, res) => {
 
 dataSource.initialize()
 
-.then(() => {
+.then(async () =>{
     console.log("Database connected!!");
 
-    app.listen(8003, () => {
-        console.log("Alert Service running on Port 8081");
+    app.listen(8002, () => {
+        console.log("Alert Service running on Port 8002");
     })
 })
 
