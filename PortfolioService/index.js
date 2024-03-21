@@ -35,8 +35,8 @@ dataSource.initialize()
     //createTriggerFunction();
     console.log("Database connected!!");
 
-    app.listen(8004, () => {
-        console.log("Portfolio Service running on Port 8004");
+    app.listen(8011, () => {
+        console.log("Portfolio Service running on Port 8011");
     })
 })
 

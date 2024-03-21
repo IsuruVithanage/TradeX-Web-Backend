@@ -27,8 +27,8 @@ dataSource.initialize()
 .then(() => {
     console.log("Database connected!!");
 
-    app.listen(8010, () => {
-        console.log("Watchlist Service running on Port 8010");
+    app.listen(8007, () => {
+        console.log("User Service running on Port 8007");
     })
 })
 

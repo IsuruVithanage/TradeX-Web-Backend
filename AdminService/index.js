@@ -27,8 +27,13 @@ dataSource.initialize()
     .then(() => {
         console.log("Database connected!!");
 
+<<<<<<< HEAD
+        app.listen(8003, () => {
+            console.log("User Service running on Port 8003");
+=======
         app.listen(8002, () => {
             console.log("Admin Service running on Port 8002");
+>>>>>>> 5d66d2ab5bb6e6dad9f392b932e4fd096fa21b91
         })
     })
 
