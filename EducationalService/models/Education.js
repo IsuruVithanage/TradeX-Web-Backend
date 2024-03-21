@@ -1,8 +1,8 @@
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
-    name: "Education",
-    tableName: "Education",
+    name: "EduResources",
+    tableName: "eduResources",
     columns: {
         EduId: {
             primary: true,

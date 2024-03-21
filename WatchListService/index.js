@@ -6,7 +6,7 @@ const watchlistRouter = require("./routes/WatchListRoutes");
 
 app.use(express.json());
 app.use(cors());
-app.use("/watchList",watchlisRouter);
+app.use("/watchList",watchlistRouter);
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
