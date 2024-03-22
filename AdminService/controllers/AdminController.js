@@ -6,10 +6,32 @@ const getAllAdmins = async (req, res) => {
     res.json(await AdminRepo.find());
 };
 
+
 const saveAdmin = async (req, res) => {
     const AdminRepo = dataSource.getRepository("Admin");
-    const Adminsave = AdminRepo.save(req.body);
-    res.json(Adminsave);
+
+    try {
+    
+        const { AdminName, Date, NIC, Contact, Age } = req.body;
+
+        
+        const newAdmin = AdminRepo.create({
+            AdminName,
+            Date,
+            NIC,
+            Contact,
+            Age
+        });
+
+    
+        const savedAdmin = await AdminRepo.save(newAdmin);
+
+    
+        res.status(201).json(savedAdmin);
+    } catch (error) {
+        console.error("Error saving admin:", error);
+        res.status(500).json({message: 'Internal server error'});
+    }
 };
 
 const deleteAdmin = async (req, res) => {
