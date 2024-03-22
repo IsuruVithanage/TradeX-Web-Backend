@@ -4,10 +4,13 @@ module.exports = new EntitySchema({
     name: "Forum-question",
     tableName: "forum-question",
     columns: {
-        userId: {
+        questionId: {
             primary: true,
             type: "int",
             generated: true,
+        },
+        userId: {
+            type: "int",
         },
         title: {
             type: "varchar",
