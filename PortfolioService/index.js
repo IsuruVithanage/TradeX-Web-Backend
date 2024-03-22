@@ -3,6 +3,8 @@ const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
 const createTriggerFunction = require('./Triggers/checkAndDeleteAssets');
+const update_portfolio_value_trigger = require('./Triggers/update_portfolio_value_trigger');
+const scheduledJobs = require('./Scheduler/scheduler');
 const assetRouter = require("./routes/AssetRoutes");
 const PortfolioValueRouter = require("./routes/PortfolioValueRoutes");
 const TransactionHistoryRouter = require("./routes/TransactionHistoryRoutes");
@@ -31,12 +33,15 @@ app.use((error, req, res) => {
 
 dataSource.initialize()
 
-.then(() => {
-    //createTriggerFunction();
+.then(async() => {
+    //await createTriggerFunction();
+    await update_portfolio_value_trigger();
+    scheduledJobs();
+
     console.log("Database connected!!");
 
-    app.listen(8004, () => {
-        console.log("Portfolio Service running on Port 8004");
+    app.listen(8011, () => {
+        console.log("Portfolio Service running on Port 8011");
     })
 })
 

@@ -1,6 +1,7 @@
 const dataSource = require('../config/config');
 
 const createTriggerFunction = async () => {
+
     const sqlQuery = `
         CREATE OR REPLACE FUNCTION check_and_delete_asset()
         RETURNS TRIGGER AS $$

@@ -1,31 +1,47 @@
 const EntitySchema = require("typeorm").EntitySchema
 
-module.exports = new EntitySchema({
-    name: "PortfolioValue",
-    tableName: "portfolioValue",
-    columns: {
-        userId: {
-            primary: true,
-            type: "int",
-            nullable: false,
-        },
-        timePeriod: {
-            primary: true,
-            type: "varchar",
-            length: 10,
-            nullable: false,
-        },
-        recordNo: {
-            primary: true,
-            type: "int",
-        },
-        time: {
-            type: "timestamp",
-            nullable: true,
-        },
-        value: {
-            type: "float",
-            nullable: false,
-        },
+const columns = {
+    userId: {
+        primary: true,
+        type: "int",
+        nullable: false,
     },
-})
+    recordNo: {
+        primary: true,
+        type: "int",
+        nullable: false,
+    },
+    time: {
+        type: "timestamp",
+        nullable: false,
+    },
+    value: {
+        type: "float",
+        nullable: false,
+    },
+};
+
+
+const PortfolioHourlyValue = new EntitySchema({
+    name: "PortfolioHourlyValue",
+    tableName: "portfolioHourlyValue",
+    columns: columns
+});
+
+const PortfolioDailyValue = new EntitySchema({
+    name: "PortfolioDailyValue",
+    tableName: "portfolioDailyValue",
+    columns: columns
+});
+
+const PortfolioWeeklyValue = new EntitySchema({
+    name: "PortfolioWeeklyValue",
+    tableName: "portfolioWeeklyValue",
+    columns: columns
+});
+
+module.exports = [
+    PortfolioHourlyValue,
+    PortfolioDailyValue,
+    PortfolioWeeklyValue,
+]

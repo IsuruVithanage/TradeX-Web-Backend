@@ -1,45 +1,57 @@
 const dataSource = require("../config/config");
-const PortfolioValueRepo = dataSource.getRepository("PortfolioValue");
 
-const getPortfolioValueData = async (req) => {
+const getPortfolioValueData = async (req, res) => {
     try {
         if (!req.query.userId) {
-            res.status(404).json({ message: 'User Id not found' });
+            return res.status(404).json({ message: 'User Id not found' });
         } 
-        
-        else {
-            const PortfolioValueData = await PortfolioValueRepo.find({
-                select: ["time", "value", "timePeriod"],
-                where: {
-                    userId: req.query.userId,
-                },
-                order: {
-                    timePeriod: "ASC",
-                    recordNo: "ASC",
-                },
-            });
 
 
-            const hourlyValueData = PortfolioValueData.filter(data => data.timePeriod === "Hourly");
-            const dailyValueData = PortfolioValueData.filter(data => data.timePeriod === "Daily");
-            const weeklyValueData = PortfolioValueData.filter(data => data.timePeriod === "Weekly");
+        const queryResult = await dataSource.query(
+        `   SELECT 'Hourly' AS "type", "time", "value"
+            FROM "portfolioHourlyValue"
+            WHERE "userId" = $1
+            
+            UNION ALL
+            
+            SELECT 'Daily' AS "type", "time", "value"
+            FROM "portfolioDailyValue"
+            WHERE "userId" = $1
+            
+            UNION ALL
+            
+            SELECT 'Weekly' AS "type", "time", "value"
+            FROM "portfolioWeeklyValue"
+            WHERE "userId" = $1
+            
+            ORDER BY "type" ASC, "time" ASC; 
+        `, 
+        [req.query.userId]);
 
-            hourlyValueData.forEach(data => { data.time = Math.floor(Date.parse(data.time) / 1000); });
-            dailyValueData.forEach(data => { data.time = new Date(data.time).toISOString().split('T')[0]; });
-            weeklyValueData.forEach(data => { data.time = new Date(data.time).toISOString().split('T')[0]; });
+
+        const hourlyData = queryResult
+            .filter(data => data.type === 'Hourly')
+            .map(data => ({ ...data, time: Math.floor(Date.parse(data.time) / 1000) }));
+
+        const dailyData = queryResult
+            .filter(data => data.type === 'Daily')
+            .map(data => ({ ...data, time: new Date(data.time).toISOString().split('T')[0] }));
+
+        const weeklyData = queryResult
+            .filter(data => data.type === 'Weekly')
+            .map(data => ({ ...data, time: new Date(data.time).toISOString().split('T')[0] }));
+
 
             
-            return({
-                Hourly: hourlyValueData,
-                Daily: dailyValueData,
-                Weekly: weeklyValueData
-            });
-        }
-    }
-    
-    catch (error) {
+        return {
+            Hourly: hourlyData,
+            Daily: dailyData,
+            Weekly: weeklyData
+        };
+
+    } catch (error) {
         console.log("\nError fetching value Data:", error);
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
 

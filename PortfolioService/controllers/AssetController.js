@@ -49,7 +49,7 @@ const getPortfolioData = async (req, res) => {
             })
 
             .catch((error) => {
-                console.log("\nError getting markrt prices:", error.message);
+                console.log("\nError getting market prices:", error.message);
 
                 assets.map(asset => {
                     if (asset.symbol !== 'USD') {
