@@ -3,7 +3,6 @@ const dataSource = require("../config/config");
 const walletRepo = dataSource.getRepository("Capital");
 
 
-
 const getAllBalances = async (req, res) => {
     try {
         const userId = req.params.userId;	
@@ -22,7 +21,6 @@ const getAllBalances = async (req, res) => {
         });
         
 
-        
         await axios
             .get(
                 'https://api.binance.com/api/v3/ticker/price?symbols=' + 
@@ -52,10 +50,6 @@ const getAllBalances = async (req, res) => {
                     }
                 });
             });
-
-
-            
-
 
 
         let updatedAssets = assets.map(asset => {
@@ -110,17 +104,6 @@ const getAllBalances = async (req, res) => {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
 const getAllUsers = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     res.json(await userRepo.find());
@@ -131,6 +114,7 @@ const saveUser = async (req, res) => {
     const usersave = userRepo.save(req.body);
     res.json(usersave);
 };
+
 
 const deleteUser = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
