@@ -8,5 +8,7 @@ router.post("/saveAdmin", controller.saveAdmin);
 
 router.delete("/", controller.deleteAdmin);
 
+router.get("/getAdminCount", controller.getAdminCount);
+
 
 module.exports = router

@@ -57,9 +57,21 @@ const deleteAdmin = async (req, res) => {
     }
 };
 
+const getAdminCount = async (req, res) => {
+    const AdminRepo = dataSource.getRepository("Admin");
+    try {
+        const count = await AdminRepo.count();
+        res.json({ count: count });
+    } catch (error) {
+        console.error("Error retrieving admin count:", error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 
 module.exports = {
     getAllAdmins,
     saveAdmin,
-    deleteAdmin
+    deleteAdmin,
+    getAdminCount
 }
