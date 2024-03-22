@@ -4,9 +4,11 @@ const router = express.Router();
 
 router.get("/getAllAdmins", controller.getAllAdmins);
 
-router.post("/", controller.saveAdmin);
+router.post("/saveAdmin", controller.saveAdmin);
 
-router.delete("/:id", controller.deleteAdmin);
+router.delete("/", controller.deleteAdmin);
+
+router.get("/getAdminCount", controller.getAdminCount);
 
 
 module.exports = router
