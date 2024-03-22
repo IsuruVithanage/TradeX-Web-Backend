@@ -1,10 +1,10 @@
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
-    name: "EduResources",
-    tableName: "eduResources",
+    name: "Forum-question",
+    tableName: "forum-question",
     columns: {
-        EduId: {
+        userId: {
             primary: true,
             type: "int",
             generated: true,
@@ -12,8 +12,18 @@ module.exports = new EntitySchema({
         title: {
             type: "varchar",
         },
-        author: {
+        description: {
             type: "varchar",
         },
+        views: {
+            type: "int",
+        },
+        likes: {
+            type: "int",
+        },
+        replies: {
+            type: "int",
+        },
+
     },
 })

@@ -1,8 +1,8 @@
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
-    name: "Watchlist",
-    tableName: "Watchlist",
+    name: "watchlist",
+    tableName: "watchlist",
     columns: {
         coinId: {
             primary: true,
