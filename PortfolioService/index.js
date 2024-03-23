@@ -4,7 +4,7 @@ const app = express();
 const dataSource = require("./config/config");
 const createTriggerFunction = require('./Triggers/checkAndDeleteAssets');
 const update_portfolio_value_trigger = require('./Triggers/update_portfolio_value_trigger');
-const scheduledJobs = require('./Scheduler/scheduler');
+const runScheduledValueUpdaters = require('./Scheduler/scheduler');
 const assetRouter = require("./routes/AssetRoutes");
 const PortfolioValueRouter = require("./routes/PortfolioValueRoutes");
 const TransactionHistoryRouter = require("./routes/TransactionHistoryRoutes");
@@ -35,8 +35,8 @@ dataSource.initialize()
 
 .then(async() => {
     //await createTriggerFunction();
-    await update_portfolio_value_trigger();
-    scheduledJobs();
+    //await update_portfolio_value_trigger();
+    runScheduledValueUpdaters();
 
     console.log("Database connected!!");
 

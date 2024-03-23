@@ -3,40 +3,32 @@ const dataSource = require('../config/config');
 const update_portfolio_value_trigger = async () => {
 
     const sqlQuery = `
-    CREATE OR REPLACE FUNCTION update_portfolio_value()
-        RETURNS TRIGGER AS $$
+    CREATE OR REPLACE FUNCTION update_portfolio_value() RETURNS TRIGGER AS $$
     DECLARE
-        recordToDelete INT;
-        record_row RECORD;
-        cur_cursor CURSOR FOR
-            SELECT * FROM "portfolioHourlyValue"
-            WHERE "userId" = NEW."userId" 
-            ORDER BY "recordNo" DESC;
-            
+        lastRecordNo INT;
+        recordHolder RECORD;
     BEGIN
         CASE TG_TABLE_NAME
-            WHEN 'portfolioHourlyValue' THEN recordToDelete := 24;
-            WHEN 'portfolioDailyValue' THEN recordToDelete := 31;
-            WHEN 'portfolioWeeklyValue' THEN recordToDelete := 53;
+            WHEN 'portfolioHourlyValue' THEN lastRecordNo := 24;
+            WHEN 'portfolioDailyValue' THEN lastRecordNo := 31;
+            WHEN 'portfolioWeeklyValue' THEN lastRecordNo := 53;
         END CASE;
 
         EXECUTE format('DELETE FROM %I WHERE "userId" = $1 AND "recordNo" = $2', TG_TABLE_NAME)
-        USING NEW."userId", recordToDelete;
+        USING NEW."userId", lastRecordNo;
 
-        OPEN cur_cursor;
+        FOR recordHolder IN
+            EXECUTE format('SELECT * FROM %I WHERE "userId" = $1 ORDER BY "recordNo" DESC', TG_TABLE_NAME)
+            USING NEW."userId"
         LOOP
-            FETCH cur_cursor INTO record_row;
-            EXIT WHEN NOT FOUND;
-
             EXECUTE format('UPDATE %I SET "recordNo" = "recordNo" + 1 WHERE "userId" = $1 AND "recordNo" = $2', TG_TABLE_NAME)
-            USING record_row."userId", record_row."recordNo";
+            USING recordHolder."userId", recordHolder."recordNo";
         END LOOP;
-
-        CLOSE cur_cursor;
 
         RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
+
 
 
     CREATE OR REPLACE TRIGGER update_portfolio_hourly_value_trigger
