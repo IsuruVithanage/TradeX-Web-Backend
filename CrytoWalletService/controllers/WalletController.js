@@ -109,10 +109,11 @@ const getAllUsers = async (req, res) => {
     res.json(await userRepo.find());
 };
 
-const saveUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    const usersave = userRepo.save(req.body);
-    res.json(usersave);
+const transferBalance = async (req, res) => {
+    // const userRepo = dataSource.getRepository("User");
+    // const usersave = userRepo.save(req.body);
+    // res.json(usersave);
+    console.log(req.body)
 };
 
 
@@ -142,7 +143,7 @@ const deleteUser = async (req, res) => {
 
 module.exports = {
     getAllUsers,
-    saveUser,
+    transferBalance,
     deleteUser,
     getAllBalances
 }
