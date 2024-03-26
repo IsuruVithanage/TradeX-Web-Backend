@@ -1,6 +1,7 @@
 const dataSource = require('../config/config');
 
 const createTriggerFunction = async () => {
+
     const sqlQuery = `
         CREATE OR REPLACE FUNCTION check_and_delete_asset()
         RETURNS TRIGGER AS $$
@@ -24,8 +25,13 @@ const createTriggerFunction = async () => {
         END;
         $$ LANGUAGE plpgsql;
 
-
-        CREATE OR REPLACE TRIGGER check_and_delete_asset_trigger
+        
+        CREATE OR REPLACE TRIGGER check_and_delete_asset_on_insert_trigger
+        AFTER INSERT ON asset
+        FOR EACH ROW
+        EXECUTE FUNCTION check_and_delete_asset();
+        
+        CREATE OR REPLACE TRIGGER check_and_delete_asset_on_update_trigger
         AFTER UPDATE ON asset
         FOR EACH ROW
         EXECUTE FUNCTION check_and_delete_asset();`
