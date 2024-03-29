@@ -62,11 +62,27 @@ const getPendingUsers = async (req, res) => {
     }
 };
 
+const getVerifiedUserCount = async (req, res) => {
+    const userRepo = dataSource.getRepository("User");
+    try {
+      const verifiedUserCount = await userRepo.count({
+        where: {
+          Verified: "Yes"
+        }
+      });
+      res.json({ count: verifiedUserCount });
+    } catch (error) {
+      console.error("Error fetching verified user count:", error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  };
+
 
 module.exports = {
     getAllUsers,
     saveUser,
     deleteUser,
     getUserCount,
-    getPendingUsers
+    getPendingUsers,
+    getVerifiedUserCount
 }
