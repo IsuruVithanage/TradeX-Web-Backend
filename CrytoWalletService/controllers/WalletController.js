@@ -147,21 +147,17 @@ const transferBalance = async (req, res) => {
             coin: assetToTransfer.coin,
             quantity: req.body.quantity,
             purchasePrice: assetToTransfer.AvgPurchasePrice,
-        }).then(() => {
-            // Update balance
+        }).then(async() => {
             assetToTransfer.balance -= req.body.quantity;
-            // Save updated asset
-            walletRepo.save(assetToTransfer).then(() => {
-                // Send response
-                res.status(200).json({ message: "Transfer successful" });
-            }).catch((error) => {
-                console.log("\nError saving asset:", error);
-                res.status(500).json({ message: "Transfer failed: Error saving asset" });
-            });
+            await walletRepo.save(assetToTransfer)
+            await getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
+
         }).catch((error) => {
             console.log("\nError transferring asset:", error);
             res.status(500).json({ message: "Transfer failed: Error transferring asset" });
         });
+        
+
     } catch (error) {
         console.log("\nError transferring asset:", error);
         res.status(500).json({ message: "Transfer failed: " + error.message });
