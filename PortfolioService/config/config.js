@@ -9,7 +9,7 @@ const dataSource = new typeorm.DataSource({
     password: "database12345",
     database: "portfolio_service_db",
     synchronize: true,
-    logging : true,
+    logging : ["error", "warn"],
     entities: [path.join(__dirname , ".." , "models/**/*.js")],
 })
 

@@ -109,12 +109,90 @@ const getAllUsers = async (req, res) => {
     res.json(await userRepo.find());
 };
 
+
+
+// wallet to wallet crypto transfer
+
 const transferBalance = async (req, res) => {
-    // const userRepo = dataSource.getRepository("User");
-    // const usersave = userRepo.save(req.body);
-    // res.json(usersave);
-    console.log(req.body)
+    try {
+        if(!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet){
+            return res.status(400).json({ 
+                message:"invalid request, contain null values for 'userId', 'coin', 'quantity'"
+            });
+        }
+
+
+        if(req.body.quantity <= 0 ){
+            return res.status(400).json({ message:"invalid quantity" });
+        }
+
+        const additionSource = (req.params.actionType === 'add') ? 'tradingBalance' : 'fundingBalance' ;
+        req.body.purchasePrice = (req.body.coin === 'USD') ? 1 : req.body.purchasePrice;
+
+        let assetToTransfer = await walletRepo.findOne({
+            where: {
+                userId: req.body.userId,
+                coin : req.body.coin
+            },
+        });
+        
+        if (!assetToTransfer){
+            return res.status(400).json({ message:"assets not found" });
+        }
+
+        else {
+            const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+          
+            if(req.body.quantity <= 0){
+                return res.status(400).json({message: "Invalid quantity"});
+            }
+
+            else if(req.body.quantity > assetToTransfer.balance){
+                return res.status(400).json({message: "Insufficient balance in sending wallet"});
+            }
+
+            else{
+                
+                // axios
+                // .post(
+                //     // external wallet API,
+                //     {
+                //         userId: assetToTransfer.userId ,
+                //         coin: assetToTransfer.coin ,
+                //         quantity: req.body.quantity ,
+                //         purchasePrice: assetToTransfer.AvgPurchasePrice ,
+                //     }
+                // )
+                // .then((res) => {
+                //     assetToTransfer.balance -= req.body.quantity;
+                // })
+                // .catch((error) => {
+                //     res.status(500).json({message: "Transfer failed."});
+                // });
+
+                assetToTransfer.balance -= req.body.quantity;               
+                await walletRepo.save(assetToTransfer);
+                // await updateTransactionHistory(req.body);
+            }
+        
+        }
+        
+        res.status(200).json(
+            await walletRepo.find({
+                where: {
+                    userId: req.body.userId,
+                },
+            })  
+        )
+    }
+    
+    
+    catch (error) {
+        console.log("\nError adding asset:", error);
+        res.status(500).json({message: error.message});
+    }
 };
+
 
 
 const deleteUser = async (req, res) => {
