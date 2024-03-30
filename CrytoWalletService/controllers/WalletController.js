@@ -109,11 +109,62 @@ const getAllUsers = async (req, res) => {
     res.json(await userRepo.find());
 };
 
-const saveUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    const usersave = userRepo.save(req.body);
-    res.json(usersave);
+
+
+// wallet to wallet crypto transfer
+
+const transferBalance = async (req, res) => {
+    try {
+        if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet) {
+            return res.status(400).json({
+                message: "Invalid request, contain null values for 'userId', 'coin', 'quantity'"
+            });
+        }
+
+        if (req.body.quantity <= 0) {
+            return res.status(400).json({ message: "Invalid quantity" });
+        }
+
+      
+        let assetToTransfer = await walletRepo.findOne({
+            where: {
+                userId: req.body.userId,
+                coin: req.body.coin
+            },
+        });
+
+        if (!assetToTransfer) {
+            return res.status(400).json({ message: "Assets not found" });
+        }
+
+        if (req.body.quantity > assetToTransfer.balance) {
+            return res.status(400).json({ message: "Insufficient balance in sending wallet" });
+        }
+
+        // Transfer asset
+        axios.post("http://localhost:8011/portfolio/asset/transfer", {
+            userId: assetToTransfer.userId,
+            coin: assetToTransfer.coin,
+            quantity: req.body.quantity,
+            purchasePrice: assetToTransfer.AvgPurchasePrice,
+        }).then(async() => {
+            assetToTransfer.balance -= req.body.quantity;
+            await walletRepo.save(assetToTransfer)
+            await getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
+
+        }).catch((error) => {
+            console.log("\nError transferring asset:", error);
+            res.status(500).json({ message: "Transfer failed: Error transferring asset" });
+        });
+        
+
+    } catch (error) {
+        console.log("\nError transferring asset:", error);
+        res.status(500).json({ message: "Transfer failed: " + error.message });
+    }
 };
+
+
 
 
 const deleteUser = async (req, res) => {
@@ -142,7 +193,7 @@ const deleteUser = async (req, res) => {
 
 module.exports = {
     getAllUsers,
-    saveUser,
+    transferBalance,
     deleteUser,
     getAllBalances
 }
