@@ -115,83 +115,59 @@ const getAllUsers = async (req, res) => {
 
 const transferBalance = async (req, res) => {
     try {
-        if(!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet){
-            return res.status(400).json({ 
-                message:"invalid request, contain null values for 'userId', 'coin', 'quantity'"
+        if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet) {
+            return res.status(400).json({
+                message: "Invalid request, contain null values for 'userId', 'coin', 'quantity'"
             });
         }
 
-
-        if(req.body.quantity <= 0 ){
-            return res.status(400).json({ message:"invalid quantity" });
+        if (req.body.quantity <= 0) {
+            return res.status(400).json({ message: "Invalid quantity" });
         }
 
-        const additionSource = (req.params.actionType === 'add') ? 'tradingBalance' : 'fundingBalance' ;
-        req.body.purchasePrice = (req.body.coin === 'USD') ? 1 : req.body.purchasePrice;
-
+      
         let assetToTransfer = await walletRepo.findOne({
             where: {
                 userId: req.body.userId,
-                coin : req.body.coin
+                coin: req.body.coin
             },
         });
-        
-        if (!assetToTransfer){
-            return res.status(400).json({ message:"assets not found" });
+
+        if (!assetToTransfer) {
+            return res.status(400).json({ message: "Assets not found" });
         }
 
-        else {
-            const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-          
-            if(req.body.quantity <= 0){
-                return res.status(400).json({message: "Invalid quantity"});
-            }
-
-            else if(req.body.quantity > assetToTransfer.balance){
-                return res.status(400).json({message: "Insufficient balance in sending wallet"});
-            }
-
-            else{
-                
-                // axios
-                // .post(
-                //     // external wallet API,
-                //     {
-                //         userId: assetToTransfer.userId ,
-                //         coin: assetToTransfer.coin ,
-                //         quantity: req.body.quantity ,
-                //         purchasePrice: assetToTransfer.AvgPurchasePrice ,
-                //     }
-                // )
-                // .then((res) => {
-                //     assetToTransfer.balance -= req.body.quantity;
-                // })
-                // .catch((error) => {
-                //     res.status(500).json({message: "Transfer failed."});
-                // });
-
-                assetToTransfer.balance -= req.body.quantity;               
-                await walletRepo.save(assetToTransfer);
-                // await updateTransactionHistory(req.body);
-            }
-        
+        if (req.body.quantity > assetToTransfer.balance) {
+            return res.status(400).json({ message: "Insufficient balance in sending wallet" });
         }
-        
-        res.status(200).json(
-            await walletRepo.find({
-                where: {
-                    userId: req.body.userId,
-                },
-            })  
-        )
-    }
-    
-    
-    catch (error) {
-        console.log("\nError adding asset:", error);
-        res.status(500).json({message: error.message});
+
+        // Transfer asset
+        axios.post("http://localhost:8011/portfolio/asset/transfer", {
+            userId: assetToTransfer.userId,
+            coin: assetToTransfer.coin,
+            quantity: req.body.quantity,
+            purchasePrice: assetToTransfer.AvgPurchasePrice,
+        }).then(() => {
+            // Update balance
+            assetToTransfer.balance -= req.body.quantity;
+            // Save updated asset
+            walletRepo.save(assetToTransfer).then(() => {
+                // Send response
+                res.status(200).json({ message: "Transfer successful" });
+            }).catch((error) => {
+                console.log("\nError saving asset:", error);
+                res.status(500).json({ message: "Transfer failed: Error saving asset" });
+            });
+        }).catch((error) => {
+            console.log("\nError transferring asset:", error);
+            res.status(500).json({ message: "Transfer failed: Error transferring asset" });
+        });
+    } catch (error) {
+        console.log("\nError transferring asset:", error);
+        res.status(500).json({ message: "Transfer failed: " + error.message });
     }
 };
+
 
 
 
