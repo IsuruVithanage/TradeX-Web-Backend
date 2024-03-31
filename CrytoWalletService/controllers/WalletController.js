@@ -1,6 +1,8 @@
 const axios = require("axios");
 const dataSource = require("../config/config");
 const walletRepo = dataSource.getRepository("Capital");
+const updateWalletHistory = require("./WalletHistoryContrller").updateWalletHistory;
+
 
 
 const getAllBalances = async (req, res) => {
@@ -104,45 +106,132 @@ const getAllBalances = async (req, res) => {
 }
 
 
-const getAllUsers = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    res.json(await userRepo.find());
-};
 
-const saveUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    const usersave = userRepo.save(req.body);
-    res.json(usersave);
-};
+// wallet to wallet crypto transfer
 
-
-const deleteUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    const userId = req.params.id;
-
+const transferBalance = async (req, res) => {
     try {
-        const userToDelete = await userRepo.findOne({
-            where: {
-                userId: userId,
-            },
-        })
-
-        if (!userToDelete) {
-            return res.status(404).json({message: 'User not found'});
+        if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet) {
+            return res.status(400).json({
+                message: "Invalid request, contain null values for 'userId', 'coin', 'quantity'"
+            });
         }
 
-        await userRepo.remove(userToDelete);
-        res.json({message: 'User deleted successfully'});
+        if (req.body.quantity <= 0) {
+            return res.status(400).json({ message: "Invalid quantity" });
+        }
+
+      
+        let assetToTransfer = await walletRepo.findOne({
+            where: {
+                userId: req.body.userId,
+                coin: req.body.coin
+            },
+        });
+
+        if (!assetToTransfer) {
+            return res.status(400).json({ message: "Assets not found" });
+        }
+
+        if (req.body.quantity > assetToTransfer.balance) {
+            return res.status(400).json({ message: "Insufficient balance in sending wallet" });
+        }
+
+        // Transfer asset
+        axios.post("http://localhost:8011/portfolio/asset/transfer", {
+            userId: assetToTransfer.userId,
+            coin: assetToTransfer.coin,
+            quantity: req.body.quantity,
+            purchasePrice: assetToTransfer.AvgPurchasePrice,
+        }).then(async() => {
+            assetToTransfer.balance -= req.body.quantity;
+            await walletRepo.save(assetToTransfer)
+            await updateWalletHistory({
+                userId:req.body.userId,
+                coin:req.body.coin,
+                quantity:req.body.quantity,
+                date:new Date(),
+                type:"Send",
+                from_to: req.body.receivingWallet
+            })
+            await getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
+
+        }).catch((error) => {
+            console.log("\nError transferring asset:", error);
+            res.status(500).json({ message: "Transfer failed: Error transferring asset" });
+        });
+        
+
     } catch (error) {
-        console.error("Error deleting user:", error);
-        res.status(500).json({message: 'Internal server error'});
+        console.log("\nError transferring asset:", error);
+        res.status(500).json({ message: "Transfer failed: " + error.message });
+    }
+};
+
+const addCapital = async (req, res) => {
+    try {
+        if(!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.purchasePrice ){
+            return res.status(400).json({ 
+                message:"invalid request, contain null values for 'userId', 'coin', 'quantity' or 'purchasePrice'"
+            });
+        }
+
+        
+        if(req.body.quantity <= 0 || req.body.purchasePrice <= 0){
+            return res.status(400).json({ message:"invalid quantity or purchasePrice" });
+        }
+
+        req.body.purchasePrice = (req.body.coin === 'USD') ? 1 : req.body.purchasePrice;
+
+        let assetToUpdate = await walletRepo.findOne({
+            where:{
+                userId:req.body.userId,
+                coin:req.body.coin
+            }
+        })
+
+        if (!assetToUpdate){
+            assetToUpdate = {
+                userId: req.body.userId,
+                coin: req.body.coin,
+                balance: req.body.quantity,
+                AvgPurchasePrice: req.body.purchasePrice
+            }
+        }
+
+        else{
+            const newTotalBalance = ( assetToUpdate.balance + req.body.quantity );
+            const newPurchasePrice = ( assetToUpdate.AvgPurchasePrice * assetToUpdate.balance  ) + ( req.body.purchasePrice * req.body.quantity);
+            const newAvgPurchasePrice = ( newPurchasePrice / newTotalBalance );
+
+            assetToUpdate.AvgPurchasePrice = newAvgPurchasePrice;
+            assetToUpdate.balance += req.body.quantity;
+        }
+
+        await walletRepo.save(assetToUpdate)
+        await updateWalletHistory({
+            userId:req.body.userId,
+            coin:req.body.coin,
+            quantity:req.body.quantity,
+            date:new Date(),
+            type:"Recieve",
+            from_to: "tradeX"
+        })
+        res.status(200).json({message: "Asset Updated"}); 
+
+    } 
+    
+    catch (error) {
+        console.log("\nError adding asset:", error);
+        res.status(500).json({message: error.message});
     }
 };
 
 
+
+
 module.exports = {
-    getAllUsers,
-    saveUser,
-    deleteUser,
-    getAllBalances
+    transferBalance,
+    getAllBalances,
+    addCapital
 }
