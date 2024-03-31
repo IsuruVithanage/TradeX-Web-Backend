@@ -146,6 +146,14 @@ const transferBalance = async (req, res) => {
         }).then(async() => {
             assetToTransfer.balance -= req.body.quantity;
             await walletRepo.save(assetToTransfer)
+            await updateWalletHistory({
+                userId:req.body.userId,
+                coin:req.body.coin,
+                quantity:req.body.quantity,
+                date:new Date(),
+                type:"Send",
+                from_to: req.body.receivingWallet
+            })
             await getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
 
         }).catch((error) => {
@@ -159,7 +167,6 @@ const transferBalance = async (req, res) => {
         res.status(500).json({ message: "Transfer failed: " + error.message });
     }
 };
-
 
 const addCapital = async (req, res) => {
     try {
@@ -219,7 +226,6 @@ const addCapital = async (req, res) => {
         res.status(500).json({message: error.message});
     }
 };
-
 
 
 
