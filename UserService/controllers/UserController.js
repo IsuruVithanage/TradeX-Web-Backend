@@ -6,6 +6,11 @@ const getAllUsers = async (req, res) => {
     res.json(await userRepo.find());
 };
 
+const getAllIssues = async (req, res) => {
+    const IssueRepo = dataSource.getRepository("Issue");
+    res.json(await IssueRepo.find());
+};
+
 const saveUser = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     const usersave = userRepo.save(req.body);
@@ -77,6 +82,27 @@ const getVerifiedUserCount = async (req, res) => {
     }
   };
 
+  const getUsersWithVerificationIssues = async (req, res) => {
+    const userRepo = dataSource.getRepository("User");
+    try {
+        const usersWithIssues = await userRepo
+            .createQueryBuilder("user")
+            .leftJoinAndSelect("user.issue", "issue")
+            .where("user.Verified != :verified", { verified: "Yes" })
+            .getMany();
+        const formattedData = usersWithIssues.map(user => ({
+            userId: user.userId,
+            userName: user.userName,
+            issue: user.issue ? user.issue.IssueName : "" 
+        }));
+        res.json(formattedData);
+    } catch (error) {
+        console.error("Error fetching users with verification issues:", error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+
 
 module.exports = {
     getAllUsers,
@@ -84,5 +110,7 @@ module.exports = {
     deleteUser,
     getUserCount,
     getPendingUsers,
-    getVerifiedUserCount
+    getVerifiedUserCount,
+    getUsersWithVerificationIssues,
+    getAllIssues
 }
