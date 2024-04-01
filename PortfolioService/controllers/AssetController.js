@@ -366,12 +366,7 @@ const transferAsset = async (req, res) => {
                 }
 
                 else{
-<<<<<<< HEAD
                     await axios.post(
-=======
-                    axios
-                    .post(
->>>>>>> 9ab87b136002d44ce8c1bdf6b07c677c5c8bd883
                         "http://localhost:8006/wallet",
                         {
                             userId: assetToTransfer.userId ,
@@ -382,29 +377,17 @@ const transferAsset = async (req, res) => {
                     )
                     .then(async(res) => {
                         assetToTransfer[senderBalance] -= req.body.quantity;
-<<<<<<< HEAD
-=======
-                        await assetOperations.saveAsset(assetToTransfer);
-                        await updateTransactionHistory(req.body);
->>>>>>> 9ab87b136002d44ce8c1bdf6b07c677c5c8bd883
                     })
                     .catch((error) => {
                         res.status(500).json({message: "Transfer failed."});
                         console.log("\nError transferring asset:", error);
                     });
-<<<<<<< HEAD
-=======
-
-                    // return res.status(500).json({message: "Transfer failed."});  
-
->>>>>>> 9ab87b136002d44ce8c1bdf6b07c677c5c8bd883
                 }
                 
                 await assetOperations.saveAsset(assetToTransfer);
                 await updateTransactionHistory(req.body);
             }
             
-
             req.body.sendingWallet === 'tradingWallet' ? 
             await getPortfolioData({ ...req, params: { ...req.params, wallet: "trading" } }, res) : 
             await getPortfolioData({ ...req, params: { ...req.params, wallet: "funding" } }, res);
