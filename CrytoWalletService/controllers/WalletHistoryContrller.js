@@ -31,9 +31,11 @@ const getWalletHistory = async (req, res) => {
 }
 
 const updateWalletHistory = async (historyData) => {
+    console.log(historyData)
     await WalletHistoryRepo.save(historyData);
     return;
 }
+
 
 module.exports = {
     getWalletHistory,

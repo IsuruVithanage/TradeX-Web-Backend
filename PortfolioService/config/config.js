@@ -6,10 +6,10 @@ const dataSource = new typeorm.DataSource({
     host: "localhost",
     port: 5432,
     username: "postgres",
-    password: "database12345",
-    database: "portfolioService",
+    password: "savith123",
+    database: "portfolio_service_db",
     synchronize: true,
-    logging : true,
+    logging : ["error", "warn"],
     entities: [path.join(__dirname , ".." , "models/**/*.js")],
 })
 
