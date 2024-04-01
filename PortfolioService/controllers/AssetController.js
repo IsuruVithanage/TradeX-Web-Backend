@@ -1,8 +1,8 @@
-const axios = require("axios");
-const dataSource = require("../config/config");
-const assetRepo = dataSource.getRepository("Asset");
-const getPortfolioValueData = require("./PortfolioValueController").getPortfolioValueData;
+const getPortfolioValueData = require("../services/PortfolioValueService").getPortfolioValueData;
 const updateTransactionHistory = require("./TransactionHistoryController").updateTransactionHistory;
+const assetOperations = require("../services/AssetService");
+const axios = require("axios");
+
 
 
 const getPortfolioData = async (req, res) => {
@@ -22,41 +22,12 @@ const getPortfolioData = async (req, res) => {
             return res.status(404).json({ message: 'User Id not found' });
         } 
 
-        const assets = await assetRepo.find({
-            where: {
-                userId: userId,
-            },
-        });
-        
+        const assets = await assetOperations.getAssetsWithMarketPrice(userId);
 
         
-        await axios
-            .get(
-                'https://api.binance.com/api/v3/ticker/price?symbols=' + 
-                "[\"" + assets
-                .filter(asset => asset.symbol !== 'USD')
-                .map(asset => `${asset.symbol}USDT`)
-                .join('\",\"') + "\"]"
-            )
-
-            .then((res) => {
-                assets.map(asset => {
-                    if (asset.symbol !== 'USD') {
-                        const marketPrice = res.data.find(data => data.symbol === asset.symbol + 'USDT');
-                        asset.marketPrice = (marketPrice) ? parseFloat(marketPrice.price): 0;
-                    }
-                });
-            })
-
-            .catch((error) => {
-                console.log("\nError getting markrt prices:", error.message);
-
-                assets.map(asset => {
-                    if (asset.symbol !== 'USD') {
-                        asset.marketPrice = 0;
-                    }
-                });
-            });
+        if (!assets) {
+            return res.status(404).json({ message: 'Assets not found' });
+        }
 
 
 
@@ -145,7 +116,7 @@ const getPortfolioData = async (req, res) => {
             assets: updatedAssets,
             ...(wallet === 'overview' ? { 
                 percentages: percentages, 
-                historyData: await getPortfolioValueData(req) 
+                historyData: await getPortfolioValueData(userId) 
             } : {})
         }); 
     }
@@ -165,27 +136,20 @@ const getBalance = async (req, res) => {
             return res.status(400).json({message: 'Invalid Request'}); 
         }
 
-        const conditions = req.params.coin
-        .split(',')
-        .map(coin => ({
-            userId: req.params.userId, 
-            symbol: coin
-        }));
+        const assets = await assetOperations.getAssets(req.params.userId, req.params.coin);
 
-        const assets = await assetRepo.find({
-            select: {
-                symbol: "coin",
-                tradingBalance: "balance",
-                AvgPurchasePrice: "avgPurchasePrice"
-            },
-            where: conditions
-        });
 
         if (!assets) {
             return res.status(404).json({message: 'Asset not found'}); 
         } 
         else {
-            res.status(200).json(assets);
+            res.status(200).json(
+                assets.map(asset => ({
+                    symbol: asset.symbol,
+                    balance: asset.tradingBalance,
+                    avgPurchasePrice: asset.AvgPurchasePrice
+                }))
+            );
         }
     } 
     catch (error) {
@@ -208,12 +172,8 @@ const holdAsset = async (req, res) => {
             return res.status(400).json({message: "Invalid quantity"}); 
         }
 
-        const assetToHold = await assetRepo.findOne({
-            where: {
-                userId: req.body.userId,
-                symbol: req.body.coin,
-            },
-        })
+        const assetToHold = ( await assetOperations.getAssets(req.body.userId, req.body.coin))[0];
+
 
         if (!assetToHold) {
             return res.status(404).json({message: 'Asset not found'}); 
@@ -227,12 +187,12 @@ const holdAsset = async (req, res) => {
                 assetToHold.tradingBalance -= req.body.quantity;
                 assetToHold.holdingBalance += req.body.quantity;
 
-                await assetRepo.save(assetToHold);
-
+                const savedAsset = await assetOperations.saveAsset(assetToHold);
+                
                 res.status(200).json({
-                    coin: assetToHold.symbol,
-                    balance: assetToHold.tradingBalance,
-                    avgPurchasePrice: assetToHold.AvgPurchasePrice
+                    coin: savedAsset.symbol,
+                    balance: savedAsset.tradingBalance,
+                    avgPurchasePrice: savedAsset.AvgPurchasePrice
                 }); 
             }
         }
@@ -266,12 +226,7 @@ const addAsset = async (req, res) => {
         const additionSource = (req.params.actionType === 'add') ? 'tradingBalance' : 'fundingBalance' ;
         req.body.purchasePrice = (req.body.coin === 'USD') ? 1 : req.body.purchasePrice;
 
-        let assetToUpdate = await assetRepo.findOne({
-            where: {
-                userId: req.body.userId,
-                symbol: req.body.coin
-            },
-        });
+        let assetToUpdate = ( await assetOperations.getAssets(req.body.userId, req.body.coin))[0];
 
         if (!assetToUpdate){
             assetToUpdate = {
@@ -292,20 +247,16 @@ const addAsset = async (req, res) => {
             assetToUpdate[additionSource] += req.body.quantity;
         }
 
-        await assetRepo.save(assetToUpdate);
+        await assetOperations.saveAsset(assetToUpdate);
 
         if(req.params.actionType === 'transfer'){
             res.status(200).json({message: "Asset Updated"}); 
         }
         
         else{
-            await getBalance({
-                ...req, 
-                params: { 
-                    userId: req.body.userId, 
-                    coin: `${req.body.coin},USD`
-                } 
-            }, res);
+            res.status(200).json(
+                await assetOperations.getAssets(req.body.userId, `${req.body.coin},USD`)
+            )
         }
     } 
     
@@ -331,12 +282,8 @@ const deductAsset = async (req, res) => {
         }
 
 
-        const assetToDeduct = await assetRepo.findOne({
-            where: {
-                userId: req.body.userId,
-                symbol: req.body.coin,
-            },
-        })
+        const assetToDeduct = ( await assetOperations.getAssets(req.body.userId, req.body.coin))[0];
+ 
 
 
         if (!assetToDeduct) {
@@ -356,13 +303,12 @@ const deductAsset = async (req, res) => {
             else{
                 assetToDeduct[deductionSource] -= req.body.quantity;
 
-                await assetRepo.save(assetToDeduct);
-                // await CheckAssetForDelete(req.body.userId, req.body.coin);
+                const updatedAsset = await assetOperations.saveAsset(assetToDeduct);
 
                 res.status(200).json({
-                    coin: assetToDeduct.symbol,
-                    balance: assetToDeduct.tradingBalance,
-                    avgPurchasePrice: assetToDeduct.AvgPurchasePrice
+                    coin: updatedAsset.symbol,
+                    balance: updatedAsset.tradingBalance,
+                    avgPurchasePrice: updatedAsset.AvgPurchasePrice
                 }); 
             }
         }
@@ -388,12 +334,7 @@ const transferAsset = async (req, res) => {
         ){ return res.status(400).json({message: 'Incomplete Request Body'}); }
 
 
-        const assetToTransfer = await assetRepo.findOne({
-            where: {
-                userId: req.body.userId,
-                symbol: req.body.coin,
-            },
-        })
+        const assetToTransfer = ( await assetOperations.getAssets(req.body.userId, req.body.coin))[0];
 
 
         if (!assetToTransfer) {
@@ -420,28 +361,29 @@ const transferAsset = async (req, res) => {
                 }
 
                 else{
-                    // axios
-                    // .post(
-                    //     // external wallet API,
-                    //     {
-                    //         userId: assetToTransfer.userId ,
-                    //         coin: assetToTransfer.symbol ,
-                    //         quantity: req.body.quantity ,
-                    //         purchasePrice: assetToTransfer.AvgPurchasePrice ,
-                    //     }
-                    // )
-                    // .then((res) => {
-                    //     assetToTransfer[senderBalance] -= req.body.quantity;
-                    // })
-                    // .catch((error) => {
-                    //     res.status(500).json({message: "Transfer failed."});
-                    // });
-                    return res.status(500).json({message: "Transfer failed."});  
+                    axios
+                    .post(
+                        "http://localhost:8006/wallet",
+                        {
+                            userId: assetToTransfer.userId ,
+                            coin: assetToTransfer.symbol ,
+                            quantity: req.body.quantity ,
+                            purchasePrice: assetToTransfer.AvgPurchasePrice ,
+                        }
+                    )
+                    .then(async(res) => {
+                        assetToTransfer[senderBalance] -= req.body.quantity;
+                        await assetOperations.saveAsset(assetToTransfer);
+                        await updateTransactionHistory(req.body);
+                    })
+                    .catch((error) => {
+                        res.status(500).json({message: "Transfer failed."});
+                    });
+                    // return res.status(500).json({message: "Transfer failed."});  
                 }
-
-                await assetRepo.save(assetToTransfer);
-                await updateTransactionHistory(req.body);
-                //await CheckAssetForDelete(req.body.userId, req.body.coin);
+                
+                // await assetOperations.saveAsset(assetToTransfer);
+                // await updateTransactionHistory(req.body);
             }
             
 
@@ -454,38 +396,6 @@ const transferAsset = async (req, res) => {
     catch (error) {
         console.log("\nError updating asset:", error);
         res.status(error.status || 500).json({message: error.message});
-    }
-};
-
-
-
-
-
-const CheckAssetForDelete = async (userId, coin) => {
-    try {
-        if(coin === 'USD'){
-            return;
-        }
-
-        const assetToDelete = await assetRepo.findOne({
-            where: {
-                userId: userId,
-                symbol: coin,
-            },
-        })
-
-        if (!assetToDelete) {
-            console.log("\nAsset not found to delete");
-        } 
-        
-        else if(assetToDelete.tradingBalance + assetToDelete.holdingBalance + assetToDelete.fundingBalance <= 0){
-            await assetRepo.remove(assetToDelete);
-            console.log("\nAsset deleted");
-        }
-    } 
-    
-    catch (error) {
-        console.log("\nError deleting asset:", error);
     }
 };
 

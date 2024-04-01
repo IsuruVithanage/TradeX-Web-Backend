@@ -1,11 +1,12 @@
 const express = require('express');
 const PortfolioValueController = require("../controllers/PortfolioValueController");
+const assetOperations = require("../services/AssetService");
 const router = express.Router();
 
 
-router.get("/", PortfolioValueController.getPortfolioValueData);
+router.put("/", assetOperations.getRealtimeTotalValues);
 
-router.put("/", PortfolioValueController.updatePortfolioValueData);
+router.get("/", PortfolioValueController.updatePortfolioValueOf);
 
 
 module.exports = router

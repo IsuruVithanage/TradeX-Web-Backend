@@ -4,9 +4,10 @@ const router = express.Router();
 
 router.get("/:userId", controller.getAllBalances);
 
-router.post("/", controller.saveUser);
+router.put("/", controller.transferBalance);
 
-router.delete("/:id", controller.deleteUser);
+
+router.post("/", controller.addCapital);
 
 
 module.exports = router

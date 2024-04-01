@@ -1,31 +1,32 @@
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
-    name: "User",
-    tableName: "user",
+    name: "Forum-question",
+    tableName: "forum-question",
     columns: {
-        userId: {
+        questionId: {
             primary: true,
             type: "int",
             generated: true,
         },
-        userName: {
-            type: "varchar",
-        },
-        Date: {
-            type: "varchar",
-        },
-        NIC: {
-            type: "varchar",
-        },
-        Contact: {
-            type: "varchar",
-        },
-        Age: {
+        userId: {
             type: "int",
         },
-        Verified: {
+        title: {
             type: "varchar",
         },
+        description: {
+            type: "varchar",
+        },
+        views: {
+            type: "int",
+        },
+        likes: {
+            type: "int",
+        },
+        replies: {
+            type: "int",
+        },
+
     },
 })
