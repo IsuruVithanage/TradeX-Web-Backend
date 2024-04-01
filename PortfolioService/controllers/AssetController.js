@@ -1,6 +1,8 @@
 const getPortfolioValueData = require("../services/PortfolioValueService").getPortfolioValueData;
 const updateTransactionHistory = require("./TransactionHistoryController").updateTransactionHistory;
 const assetOperations = require("../services/AssetService");
+const axios = require("axios");
+
 
 
 const getPortfolioData = async (req, res) => {
@@ -247,6 +249,13 @@ const addAsset = async (req, res) => {
         await assetOperations.saveAsset(assetToUpdate);
 
         if(req.params.actionType === 'transfer'){
+            await updateTransactionHistory({
+                userId: req.body.userId,
+                coin: req.body.coin,
+                quantity: req.body.quantity,
+                sendingWallet: 'ExternalWallet',
+                receivingWallet: 'fundingWallet',
+            });
             res.status(200).json({message: "Asset Updated"}); 
         }
         
@@ -339,7 +348,6 @@ const transferAsset = async (req, res) => {
         } 
 
         else {
-            req.body.date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
             const senderBalance = req.body.sendingWallet.slice(0, 7).concat("Balance");
             const receiverBalance = req.body.receivingWallet.slice(0, 7).concat("Balance");
 
@@ -358,8 +366,7 @@ const transferAsset = async (req, res) => {
                 }
 
                 else{
-                    axios
-                    .put(
+                    await axios.post(
                         "http://localhost:8006/wallet",
                         {
                             userId: assetToTransfer.userId ,
@@ -368,13 +375,13 @@ const transferAsset = async (req, res) => {
                             purchasePrice: assetToTransfer.AvgPurchasePrice ,
                         }
                     )
-                    .then((res) => {
+                    .then(async(res) => {
                         assetToTransfer[senderBalance] -= req.body.quantity;
                     })
                     .catch((error) => {
                         res.status(500).json({message: "Transfer failed."});
+                        console.log("\nError transferring asset:", error);
                     });
-                    //return res.status(500).json({message: "Transfer failed."});  
                 }
                 
                 await assetOperations.saveAsset(assetToTransfer);

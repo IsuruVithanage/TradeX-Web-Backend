@@ -1,6 +1,8 @@
 const axios = require("axios");
 const dataSource = require("../config/config");
 const walletRepo = dataSource.getRepository("Capital");
+const updateWalletHistory = require("./WalletHistoryContrller").updateWalletHistory;
+
 
 
 const getAllBalances = async (req, res) => {
@@ -104,12 +106,6 @@ const getAllBalances = async (req, res) => {
 }
 
 
-const getAllUsers = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    res.json(await userRepo.find());
-};
-
-
 
 // wallet to wallet crypto transfer
 
@@ -150,6 +146,14 @@ const transferBalance = async (req, res) => {
         }).then(async() => {
             assetToTransfer.balance -= req.body.quantity;
             await walletRepo.save(assetToTransfer)
+            await updateWalletHistory({
+                userId:req.body.userId,
+                coin:req.body.coin,
+                quantity:req.body.quantity,
+                date:new Date(),
+                type:"Send",
+                from_to: req.body.receivingWallet
+            })
             await getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
 
         }).catch((error) => {
@@ -164,36 +168,70 @@ const transferBalance = async (req, res) => {
     }
 };
 
-
-
-
-const deleteUser = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    const userId = req.params.id;
-
+const addCapital = async (req, res) => {
     try {
-        const userToDelete = await userRepo.findOne({
-            where: {
-                userId: userId,
-            },
-        })
-
-        if (!userToDelete) {
-            return res.status(404).json({message: 'User not found'});
+        if(!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.purchasePrice ){
+            return res.status(400).json({ 
+                message:"invalid request, contain null values for 'userId', 'coin', 'quantity' or 'purchasePrice'"
+            });
         }
 
-        await userRepo.remove(userToDelete);
-        res.json({message: 'User deleted successfully'});
-    } catch (error) {
-        console.error("Error deleting user:", error);
-        res.status(500).json({message: 'Internal server error'});
+        
+        if(req.body.quantity <= 0 || req.body.purchasePrice <= 0){
+            return res.status(400).json({ message:"invalid quantity or purchasePrice" });
+        }
+
+        req.body.purchasePrice = (req.body.coin === 'USD') ? 1 : req.body.purchasePrice;
+
+        let assetToUpdate = await walletRepo.findOne({
+            where:{
+                userId:req.body.userId,
+                coin:req.body.coin
+            }
+        })
+
+        if (!assetToUpdate){
+            assetToUpdate = {
+                userId: req.body.userId,
+                coin: req.body.coin,
+                balance: req.body.quantity,
+                AvgPurchasePrice: req.body.purchasePrice
+            }
+        }
+
+        else{
+            const newTotalBalance = ( assetToUpdate.balance + req.body.quantity );
+            const newPurchasePrice = ( assetToUpdate.AvgPurchasePrice * assetToUpdate.balance  ) + ( req.body.purchasePrice * req.body.quantity);
+            const newAvgPurchasePrice = ( newPurchasePrice / newTotalBalance );
+
+            assetToUpdate.AvgPurchasePrice = newAvgPurchasePrice;
+            assetToUpdate.balance += req.body.quantity;
+        }
+
+        await walletRepo.save(assetToUpdate)
+        await updateWalletHistory({
+            userId:req.body.userId,
+            coin:req.body.coin,
+            quantity:req.body.quantity,
+            date:new Date(),
+            type:"Recieve",
+            from_to: "tradeX"
+        })
+        res.status(200).json({message: "Asset Updated"}); 
+
+    } 
+    
+    catch (error) {
+        console.log("\nError adding asset:", error);
+        res.status(500).json({message: error.message});
     }
 };
 
 
+
+
 module.exports = {
-    getAllUsers,
     transferBalance,
-    deleteUser,
-    getAllBalances
+    getAllBalances,
+    addCapital
 }

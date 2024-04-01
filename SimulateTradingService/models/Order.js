@@ -15,6 +15,10 @@ module.exports = new EntitySchema({
         type: {
             type: "varchar",
         },
+        date: {
+            type: "varchar",
+            nullable: true
+        },
         coin: {
             type: "varchar",
         },

@@ -11,12 +11,12 @@ module.exports = new EntitySchema({
         },
         userId: {
             type: "int",
-            nullable: false,
+            nullable: true,
         },
         coin: {
             type: "varchar",
             length: 10,
-            nullable: false,
+            nullable: true,
         },
         type: {
             type: "varchar",
@@ -25,12 +25,11 @@ module.exports = new EntitySchema({
         },
         quantity: {
             type: "float",
-            nullable: false,
+            nullable: true,
         },
         date: {
-            type: "varchar",
-            length: 10,
-            nullable: false,
+            type: "timestamp with time zone",
+            nullable: true,
         },
         from_to: {
             type: "varchar",

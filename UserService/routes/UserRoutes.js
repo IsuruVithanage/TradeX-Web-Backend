@@ -14,5 +14,10 @@ router.get("/getPendingUsers",controller.getPendingUsers);
 
 router.get("/getVerifiedUserCount", controller.getVerifiedUserCount);
 
+router.get("/getUsersWithVerificationIssues", controller.getUsersWithVerificationIssues);
+
+router.get("/getAllIssues", controller.getAllIssues);
+
+
 
 module.exports = router
