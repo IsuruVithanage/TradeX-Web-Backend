@@ -1,6 +1,8 @@
 const getPortfolioValueData = require("../services/PortfolioValueService").getPortfolioValueData;
 const updateTransactionHistory = require("./TransactionHistoryController").updateTransactionHistory;
 const assetOperations = require("../services/AssetService");
+const axios = require("axios");
+
 
 
 const getPortfolioData = async (req, res) => {
@@ -359,7 +361,7 @@ const transferAsset = async (req, res) => {
 
                 else{
                     axios
-                    .put(
+                    .post(
                         "http://localhost:8006/wallet",
                         {
                             userId: assetToTransfer.userId ,
@@ -368,17 +370,21 @@ const transferAsset = async (req, res) => {
                             purchasePrice: assetToTransfer.AvgPurchasePrice ,
                         }
                     )
-                    .then((res) => {
+                    .then(async(res) => {
                         assetToTransfer[senderBalance] -= req.body.quantity;
+                        await assetOperations.saveAsset(assetToTransfer);
+                        await updateTransactionHistory(req.body);
                     })
                     .catch((error) => {
                         res.status(500).json({message: "Transfer failed."});
                     });
-                    //return res.status(500).json({message: "Transfer failed."});  
+
+                    // return res.status(500).json({message: "Transfer failed."});  
+
                 }
                 
-                await assetOperations.saveAsset(assetToTransfer);
-                await updateTransactionHistory(req.body);
+                // await assetOperations.saveAsset(assetToTransfer);
+                // await updateTransactionHistory(req.body);
             }
             
 
