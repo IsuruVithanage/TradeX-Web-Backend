@@ -53,20 +53,21 @@ const getPortfolioData = async (req, res) => {
                 portfolioValue += totalBalance;
             }
             else{
-                updatedAsset.marketPrice = `$ ${asset.marketPrice}`;
-                updatedAsset.value = ((asset.marketPrice > 0) ? asset.marketPrice : 1) *  totalBalance;
-                portfolioValue += updatedAsset.value;
+                const assetValue = asset.marketPrice *  totalBalance;
+                portfolioValue += assetValue;
+                updatedAsset.value = assetValue;
+                updatedAsset.marketPrice = "$ " + asset.marketPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 10,});
             }
 
             if(wallet !== 'overview'){
                 if(asset.symbol === 'USD'){
                     updatedAsset.marketPrice = "- - -";
-                    updatedAsset.value = totalBalance;
+                    updatedAsset.value = totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});;
                     updatedAsset.ROI = "- - -";
                     updatedAsset.RoiColor = '#FFFFFF';
                 } else {
-                    asset.marketPrice = ( asset.marketPrice > 0 ) ? asset.marketPrice : asset.AvgPurchasePrice
-                    const ROI = ( asset.marketPrice - asset.AvgPurchasePrice ) * ( 100 / asset.AvgPurchasePrice );
+                    const currentMarketPrice = ( asset.marketPrice > 0 ) ? asset.marketPrice : asset.AvgPurchasePrice
+                    const ROI = ( currentMarketPrice - asset.AvgPurchasePrice ) * ( 100 / asset.AvgPurchasePrice );
                     updatedAsset.ROI = `${ROI.toFixed(2)} %`;
                     updatedAsset.RoiColor = ( ROI > 0 ) ? '#21DB9A' : ( ROI < 0 ) ? '#FF0000' : '#FFFFFF';
                 } 
@@ -80,12 +81,10 @@ const getPortfolioData = async (req, res) => {
                 updatedAsset.totalBalance = totalBalance;
             }
 
-
             return updatedAsset;
         })
         .filter(asset => Object.keys(asset).length > 0)
         .sort((a, b) => b.value - a.value);
-
 
 
         if(wallet !== 'overview'){
@@ -379,7 +378,9 @@ const transferAsset = async (req, res) => {
                     .catch((error) => {
                         res.status(500).json({message: "Transfer failed."});
                     });
+
                     // return res.status(500).json({message: "Transfer failed."});  
+
                 }
                 
                 // await assetOperations.saveAsset(assetToTransfer);
