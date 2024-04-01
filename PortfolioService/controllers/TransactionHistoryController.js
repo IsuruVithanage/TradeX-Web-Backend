@@ -33,6 +33,7 @@ const getTransactionHistory = async (req, res) => {
 }
 
 const updateTransactionHistory = async (historyData) => {
+    historyData.date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
     await TransactionHistoryRepo.save(historyData);
     return;
 }
