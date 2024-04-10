@@ -5,20 +5,30 @@ const userRepo = dataSource.getRepository("UserDetail");
 
 
 const login = async (req, res) => {
-    const usersave = userRepo.save(req.body);
-    res.json(usersave);
+    const {username,password} = req.body;
+
+    const user = await userRepo.findOne({where: {userName: username}});
+
+    if(!user) res.status(400).json({error: "User Doesn't Exist"})
+
+    const dbPassword = user.password;
+    bcrypt.compare(password,dbPassword).then((match)=>{
+        if(!match){
+            res.status(400).json({error: "Wrong Username and Password "})
+        }
+        else{
+            res.status(200).json("Logged In")
+
+        }
+    })
 
 };
 
 const register = async (req, res) => {
     const {username,password} = req.body;
-    
+
     bcrypt.hash(password,10).then(async(hash) => {
-        const user = await userRepo.findOne({
-            where: {
-                "userName": username
-            }
-        })
+        const user = await userRepo.findOne({  where: {  "userName": username} });
 
         if(user){
             return res.status(400).json({"message": "User Already existing"})
