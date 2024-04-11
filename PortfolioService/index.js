@@ -34,8 +34,8 @@ app.use((error, req, res) => {
 dataSource.initialize()
 
 .then(async() => {
-    //await createTriggerFunction();
-    //await update_portfolio_value_trigger();
+    await createTriggerFunction();
+    await update_portfolio_value_trigger();
     runScheduledValueUpdaters();
 
     console.log("Database connected!!");
