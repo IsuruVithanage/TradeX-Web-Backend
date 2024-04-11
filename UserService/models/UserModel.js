@@ -11,29 +11,28 @@ module.exports = new EntitySchema({
         },
         userName: {
             type: "varchar",
+            
         },
         Date: {
             type: "varchar",
+            nullable:true
         },
         NIC: {
             type: "varchar",
+            nullable:true
         },
         Contact: {
             type: "varchar",
+            nullable:true
         },
         Age: {
             type: "int",
+            nullable:true
         },
         Verified: {
             type: "varchar",
+            nullable:true
         },
     },
 
-    relations: {
-        Issue: {
-            type: "one-to-many",
-            target: "Issue", // Name of the Issue entity
-            inverseSide: "user" // Name of the property in the Issue entity that maps back to User
-        }
-    }
 })
