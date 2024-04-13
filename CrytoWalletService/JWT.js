@@ -7,6 +7,24 @@ const createTokens = (user) => {
     return accessToken
 };
 
+const validateToken = (req,res,next) => {
+   
+    const accessToken = req.cookies["access-token"] ;
 
+    if (!accessToken)
+     return res.status(400).json({error:"User not Authenticated"});
 
-module.exports = {createTokens};
+     try{
+        const validToken = verify(accessToken,"jwtsecretplschange")
+        if (validToken){
+            req.authenticated = true
+            return next()
+        }
+
+     } catch(error){
+        return res.status(400).json({error:error});
+
+     }
+};
+
+module.exports = {createTokens,validateToken};
