@@ -5,6 +5,8 @@ const dataSource = require("./config/config");
 const walletRouter = require("./routes/WalletRoutes");
 const WalletHistoryRounter = require("./routes/WalletHistoryRoutes")
 const WalletLoginRounter = require("./routes/WalletLoginRoutes")
+const cookieParser = require("cookie-parser")
+
 
 
 
@@ -13,6 +15,7 @@ app.use(cors());
 app.use("/wallet", walletRouter);
 app.use("/history", WalletHistoryRounter);
 app.use("/login", WalletLoginRounter);
+app.use(cookieParser());
 
 
 
