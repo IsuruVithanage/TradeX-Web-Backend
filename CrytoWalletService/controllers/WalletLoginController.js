@@ -2,6 +2,7 @@ const express = require('express');
 const dataSource = require("../config/config");
 const bcrypt = require('bcrypt')
 const userRepo = dataSource.getRepository("UserDetail");
+const {createTokens} = require('../JWT')
 
 
 const login = async (req, res) => {
@@ -17,6 +18,12 @@ const login = async (req, res) => {
             res.status(400).json({error: "Wrong Username and Password "})
         }
         else{
+
+            const accessToken = createTokens(user)
+            res.cookie("access-token",accessToken,{
+                maxAge : 60*60*1000,
+            })
+
             res.status(200).json("Logged In")
 
         }
