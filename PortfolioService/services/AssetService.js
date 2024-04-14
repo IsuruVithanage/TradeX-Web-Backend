@@ -106,12 +106,8 @@ const getAssetsWithMarketPrice = async (userId, coins) => {
 
         .then((res) => {
             assets.map(asset => {
-                if (asset.symbol !== 'USD') {
-                    const marketPrice = res.data.find(data => data.symbol === asset.symbol + 'USDT');
-                    asset.marketPrice = (marketPrice) ? parseFloat(marketPrice.price): 0;
-                }else{
-                    asset.marketPrice = 1;
-                }
+                const marketPrice = res.data.find(data => data.symbol === asset.symbol + 'USDT');
+                asset.marketPrice = (marketPrice) ? parseFloat(marketPrice.price): 1;
             });
         })
 
