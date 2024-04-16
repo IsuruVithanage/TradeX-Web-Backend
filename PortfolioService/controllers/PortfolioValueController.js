@@ -3,7 +3,6 @@ const valueOperations = require("../services/PortfolioValueService");
 
 
 
-
 const updatePortfolioValueOf = async (intoTable) => {
     try {
         let fromTable = "";
