@@ -17,6 +17,12 @@ const saveUser = async (req, res) => {
     res.json(usersave);
 };
 
+const saveUserVerificationDetails = async (req, res) => {
+    const verifyRepo = dataSource.getRepository("UserVerificationDetail");
+    const verifySave = verifyRepo.save(req.body);
+    res.json(verifySave);
+};
+
 const deleteUser = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     const userId = req.params.id;
@@ -113,5 +119,7 @@ module.exports = {
     getPendingUsers,
     getVerifiedUserCount,
     getUsersWithVerificationIssues,
-    getAllIssues
+    getAllIssues,
+    saveUserVerificationDetails
+
 }
