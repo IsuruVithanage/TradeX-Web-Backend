@@ -10,12 +10,14 @@ const cookieParser = require("cookie-parser")
 
 
 
+
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors());
 app.use("/wallet", walletRouter);
 app.use("/history", WalletHistoryRounter);
-app.use("/login", WalletLoginRounter);
-app.use(cookieParser());
+app.use("/login",  WalletLoginRounter);
+
 
 
 
