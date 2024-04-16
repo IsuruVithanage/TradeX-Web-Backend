@@ -19,7 +19,12 @@ const validateToken = (req,res,next) => {
         if (validToken){
             req.authenticated = true
             return next()
+        }else{
+            return res.status(400).json({message:"not valid user"});
+
         }
+        
+
 
      } catch(error){
         return res.status(400).json({error:error});
