@@ -1,4 +1,4 @@
-const EntitySchema = require("typeorm").EntitySchema
+const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
     name: "Alert",
@@ -34,6 +34,13 @@ module.exports = new EntitySchema({
         runningStatus: {
             type: "boolean",
             nullable: false,
+        },
+    },
+    relations: {
+        deviceToken: {
+            type: "many-to-one",
+            target: "DeviceToken",
+            joinColumn: { name: "userId" },
         },
     },
 });
