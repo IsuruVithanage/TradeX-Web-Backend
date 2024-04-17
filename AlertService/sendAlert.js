@@ -21,6 +21,7 @@ catch (error) {
 
 
 
+
 const sendAlert = (data) => {
     return new Promise((resolve, reject) => {
         try {
@@ -29,12 +30,14 @@ const sendAlert = (data) => {
                 notification: {
                     title: 'TradeX',
                     body: data.message,
-                    image: 'https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/trade.png',
                 },
                 webpush: {
                     notification: {
                         icon: 'https://i.postimg.cc/gcfCW5yn/tlogo2.png'
-                    }
+                    },
+                    fcmOptions: {
+                        link: 'http://localhost:3000/alert'
+                    },
                 }
             };
 
