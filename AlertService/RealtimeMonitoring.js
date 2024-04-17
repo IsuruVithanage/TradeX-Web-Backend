@@ -1,15 +1,28 @@
 const WebSocket = require('ws');
+const axios = require('axios');
 const { getAllRunningAlerts, editAlert } = require('./controllers/AlertController');
 const { sendAlert } = require('./sendAlert');
 
+let coinList = [];
 let marketPrice = {};
 let ws = { readyState: WebSocket.CLOSED };
 let alerts = [];
 
 
-const startRealtimeMonitoring = ()    => {
+
+const startRealtimeMonitoring = async() => {
     try{
         console.log('Starting Realtime Monitoring...');
+
+        await axios.get('https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/Coin%20Images.json')
+        .then((response) => {
+            coinList = response.data;
+        })
+        .catch((error) => {
+            console.log('Coin list fetching error:', error)
+        });
+
+
 
         setInterval( async() => {
             alerts = await getAllRunningAlerts();
@@ -86,12 +99,14 @@ const checkAlerts = () => {
                     ( condition === 'Below' && marketPrice[coin] < price ) ||
                     ( condition === 'Equals' && marketPrice[coin] === price )
                 ){ 
+                    const coinName = coinList[alert.coin].name;
                     alert.runningStatus = false;
                     editAlert({query: {alertId: alert.alertId}, body: {runningStatus: false}})
                     .then(() => {
                         sendAlert({
                             token: alert.deviceToken, 
-                            message: `U${alert.userId} Alert triggered for ${alert.coin} at price ${marketPrice[alert.coin]}`
+                            title: coinName,
+                            body: `Hello there! ${coinName} is now at ${marketPrice[alert.coin]}`,
                         }).then(() => {
                             console.log('\x1b[32mNotification sent\x1b[0m for alertID:', alert.alertId);
                         }).catch(() => {

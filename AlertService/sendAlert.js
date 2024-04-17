@@ -22,18 +22,18 @@ catch (error) {
 
 
 
-const sendAlert = (data) => {
+const sendAlert = (payload) => {
     return new Promise((resolve, reject) => {
         try {
             const message = {
-                token: data.token,
+                token: payload.token,
                 notification: {
-                    title: 'TradeX',
-                    body: data.message,
+                    title: payload.title,
+                    body: payload.body,
                 },
                 webpush: {
                     notification: {
-                        icon: 'https://i.postimg.cc/gcfCW5yn/tlogo2.png'
+                        icon: 'https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/TradeX-mini-logo.png'
                     },
                     fcmOptions: {
                         link: 'http://localhost:3000/alert'
