@@ -1,7 +1,41 @@
 const dataSource = require("../config/config");
 const alertRepo = dataSource.getRepository("Alert");
 
-const getAllAlerts = async (req, res) => {
+const getAllRunningAlerts = async () => {
+    try {
+        const alerts = await alertRepo
+        .createQueryBuilder("a")
+        .leftJoinAndSelect("a.deviceToken", "t", "a.userId = t.userId")
+        .select([
+            `a.alertId AS "alertId"`,
+            `a.userId AS "userId"`,
+            `a.coin AS "coin"`,
+            `a.condition AS "condition"`,
+            `a.price AS "price"`,
+            `a.emailActiveStatus AS "emailActiveStatus"`,
+            `a.runningStatus AS "runningStatus"`,
+            `t.deviceToken AS "deviceToken"`,
+        ])
+        .where("a.runningStatus = true")
+        .orderBy({
+            "a.coin": "ASC",
+            "a.userId": "ASC",
+            "a.condition": "ASC",
+        })
+        .getRawMany();
+
+        return alerts;
+    }
+
+    catch (error) {
+        console.log("\nError fetching All alerts:", error); 
+        return [];
+    }
+};
+
+
+
+const getAlerts = async (req, res) => {
     try {
         if(!req.query.userId){
             res.status(404).json({message: 'Alerts not found'});
@@ -19,6 +53,7 @@ const getAllAlerts = async (req, res) => {
                 }
             });
             
+
             res.status(200).json(alerts);
         }
     } 
@@ -33,19 +68,14 @@ const getAllAlerts = async (req, res) => {
 
 const addAlert = async (req, res) => {
     try {
-        const newAlert = await alertRepo.save(req.body);
-        const updatedAlerts = await getAllAlerts({ 
-            query: { 
-                userId: req.body.userId,
-                runningStatus: true
-            }
-        }, res );
-        res.status(200).json(updatedAlerts);
-        
+        await alertRepo.save(req.body);
+        await getAlerts({ query: { userId: req.body.userId, runningStatus: true}}, res ); 
     } 
     
     catch (error) {
         console.log("\nError adding alert:", error);
+        error.message.includes('violates foreign key constraint') ? 
+        res.status(500).json({message: 'Allow Notifications in your browser settings to Add alerts..!'}) :
         res.status(500).json({message: error.message});
     }
 };
@@ -68,20 +98,26 @@ const editAlert = async (req, res) => {
             alertRepo.merge(alertToUpdate, req.body);
             await alertRepo.save(alertToUpdate);
 
-            const updatedAlerts = await getAllAlerts({ 
-                query: { 
-                    userId: req.body.userId,
+            if(!res){
+                return true;
+            }
+            else{
+                await getAlerts({ query: { 
+                    userId: req.body.userId, 
                     runningStatus: req.query.runningStatus
-                }
-            }, res );
-
-            res.status(200).json(updatedAlerts);
+                }}, res );
+            }
         }
     } 
     
     catch (error) {
-        console.log("\nError edting alert:", error);
-        res.status(500).json({message: error.message});
+        console.log("\nError Editing alert:", error);
+        if(!res){
+            return false;
+        }
+        else{
+            res.status(500).json({message: error.message});
+        }
     }
 };
 
@@ -102,14 +138,12 @@ const deleteAlert = async (req, res) => {
         else {
             await alertRepo.remove(alertToDelete);
 
-            const updatedAlerts = await getAllAlerts({ 
+            await getAlerts({ 
                 query: { 
                     userId: req.query.userId,
                     runningStatus: req.query.runningStatus
                 }
             }, res );
-
-            res.status(200).json(updatedAlerts);
         }
     } 
     
@@ -120,9 +154,26 @@ const deleteAlert = async (req, res) => {
 };
 
 
+
+
+const saveDeviceToken = async (req, res) => {
+    try {        
+        await dataSource.getRepository("DeviceToken").save(req.body);
+        res.status(200).json({message: 'Device token saved successfully'});    
+    } 
+    
+    catch (error) {
+        console.log("\nError saving device token:", error);
+        res.status(500).json({message: error.message});
+    }
+}
+
+
 module.exports = {
-    getAllAlerts,
+    getAllRunningAlerts,
+    getAlerts,
     addAlert,
     editAlert,
-    deleteAlert
+    deleteAlert,
+    saveDeviceToken
 };
