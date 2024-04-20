@@ -30,6 +30,15 @@ module.exports = new EntitySchema({
         dateOfBirth: {
             type: "date"
         },
+        userImg: {
+            type: "varchar"
+        },
+        nicImg1: {
+            type: "varchar"
+        },
+        nicImg2: {
+            type: "varchar"
+        },
 
     },
 });
