@@ -3,12 +3,14 @@ const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
 const forumRouter = require("./routes/ForumRoutes");
-const answerRouter = require("./routes/AnswerRoutes"); // Import the answer router
+const answerRouter = require("./routes/AnswerRoutes"); 
 
 app.use(express.json());
 app.use(cors());
 app.use("/forum", forumRouter);
-app.use("/answers", answerRouter); // Mount the answer router at the "/answers" endpoint
+
+// Mount the answer router at the "/answers" endpoint
+app.use("/answers", answerRouter); 
 
 // Handle 404 errors
 app.use((req, res) => {
