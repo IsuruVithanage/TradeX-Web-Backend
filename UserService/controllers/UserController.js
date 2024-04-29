@@ -17,6 +17,12 @@ const saveUser = async (req, res) => {
     res.json(usersave);
 };
 
+const saveUserVerificationDetails = async (req, res) => {
+    const verifyRepo = dataSource.getRepository("UserVerificationDetail");
+    const verifySave = verifyRepo.save(req.body);
+    res.json(verifySave);
+};
+
 const deleteUser = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     const userId = req.params.id;
@@ -44,10 +50,10 @@ const getUserCount = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     try {
         const userCount = await userRepo.count();
-        res.json({ count: userCount });
+        res.json({count: userCount});
     } catch (error) {
         console.error("Error fetching user count:", error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({message: 'Internal server error'});
     }
 };
 
@@ -70,38 +76,38 @@ const getPendingUsers = async (req, res) => {
 const getVerifiedUserCount = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     try {
-      const verifiedUserCount = await userRepo.count({
-        where: {
-          Verified: "Yes"
-        }
-      });
-      res.json({ count: verifiedUserCount });
+        const verifiedUserCount = await userRepo.count({
+            where: {
+                Verified: "Yes"
+            }
+        });
+        res.json({count: verifiedUserCount});
     } catch (error) {
-      console.error("Error fetching verified user count:", error);
-      res.status(500).json({ message: 'Internal server error' });
+        console.error("Error fetching verified user count:", error);
+        res.status(500).json({message: 'Internal server error'});
     }
-  };
+};
 
-  const getUsersWithVerificationIssues = async (req, res) => {
+const getUsersWithVerificationIssues = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     try {
         const usersWithIssues = await userRepo
             .createQueryBuilder("user")
             .leftJoinAndSelect("user.issue", "issue")
-            .where("user.Verified != :verified", { verified: "Yes" })
+            .where("user.Verified != :verified", {verified: "Yes"})
             .getMany();
         const formattedData = usersWithIssues.map(user => ({
             userId: user.userId,
             userName: user.userName,
-            issue: user.issue ? user.issue.IssueName : "" 
+            issue: user.issue ? user.issue.IssueName : ""
         }));
         res.json(formattedData);
     } catch (error) {
         console.error("Error fetching users with verification issues:", error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({message: 'Internal server error'});
     }
-};
 
+};
 
 
 
@@ -113,5 +119,7 @@ module.exports = {
     getPendingUsers,
     getVerifiedUserCount,
     getUsersWithVerificationIssues,
-    getAllIssues
+    getAllIssues,
+    saveUserVerificationDetails,
+
 }

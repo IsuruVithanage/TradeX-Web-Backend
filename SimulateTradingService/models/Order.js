@@ -23,13 +23,13 @@ module.exports = new EntitySchema({
             type: "varchar",
         },
         price: {
-            type: "varchar",
+            type: "float",
         },
         quantity: {
-            type: "varchar",
+            type: "float",
         },
         totalPrice: {
-            type: "varchar",
+            type: "float",
         },
     },
 })

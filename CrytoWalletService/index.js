@@ -5,14 +5,21 @@ const dataSource = require("./config/config");
 const walletRouter = require("./routes/WalletRoutes");
 const WalletHistoryRounter = require("./routes/WalletHistoryRoutes")
 const WalletLoginRounter = require("./routes/WalletLoginRoutes")
+const cookieParser = require("cookie-parser")
+const {validateToken} = require('./JWT')
+
 
 
 
 app.use(express.json());
-app.use(cors());
-app.use("/wallet", walletRouter);
-app.use("/history", WalletHistoryRounter);
-app.use("/login", WalletLoginRounter);
+app.use(cookieParser());
+app.use(cors( {
+    origin: 'http://localhost:3000', 
+    credentials: true, 
+}));
+app.use("/wallet", validateToken, walletRouter);
+app.use("/history", validateToken, WalletHistoryRounter);
+app.use("/login",  WalletLoginRounter);
 
 
 

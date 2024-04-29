@@ -2,14 +2,19 @@ const express = require('express');
 const dataSource = require("../config/config");
 const bcrypt = require('bcrypt')
 const userRepo = dataSource.getRepository("UserDetail");
+const {createTokens} = require('../JWT')
 
 
 const login = async (req, res) => {
     const {username,password} = req.body;
+    const accessToken = req.cookies["access-token"] ;
+    console.log("accessToken",accessToken);    
 
     const user = await userRepo.findOne({where: {userName: username}});
 
-    if(!user) res.status(400).json({error: "User Doesn't Exist"})
+
+    if(!user) {return res.status(400).json({error: "User Doesn't Exist"})}
+
 
     const dbPassword = user.password;
     bcrypt.compare(password,dbPassword).then((match)=>{
@@ -17,7 +22,14 @@ const login = async (req, res) => {
             res.status(400).json({error: "Wrong Username and Password "})
         }
         else{
-            res.status(200).json("Logged In")
+
+            const accessToken = createTokens(user)
+            res.cookie("access-token", accessToken, {
+                expires: false, // Cookie will expire when the browser is closed
+            });
+            
+
+            res.status(200).json({login:true})
 
         }
     })

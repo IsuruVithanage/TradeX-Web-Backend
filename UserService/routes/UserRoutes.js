@@ -18,6 +18,7 @@ router.get("/getUsersWithVerificationIssues", controller.getUsersWithVerificatio
 
 router.get("/getAllIssues", controller.getAllIssues);
 
+router.post("/saveUserVerificationDetails", controller.saveUserVerificationDetails);
 
 
 module.exports = router
