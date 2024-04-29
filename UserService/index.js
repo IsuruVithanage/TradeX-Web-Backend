@@ -3,6 +3,7 @@ const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
 const userRouter = require("./routes/UserRoutes");
+const bcrypt=require('bcrypt');
 
 app.use(express.json());
 app.use(cors());
@@ -13,6 +14,10 @@ app.use((req, res) => {
     res.status(404).json({
         message: `${req.originalUrl} Endpoint Not found`
     });
+});
+
+app.post("/register",(req,res) => {
+    const{username,password} = req.body;
 });
 
 app.use((error, req, res) => {
