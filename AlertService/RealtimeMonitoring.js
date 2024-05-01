@@ -1,7 +1,6 @@
 const WebSocket = require('ws');
 const axios = require('axios');
-const { getAllRunningAlerts, editAlert } = require('./controllers/AlertController');
-const { sendAlert } = require('./sendAlert');
+const { getAllRunningAlerts, editAlert, sendNotification } = require('./controllers/AlertController');
 
 let coinList = [];
 let marketPrice = {};
@@ -102,14 +101,14 @@ const checkAlerts = () => {
                     const coinName = coinList[alert.coin].name;
                     alert.runningStatus = false;
                     editAlert({query: {alertId: alert.alertId}, body: {runningStatus: false}})
-                    .then(() => {
-                        sendAlert({
-                            token: alert.deviceToken, 
+                    .then(async() => {
+                        sendNotification({ body: {
+                            token: alert.deviceToken,
                             title: coinName,
                             body: `Hello there! ${coinName} is now at ${marketPrice[alert.coin]}`,
-                        }).then(() => {
-                            console.log('\x1b[32mNotification sent\x1b[0m for alertID:', alert.alertId);
-                        }).catch(() => {
+                            onClick: 'http://localhost:3000/alert'
+                        }})
+                        .catch (() => {
                             editAlert({query: {alertId: alert.alertId}, body: {runningStatus: true}});
                             console.log('\x1b[31mNotification sending failed\x1b[0m for alertID:', alert.alertId);
                         });
