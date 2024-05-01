@@ -12,4 +12,6 @@ router.delete("/", controller.deleteAlert);
 
 router.post("/deviceToken", controller.saveDeviceToken);
 
+router.post("/send", controller.sendNotification);
+
 module.exports = router
