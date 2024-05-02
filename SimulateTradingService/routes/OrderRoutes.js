@@ -4,9 +4,11 @@ const router = express.Router();
 
 router.get("/getAllOrders", controller.getAllOrders);
 
+router.get("/getLimitOrderByCoin/:coin/:userId", controller.getAllLimitOrdersByCoin);
+
 router.post("/", controller.saveOrder);
 
-router.delete("/", controller.deleteOrder);
+router.delete("/deleteOrder/:orderId", controller.deleteOrder);
 
 
 module.exports = router
