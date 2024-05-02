@@ -4,6 +4,7 @@ const app = express();
 const dataSource = require("./config/config");
 const quizRouter = require("./routes/QuizRoutes");
 const orderRouter = require("./routes/OrderRoutes");
+const startRealtimeMonitoring = require("./LimitOrderMonitoring");
 
 app.use(express.json());
 app.use(cors());
@@ -28,6 +29,7 @@ dataSource.initialize()
 
     .then(() => {
         console.log("Database connected!!");
+        startRealtimeMonitoring();
 
         app.listen(8005, () => {
             console.log("Question Service running on Port 8005");
