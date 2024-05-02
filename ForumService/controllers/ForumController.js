@@ -12,6 +12,12 @@ const getQuestionsByUserId = async (req, res) => {
     const questions = await QuestionRepo.find({ where: { userId: userId } });
     res.json(questions);
 };
+const getQuestionsByQuestionId = async (req, res) => {
+    const questionId = req.params.questionId;
+    const QuestionRepo = dataSource.getRepository("Forum-question");
+    const questions = await QuestionRepo.find({ where: { questionId: questionId } });
+    res.json(questions);
+};
 
 const saveQuestion = async (req, res) => {
     const QuestionRepo = dataSource.getRepository("Forum-question");
@@ -47,5 +53,6 @@ module.exports = {
     getAllQuestions,
     saveQuestion,
     deleteQuestion,
-    getQuestionsByUserId
+    getQuestionsByUserId,
+    getQuestionsByQuestionId
 }

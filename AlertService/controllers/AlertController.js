@@ -1,5 +1,29 @@
+const e = require("cors");
 const dataSource = require("../config/config");
 const alertRepo = dataSource.getRepository("Alert");
+const admin = require('firebase-admin');
+require('dotenv').config();
+
+try{
+    admin.initializeApp({credential: admin.credential.cert({
+        type: process.env.TYPE,
+        project_id: process.env.PROJECT_ID,
+        private_key_id: process.env.PRIVATE_KEY_ID,
+        private_key: process.env.PRIVATE_KEY,
+        client_email: process.env.CLIENT_EMAIL,
+        client_id: process.env.CLIENT_ID,
+        auth_uri: process.env.AUTH_URI,
+        token_uri: process.env.TOKEN_URI,
+        auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
+        client_x509_cert_url: process.env.CLIENT_X509_CERT_URL
+    })});
+}
+catch (error) {
+    console.log('Firebase admin initialization error', error);
+}
+
+
+
 
 const getAllRunningAlerts = async () => {
     try {
@@ -155,7 +179,6 @@ const deleteAlert = async (req, res) => {
 
 
 
-
 const saveDeviceToken = async (req, res) => {
     try {        
         await dataSource.getRepository("DeviceToken").save(req.body);
@@ -169,11 +192,72 @@ const saveDeviceToken = async (req, res) => {
 }
 
 
+
+const sendNotification = async (req, res) => {
+    try {
+        let token = req.body.token;
+
+        if(res){
+            if(!req.body.userId){
+                return res.status(400).json({message: 'userId not found'});
+            } else{
+                const user = await dataSource
+                    .getRepository("DeviceToken")
+                    .findOne({where: {userId: req.body.userId} });
+
+                token = !user ? null : user.deviceToken;
+            }  
+        }
+
+        if(!token){
+            if (!res) {
+                throw new Error('Device Token not found');
+            } else {
+                return res.status(400).json({message: 'Device Token not found'});
+            }
+        }
+
+
+
+        await admin.messaging().send({
+            token: token,
+            notification: {
+                title: req.body.title || 'TradeX',
+                body: req.body.body,
+            },
+            webpush: {
+                notification: {
+                    icon: 'https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/TradeX-mini-logo.png'
+                },
+                fcmOptions: {
+                    link: req.body.onClick || 'http://localhost:3000/'
+                },
+            }
+        });
+
+
+        if (res){
+            res.status(200).json({message: 'Notification sent successfully'});
+        }
+    }
+
+    catch (error) {
+        if (!res) {
+            throw error;
+        } else {
+            console.log("Error sending notification:", error);
+            res.status(500).json({message: 'Error sending Notification'});
+        }
+    }
+}
+
+
 module.exports = {
     getAllRunningAlerts,
     getAlerts,
     addAlert,
     editAlert,
     deleteAlert,
-    saveDeviceToken
+    saveDeviceToken,
+    sendNotification
 };
