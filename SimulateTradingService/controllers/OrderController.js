@@ -14,11 +14,23 @@ const getAllOrders = async (req, res) => {
 const getAllOrdersByType = async (type, orderStatus) => {
     try {
         const OrderRepo = dataSource.getRepository("Order");
-        const orders = await OrderRepo.find({ where: { type: type, orderStatus: orderStatus } });
+        const orders = await OrderRepo.find({ where: { category: type, orderStatus: orderStatus } });
         return orders;
     } catch (error) {
         console.error(`Error fetching ${type} orders with status ${orderStatus}:`, error);
         throw error;
+    }
+};
+
+const getAllOrdersByCato = async (req,res) => {
+    try {
+        const type = req.params.type;
+        const OrderRepo = dataSource.getRepository("Order");
+        const orders=await OrderRepo.find({where: {type: type}});
+        res.json(orders);
+    } catch (error) {
+        console.error(`Error fetching orders:`, error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -27,7 +39,7 @@ const getAllLimitOrdersByCoin = async (req, res) => {
         const coin = req.params.coin;
         const userId = req.params.userId;
         const OrderRepo = dataSource.getRepository("Order");
-        const orders=await OrderRepo.find({where: {coin: coin, userId: userId, type: 'Limit', orderStatus: 'Pending'}});
+        const orders=await OrderRepo.find({where: {coin: coin, userId: userId, category: 'Limit', orderStatus: 'Pending'}});
         res.json(orders);
     } catch (error) {
         console.error(`Error fetching orders:`, error);
@@ -101,5 +113,6 @@ module.exports = {
     deleteOrder,
     getAllOrdersByType,
     updateOrderStatus,
-    getAllLimitOrdersByCoin
+    getAllLimitOrdersByCoin,
+    getAllOrdersByCato
 };

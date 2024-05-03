@@ -42,7 +42,7 @@ const startRealtimeMonitoring = async () => {
 const checkOrders = () => {
     try {
         orders.forEach(async (order) => {
-            if (marketPrice[order.coin] !== undefined && order.type === 'Limit') {
+            if (marketPrice[order.coin] !== undefined && order.category === 'Limit') {
                 if (order.price <= marketPrice[order.coin]) {
                     console.log('Order matched:', order);
 
