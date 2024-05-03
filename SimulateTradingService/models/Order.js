@@ -15,6 +15,9 @@ module.exports = new EntitySchema({
         type: {
             type: "varchar",
         },
+        category: {
+            type: "varchar",
+        },
         date: {
             type: "varchar",
             nullable: true
