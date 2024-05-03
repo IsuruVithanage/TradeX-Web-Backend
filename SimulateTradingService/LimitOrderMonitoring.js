@@ -1,11 +1,11 @@
 const WebSocket = require('ws');
 const axios = require('axios');
-const { getAllOrdersByType } = require('./controllers/OrderController');
-const { updateOrderStatus } = require('./controllers/OrderController');
+const { getAllOrdersByType, updateOrderStatus } = require('./controllers/OrderController');
 
 let coinList = [];
 let marketPrice = {};
 let orders = [];
+let wss;
 
 const startRealtimeMonitoring = async () => {
     try {
@@ -16,21 +16,23 @@ const startRealtimeMonitoring = async () => {
         coinList = JSON.parse(response.data.coinsList);
         //console.log(coinList);
 
+        wss = new WebSocket.Server({ port: 8080 });
+
+        wss.on('connection', (ws) => {
+            console.log('WebSocket connection established with client');
+        });
+
+
         setInterval( async() => {
             orders = await getAllOrdersByType('Limit','Pending');
-            //console.log(orders);
 
-            /*if(ws.readyState === 3 && orders.length > 0){
-                await connectWebSocket();
-            }
-*/
-        }, 5000);
+        }, 3000);
 
         await connectWebSocket();
 
         setInterval(() => {
             checkOrders();
-            console.log(marketPrice);
+            //console.log(marketPrice);
         }, 1000);
     } catch (error) {
         console.log('Realtime monitoring error:', error);
@@ -43,8 +45,36 @@ const checkOrders = () => {
             if (marketPrice[order.coin] !== undefined && order.type === 'Limit') {
                 if (order.price <= marketPrice[order.coin]) {
                     console.log('Order matched:', order);
+
+                    const requestBody = {
+                        userId: 1,
+                        title: 'TradeX',
+                        body: `Your order for ${order.coin} has been completed at ${marketPrice[order.coin]}.`,
+                        onClick: 'http://localhost:3000/simulate'
+                    };
+
                     await updateOrderStatus(order.orderId, 'Completed');
                     console.log(`Order ${order.orderId} status updated to 'Completed'`);
+
+                    fetch('http://localhost:8002/alert/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Failed to send alert');
+                            }
+                            console.log('Alert sent successfully');
+                            wss.clients.forEach((client) => {
+                                client.send(JSON.stringify({ type: 'order_completed', order }));
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error sending alert:', error);
+                        });
                 }
             }
         });
@@ -52,6 +82,7 @@ const checkOrders = () => {
         console.log('Check orders error:', error);
     }
 };
+
 
 const connectWebSocket = () => {
     return new Promise((resolve, reject) => {
