@@ -10,7 +10,7 @@ router.put("/", AssetController.transferAsset);                 // transfer asse
 
 router.put("/hold", AssetController.holdAsset);                 // hold a asset's balance - trading platform
 
-router.post("/:actionType", AssetController.addAsset);          // add after buy or transfer from external wallet
+router.post("/trade", AssetController.executeTrade);          // add after buy or transfer from external wallet
 
 router.post("/deduct/:source", AssetController.deductAsset);    // deduct after sell - trading platform
 
