@@ -140,16 +140,16 @@ const getBalance = async (req, res) => {
 
 
         if (!assets) {
-            return res.status(404).json({message: 'Asset not found'}); 
+            return !res? [] : res.status(404).json({message: 'Asset not found'}); 
         } 
         else {
-            res.status(200).json(
-                assets.map(asset => ({
-                    symbol: asset.symbol,
-                    balance: asset.tradingBalance,
-                    avgPurchasePrice: asset.AvgPurchasePrice
-                }))
-            );
+            const data = assets.map(asset => ({
+                symbol: asset.symbol,
+                balance: asset.tradingBalance,
+                avgPurchasePrice: asset.AvgPurchasePrice
+            }))
+
+            return !res? data : res.status(200).json(data);
         }
     } 
     catch (error) {
@@ -293,7 +293,7 @@ const executeTrade = async (req, res) => {
         await assetService.saveAsset(usdAsset);
 
         res.status(200).json(
-            await assetService.getAssets(req.body.userId, `${req.body.coin},USD`)
+            await getBalance({params:{userId: req.body.userId, coin: `${req.body.coin},USD`}}, null)
         );  
     } 
     
