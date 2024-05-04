@@ -1,9 +1,8 @@
 const getPortfolioValueData = require("../services/PortfolioValueService").getPortfolioValueData;
 const updateTransactionHistory = require("./TransactionHistoryController").updateTransactionHistory;
-const e = require("express");
 const assetService = require("../services/AssetService");
+const walletAddress = require("../services/WalletAddressService");
 const axios = require("axios");
-
 
 
 const getPortfolioData = async (req, res) => {
@@ -114,10 +113,13 @@ const getPortfolioData = async (req, res) => {
             usdBalance: usdBalance,
             portfolioValue: portfolioValue,
             assets: updatedAssets,
-            ...(wallet === 'overview' ? { 
+            ...(wallet === 'overview' ? 
+            { 
                 percentages: percentages, 
                 historyData: await getPortfolioValueData(userId) 
-            } : {})
+            } : {
+                walletAddress: await walletAddress.getWalletAddress(userId)
+            })
         }); 
     }
     catch (error) {
@@ -306,68 +308,84 @@ const executeTrade = async (req, res) => {
 
 
 
+const allocateUSD = async (req, res) => {
+    try {
+        if( !req.body.userId || !req.body.quantity || req.body.quantity <= 0){
+            return res.status(400).json({message: 'Invalid Request Body'});
+        }
 
-const AddfromEx = async (req, res) => {
+        await walletAddress.generateWalletAddress(req, null);
+
+        await assetService.saveAsset({
+            userId: req.body.userId,
+            symbol: 'USD',
+            AvgPurchasePrice: 1,
+            fundingBalance: req.body.quantity
+        });
+
+        res.status(200).json({ message: "USD allocated successfully"});
+    }
+
+    catch (error) {
+        console.log("\nError allocating USD", error);
+        res.status(500).json({message: error.message});
+    }
+}
+
+
+
+
+
+const receiveFromEx = async (req, res) => {
     try {
         if( 
-            !req.body.userId || 
+            !req.body.receivingWallet || 
+            !req.body.sendingWallet || 
             !req.body.coin || 
-            !req.body.quantity || 
-            !req.body.price ||
-            !req.body.category ||
+            !req.body.quantity ||
+            req.body.quantity < 0 ||
+            !req.body.AvgPurchasePrice ||
             !req.body.type 
-        ){  return res.status(400).json({ message:"incomplete request body"}); }
+        ){  return res.status(400).json({ message:"invalid request body"}); }
 
-        if(req.params.actionType !== 'add' && req.params.actionType !== 'transfer'){
-            return res.status(400).json({message: 'Invalid API endpoint'});
-        }
+        req.body.AvgPurchasePrice = (req.body.coin === 'USD') ? 1 : req.body.AvgPurchasePrice;
 
-        if(req.body.quantity <= 0 || req.body.price <= 0){
-            return res.status(400).json({ message:"invalid quantity or purchasePrice" });
-        }
+        const userId = await walletAddress.getUserId(req.body.receivingWallet);
 
-        const additionSource = (req.params.actionType === 'add') ? 'tradingBalance' : 'fundingBalance' ;
-        req.body.purchasePrice = (req.body.coin === 'USD') ? 1 : req.body.purchasePrice;
+        if(!userId){ return res.status(400).json({message: 'Invalid receiving wallet'}); }
 
-        let assetToUpdate = ( await assetService.getAssets(req.body.userId, req.body.coin))[0];
+        let assetToUpdate = ( await assetService.getAssets(userId, req.body.coin))[0];
 
         if (!assetToUpdate){
             assetToUpdate = {
-                userId: req.body.userId,
+                userId: userId,
                 symbol: req.body.coin,
-                AvgPurchasePrice: req.body.purchasePrice
+                fundingBalance: req.body.quantity,
+                AvgPurchasePrice: req.body.AvgPurchasePrice
             }
-            assetToUpdate[additionSource] = req.body.quantity;
         }
 
         else{
             const oldTotalBalance = ( assetToUpdate.tradingBalance + assetToUpdate.holdingBalance + assetToUpdate.fundingBalance );
             const newTotalBalance = ( oldTotalBalance + req.body.quantity );
-            const newPurchasePrice = ( assetToUpdate.AvgPurchasePrice * oldTotalBalance ) + ( req.body.purchasePrice * req.body.quantity);
+            const newPurchasePrice = ( assetToUpdate.AvgPurchasePrice * oldTotalBalance ) + ( req.body.AvgPurchasePrice * req.body.quantity);
             const newAvgPurchasePrice = ( newPurchasePrice / newTotalBalance );
 
             assetToUpdate.AvgPurchasePrice = newAvgPurchasePrice;
-            assetToUpdate[additionSource] += req.body.quantity;
+            assetToUpdate.fundingBalance += req.body.quantity;
         }
 
         await assetService.saveAsset(assetToUpdate);
 
-        if(req.params.actionType === 'transfer'){
-            await updateTransactionHistory({
-                userId: req.body.userId,
-                coin: req.body.coin,
-                quantity: req.body.quantity,
-                sendingWallet: 'ExternalWallet',
-                receivingWallet: 'fundingWallet',
-            });
-            res.status(200).json({message: "Asset Updated"}); 
-        }
+        await updateTransactionHistory({
+            userId: userId,
+            coin: req.body.coin,
+            quantity: req.body.quantity,
+            sendingWallet: req.body.sendingWallet,
+            receivingWallet: 'fundingWallet',
+        });
         
-        else{
-            res.status(200).json(
-                await assetService.getAssets(req.body.userId, `${req.body.coin},USD`)
-            )
-        }
+        res.status(200).json({message: "Asset Updated"}); 
     } 
     
     catch (error) {
@@ -514,6 +532,8 @@ module.exports = {
     getBalance,
     holdAsset,
     executeTrade,
+    allocateUSD,
+    receiveFromEx,
     deductAsset,
     transferAsset
 };

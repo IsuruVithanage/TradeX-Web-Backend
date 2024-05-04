@@ -1,4 +1,3 @@
-const e = require("cors");
 const dataSource = require("../config/config");
 const alertRepo = dataSource.getRepository("Alert");
 const admin = require('firebase-admin');
@@ -221,9 +220,10 @@ const sendNotification = async (req, res) => {
 
         await admin.messaging().send({
             token: token,
-            notification: {
+            notification: {	
                 title: req.body.title || 'TradeX',
                 body: req.body.body,
+                
             },
             webpush: {
                 notification: {
