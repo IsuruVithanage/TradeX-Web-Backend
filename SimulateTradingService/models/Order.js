@@ -15,6 +15,9 @@ module.exports = new EntitySchema({
         type: {
             type: "varchar",
         },
+        category: {
+            type: "varchar",
+        },
         date: {
             type: "varchar",
             nullable: true
@@ -30,6 +33,9 @@ module.exports = new EntitySchema({
         },
         totalPrice: {
             type: "float",
+        },
+        orderStatus: {
+            type: "varchar",
         },
     },
 })
