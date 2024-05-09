@@ -16,7 +16,7 @@ const startRealtimeMonitoring = async () => {
         coinList = JSON.parse(response.data.coinsList);
         //console.log(coinList);
 
-        wss = new WebSocket.Server({ port: 8080 });
+        wss = new WebSocket.Server({ port: 8081 });
 
         wss.on('connection', (ws) => {
             console.log('WebSocket connection established with client');
