@@ -10,10 +10,13 @@ router.put("/", AssetController.transferAsset);                 // transfer asse
 
 router.put("/hold", AssetController.holdAsset);                 // hold a asset's balance - trading platform
 
-router.post("/trade", AssetController.executeTrade);          // add after buy or transfer from external wallet
+router.post("/transfer", AssetController.receiveFromEx);        // add after a transaction from external wallet
+
+router.post("/trade", AssetController.executeTrade);            // change balances after a trade - trading platform
 
 router.post("/deduct/:source", AssetController.deductAsset);    // deduct after sell - trading platform
 
+router.post("/allocate", AssetController.allocateUSD);          // allocate USD to a user - Quiz
 
 
 module.exports = router

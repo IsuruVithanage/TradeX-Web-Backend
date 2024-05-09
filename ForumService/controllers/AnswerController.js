@@ -8,9 +8,25 @@ const saveAnswer = async (req, res) => {
     res.json(Answersave);
 };
 
+const getAnswersByQuestionId = async (req, res) => {
+    const questionId = req.params.questionId;
+    const AnswerRepo = dataSource.getRepository("Forum-answers");
+    const answers = await AnswerRepo.find({ where: { questionId: questionId } });
+    res.json(answers);
+};
+
+const getAnswersByUserId = async (req, res) => {
+    const userId = req.params.userId;
+    const AnswerRepo = dataSource.getRepository("Forum-answers");
+    const answers = await AnswerRepo.find({ where: { userId: userId } });
+    res.json(answers);
+};
+
 // Other controller functions for answers (if needed)
 
 module.exports = {
     saveAnswer,
+    getAnswersByQuestionId,
+    getAnswersByUserId
     // Other exported functions for answers
 };

@@ -120,10 +120,11 @@ const transferBalance = async (req, res) => {
 
         // Transfer asset
         axios.post("http://localhost:8011/portfolio/asset/transfer", {
-            userId: assetToTransfer.userId,
+            receivingWallet: req.body.receivingWallet,
+            sendingWallet: req.body.sendingWallet,
             coin: assetToTransfer.coin,
             quantity: req.body.quantity,
-            purchasePrice: assetToTransfer.AvgPurchasePrice,
+            AvgPurchasePrice: assetToTransfer.AvgPurchasePrice,
         }).then(async() => {
             assetToTransfer.balance -= req.body.quantity;
             await walletRepo.save(assetToTransfer)
