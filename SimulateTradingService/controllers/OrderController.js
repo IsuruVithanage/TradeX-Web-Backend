@@ -83,6 +83,29 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }
 };
 
+const updateOrderTime = async (orderId, time) => {
+    try {
+        const OrderRepo = dataSource.getRepository("Order");
+        const order= await OrderRepo.findOne({
+            where: {
+                orderId: orderId,
+            },
+        });
+
+        if (!order) {
+            console.error(`Order with ID ${orderId} not found.`);
+            return;
+        }
+
+        order.time = time;
+        await OrderRepo.save(order);
+        console.log(`Order ${orderId} time updated to '${time}'`);
+    } catch (error) {
+        console.error(`Error updating order status for order ${orderId}:`, error);
+        throw error;
+    }
+};
+
 
 const deleteOrder = async (req, res) => {
     const orderRepo = dataSource.getRepository("Order");
@@ -114,5 +137,6 @@ module.exports = {
     getAllOrdersByType,
     updateOrderStatus,
     getAllLimitOrdersByCoin,
-    getAllOrdersByCato
+    getAllOrdersByCato,
+    updateOrderTime
 };
