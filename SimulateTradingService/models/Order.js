@@ -34,6 +34,9 @@ module.exports = new EntitySchema({
         totalPrice: {
             type: "float",
         },
+        time: {
+            type: "bigint",
+        },
         orderStatus: {
             type: "varchar",
         },
