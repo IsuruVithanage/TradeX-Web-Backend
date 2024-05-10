@@ -4,12 +4,14 @@ const app = express();
 const dataSource = require("./config/config");
 const quizRouter = require("./routes/QuizRoutes");
 const orderRouter = require("./routes/OrderRoutes");
+const suggestionRouter = require("./routes/SuggetionRoutes");
 const startRealtimeMonitoring = require("./LimitOrderMonitoring");
 
 app.use(express.json());
 app.use(cors());
 app.use("/quiz",quizRouter);
 app.use("/order",orderRouter);
+app.use("/suggestion",suggestionRouter);
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
