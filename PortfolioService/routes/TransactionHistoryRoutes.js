@@ -5,5 +5,7 @@ const router = express.Router();
 
 router.get("/", TransactionHistoryController.getTransactionHistory);
 
+router.get("/trading", TransactionHistoryController.getTradingHistory);
+
 
 module.exports = router

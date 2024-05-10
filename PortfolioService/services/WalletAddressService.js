@@ -4,17 +4,17 @@ const walletAddressRepo = dataSource.getRepository("WalletAddress");
 
 const generateWalletAddress = async (req, res) => {
     try{
-        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        const { userName } = req.body;
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const iv = CryptoJS.lib.WordArray.random(16);
-        const secretKey = "tradeXUser" + req.body.userId;
-        let randomWord = "";
+        const secretKey = "portfolioUser@TradeX";
+        let margin = '';
 
-        for (let i = 0; i < 20; i++) {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            randomWord += characters.charAt(randomIndex);
+        for(let i=0; i < 25 - userName.length; i++){
+            margin += (i === 0) ? ':' : characters.charAt(Math.floor(Math.random() * characters.length));
         }
 
-        const walletAddress = CryptoJS.AES.encrypt(randomWord, secretKey, { iv: iv }).toString();
+        const walletAddress = CryptoJS.AES.encrypt(userName + margin, secretKey, { iv: iv }).toString();
 
         await walletAddressRepo.save({ userId: req.body.userId, walletAddress });
 
