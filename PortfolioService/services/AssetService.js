@@ -33,6 +33,10 @@ const getAssets = async (userId, coins) => {
 
 const getRealtimeTotalValues = async () => {
     try{
+        const uniqueUsers = [];
+        const uniqueCoins = [];
+        const groupedAssets = {};
+
         const allAssets =  await assetRepo
             .createQueryBuilder("asset")
             .select(["asset.userId", "asset.symbol"])
@@ -42,12 +46,26 @@ const getRealtimeTotalValues = async () => {
             .getRawMany();
 
 
-        const coins = [...new Set(allAssets.filter(asset => asset.asset_symbol !== 'USD').map(asset => asset.asset_symbol + "USDT"))];
-        const users = [...new Set(allAssets.map(asset => asset.asset_userId))];
+        allAssets.forEach(asset => {
+            const { asset_userId: userId, asset_symbol: symbol, totalValue } = asset;
+
+            if (!uniqueUsers.includes(userId)) {
+                uniqueUsers.push(userId);
+                groupedAssets[userId] = [];
+            }
+
+            if (symbol !== 'USD' && !uniqueCoins.includes(symbol + 'USDT')) {
+                uniqueCoins.push(symbol + 'USDT');
+            }
+
+            groupedAssets[userId].push({ symbol, totalValue });
+
+        });
 
 
         const marketPrices = await axios
-            .get('https://api.binance.com/api/v3/ticker/price?symbols=' + "[\"" + coins.join('\",\"') + "\"]")
+            .get('https://api.binance.com/api/v3/ticker/price?symbols=' + 
+             encodeURIComponent(JSON.stringify(uniqueCoins)))
             .then((res) => res.data)
             .catch((error) => {
                 console.log("\nError getting market prices:", error.message);
@@ -55,21 +73,17 @@ const getRealtimeTotalValues = async () => {
             });
 
 
-        const groupedValues = users.map(user => {
-            let value = 0;
+        const groupedValues = Object.keys(groupedAssets).map(userId => {
+            const value = groupedAssets[userId].reduce((acc, asset) => {
+                const marketPrice = marketPrices.find(data => data.symbol === asset.symbol + 'USDT');
+                const price = !marketPrice ? 1 : parseFloat(marketPrice.price);
+                return acc + asset.totalValue * price;
+            }, 0);
 
-            allAssets.filter(asset => asset.asset_userId === user).map(asset => {
-                const marketPrice = marketPrices.find(data => data.symbol === asset.asset_symbol + 'USDT');
-                asset.asset_symbol === 'USD'    ?
-                value += asset.totalValue       : 
-                value += asset.totalValue * ((marketPrice) ? parseFloat(marketPrice.price): 1);
-
-            });
-
-            return { userId: user, value: value };
+            return { userId: Number(userId), value: value };
         });
 
-            return groupedValues;
+        return groupedValues;  
     }
     
     catch (error) {
@@ -95,32 +109,26 @@ const getAssetsWithMarketPrice = async (userId, coins) => {
             return assets;
         }
 
+
         await axios
         .get(
             'https://api.binance.com/api/v3/ticker/price?symbols=' + 
-            "[\"" + assets
-            .filter(asset => asset.symbol !== 'USD')
-            .map(asset => `${asset.symbol}USDT`)
-            .join('\",\"') + "\"]"
+            encodeURIComponent(JSON.stringify(assets
+                .filter(asset => asset.symbol !== 'USD')
+                .map(asset => asset.symbol + 'USDT')
+            ))
         )
 
         .then((res) => {
             assets.map(asset => {
                 const marketPrice = res.data.find(data => data.symbol === asset.symbol + 'USDT');
-                asset.marketPrice = (marketPrice) ? parseFloat(marketPrice.price): 1;
+                asset.marketPrice = (!marketPrice) ? 1 : parseFloat(marketPrice.price);
             });
         })
 
         .catch((error) => {
             console.log("\nError getting market prices:", error.message);
-
-            assets.map(asset => {
-                if (asset.symbol !== 'USD') {
-                    asset.marketPrice = 0;
-                }else{
-                    asset.marketPrice = 1;
-                }
-            });
+            assets.map(asset => { asset.marketPrice = (asset.symbol !== 'USD') ? 0 : 1; });
         });
 
         return assets;

@@ -9,6 +9,7 @@ const columns = {
     recordNo: {
         primary: true,
         type: "int",
+        default: 1,
         nullable: false,
     },
     time: {
