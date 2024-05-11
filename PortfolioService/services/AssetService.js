@@ -1,6 +1,6 @@
-const axios = require("axios");
 const dataSource = require("../config/config");
 const assetRepo = dataSource.getRepository("Asset");
+const { getMarketPrices } = require("./MarketPrices");
 
 
 const getAssets = async (userId, coins) => {
@@ -33,10 +33,10 @@ const getAssets = async (userId, coins) => {
 
 const getRealtimeTotalValues = async () => {
     try{
-        const uniqueUsers = [];
-        const uniqueCoins = [];
-        const groupedAssets = {};
+        const marketPrices = getMarketPrices();
+        const groupedValues = {};
 
+        
         const allAssets =  await assetRepo
             .createQueryBuilder("asset")
             .select(["asset.userId", "asset.symbol"])
@@ -46,44 +46,21 @@ const getRealtimeTotalValues = async () => {
             .getRawMany();
 
 
-        allAssets.forEach(asset => {
-            const { asset_userId: userId, asset_symbol: symbol, totalValue } = asset;
+        while(allAssets.length > 0) {
+            const asset = allAssets.pop();
+            const marketPrice = marketPrices[asset.asset_symbol] || 1;
+            const value = marketPrice * asset.totalValue;
+            const userId = asset.asset_userId;
 
-            if (!uniqueUsers.includes(userId)) {
-                uniqueUsers.push(userId);
-                groupedAssets[userId] = [];
+            groupedValues[userId] = !groupedValues[userId] ? value : groupedValues[userId] + value;
+        };
+
+
+        return(
+            Object.keys(groupedValues).map(userId => {
+                return { userId: Number(userId), value: groupedValues[userId] };
             }
-
-            if (symbol !== 'USD' && !uniqueCoins.includes(symbol + 'USDT')) {
-                uniqueCoins.push(symbol + 'USDT');
-            }
-
-            groupedAssets[userId].push({ symbol, totalValue });
-
-        });
-
-
-        const marketPrices = await axios
-            .get('https://api.binance.com/api/v3/ticker/price?symbols=' + 
-             encodeURIComponent(JSON.stringify(uniqueCoins)))
-            .then((res) => res.data)
-            .catch((error) => {
-                console.log("\nError getting market prices:", error.message);
-                return [];
-            });
-
-
-        const groupedValues = Object.keys(groupedAssets).map(userId => {
-            const value = groupedAssets[userId].reduce((acc, asset) => {
-                const marketPrice = marketPrices.find(data => data.symbol === asset.symbol + 'USDT');
-                const price = !marketPrice ? 1 : parseFloat(marketPrice.price);
-                return acc + asset.totalValue * price;
-            }, 0);
-
-            return { userId: Number(userId), value: value };
-        });
-
-        return groupedValues;  
+        ));
     }
     
     catch (error) {
@@ -99,6 +76,7 @@ const getRealtimeTotalValues = async () => {
 const getAssetsWithMarketPrice = async (userId, coins) => {
     try {
         const assets = await getAssets(userId, coins);
+        const marketPrices = getMarketPrices();
       
         if (assets.length === 0){
             return [];
@@ -109,26 +87,9 @@ const getAssetsWithMarketPrice = async (userId, coins) => {
             return assets;
         }
 
-
-        await axios
-        .get(
-            'https://api.binance.com/api/v3/ticker/price?symbols=' + 
-            encodeURIComponent(JSON.stringify(assets
-                .filter(asset => asset.symbol !== 'USD')
-                .map(asset => asset.symbol + 'USDT')
-            ))
-        )
-
-        .then((res) => {
-            assets.map(asset => {
-                const marketPrice = res.data.find(data => data.symbol === asset.symbol + 'USDT');
-                asset.marketPrice = (!marketPrice) ? 1 : parseFloat(marketPrice.price);
-            });
-        })
-
-        .catch((error) => {
-            console.log("\nError getting market prices:", error.message);
-            assets.map(asset => { asset.marketPrice = (asset.symbol !== 'USD') ? 0 : 1; });
+        assets.map(asset => { 
+            const marketPrice = marketPrices[asset.symbol] || 0;
+            asset.marketPrice = (asset.symbol === 'USD') ? 1 : marketPrice; 
         });
 
         return assets;

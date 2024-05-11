@@ -1,19 +1,22 @@
 const express = require("express");
 const cors = require('cors');
+const createTriggerFunctions = require('./createTriggerFunctions');
+const runScheduledValueUpdaters = require('./scheduler');
+const { startGettingMarketPrices } = require('./services/MarketPrices');
+
 const app = express();
 const dataSource = require("./config/config");
-const createTriggerFunction = require('./Triggers/checkAndDeleteAssets');
-const update_portfolio_value_trigger = require('./Triggers/update_portfolio_value_trigger');
-const runScheduledValueUpdaters = require('./Scheduler/scheduler');
 const assetRouter = require("./routes/AssetRoutes");
 const PortfolioValueRouter = require("./routes/PortfolioValueRoutes");
 const TransactionHistoryRouter = require("./routes/TransactionHistoryRoutes");
+const WalletAddressRouter = require("./routes/WalletAddressRoutes");
 
 
 app.use(express.json());
 app.use(cors());
 app.use("/portfolio/asset", assetRouter);
 app.use("/portfolio/value", PortfolioValueRouter);
+app.use("/portfolio/address", WalletAddressRouter);
 app.use("/portfolio/history", TransactionHistoryRouter);
 
 app.use((req, res) => {
@@ -34,8 +37,8 @@ app.use((error, req, res) => {
 dataSource.initialize()
 
 .then(async() => {
-    await createTriggerFunction();
-    await update_portfolio_value_trigger();
+    await createTriggerFunctions();
+    await startGettingMarketPrices();
     runScheduledValueUpdaters();
 
     console.log("Database connected!!");

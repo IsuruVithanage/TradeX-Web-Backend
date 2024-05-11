@@ -4,7 +4,7 @@ const walletAddressRepo = dataSource.getRepository("WalletAddress");
 
 const generateWalletAddress = async (req, res) => {
     try{
-        const { userName } = req.body;
+        const { userName, userId } = req.body;
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const iv = CryptoJS.lib.WordArray.random(16);
         const secretKey = "portfolioUser@TradeX";
@@ -16,10 +16,16 @@ const generateWalletAddress = async (req, res) => {
 
         const walletAddress = CryptoJS.AES.encrypt(userName + margin, secretKey, { iv: iv }).toString();
 
-        await walletAddressRepo.save({ userId: req.body.userId, walletAddress });
+        const isExists = await walletAddressRepo.exists({ where: { walletAddress } });
 
-        return !res ? true : res.status(200).json({ walletAddress });
+        if (isExists) {
+            return await generateWalletAddress(req, res);
+        } else {
+            await walletAddressRepo.save({ userId, walletAddress });
+            return !res ? true : res.status(200).json({ walletAddress });
+        }
     }
+
     catch(error){
         console.log("error generating wallet Address", error);
         return !res ? false : res.status(500).json({ message: "error generating wallet Address" });
