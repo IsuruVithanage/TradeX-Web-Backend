@@ -243,7 +243,7 @@ const transferAsset = async (req, res) => {
 
 const receiveFromEx = async (req, res) => {
     try {
-        const { coin, quantity, AvgPurchasePrice, type, receivingWallet, sendingWallet } = req.body;
+        const { coin, quantity, AvgPurchasePrice, receivingWallet, sendingWallet } = req.body;
         if( 
             !receivingWallet || 
             !sendingWallet || 
@@ -251,7 +251,7 @@ const receiveFromEx = async (req, res) => {
             !quantity ||
             quantity <= 0 ||
             !AvgPurchasePrice ||
-            !type 
+            AvgPurchasePrice <= 0
         ){  return res.status(400).json({ message:"invalid request body"}); }
 
         AvgPurchasePrice = (coin === 'USD') ? 1 : AvgPurchasePrice;

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <title>Email Signature</title>
+    <style>
+        body {
+            font-family: inter;
+            background-color: #5e5e5e;
+            margin: 0;
+            padding: 0;
+        }
+
+        td {
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .container {
+            width: fit-content;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            width: 150px;
+            height: auto;
+            margin-top: 5px;
+        }
+
+        .link-container {
+            text-align: left;
+            margin-left: 10px;
+        }
+
+        .link {
+            color: #3c3c3c;
+            text-decoration: none;
+            margin-left: 15px;
+            font-style: italic;
+        }
+
+        .title {
+            margin-top: -5px;
+            margin-bottom: 10px;
+            color: #a3a7a5;
+            font-weight: 600;
+            font-style: italic;
+            font-size: 13px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div style="height: 500px;">
+            <p>This is message Body</p>
+            <p>Goog luck..!</p>
+        </div>
+        <table>
+            <tr>
+                <td>
+                    <img src="./Untitled.png" alt="TradeX Logo" class="logo" />
+                    <span class="title">TradeX Simulated Trading Platform</span>
+                </td>
+                <td style="border-left: 2px solid #21db9a">
+                    <div class="link-container">
+                        <p>
+                            <i class="fa-solid fa-envelope" style="color: #21db9a"></i>
+                            <a href="mailto:tradexsimulator@gmail.com"
+                                class="link">tradexsimulator@gmail.com</a>
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-globe" style="color: #21db9a"></i>
+                            <a href="http://localhost:3000" class="link">https://tradex.com</a>
+                        </p>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="border-bottom: 2px solid #21db9a; height: 20px"></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p style="color: #b8b8b8">TradeX Notification Service</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+</html>
