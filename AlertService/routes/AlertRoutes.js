@@ -1,5 +1,6 @@
 const express = require('express');
 const controller = require("../controllers/AlertController");
+const send = require("../send");
 const router = express.Router();
 
 router.get("/", controller.getAlerts);
@@ -13,5 +14,7 @@ router.delete("/", controller.deleteAlert);
 router.post("/deviceToken", controller.saveDeviceToken);
 
 router.post("/send", controller.sendNotification);
+
+router.post("/se", send);
 
 module.exports = router
