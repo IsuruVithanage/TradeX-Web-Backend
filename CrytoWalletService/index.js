@@ -7,6 +7,8 @@ const WalletHistoryRounter = require("./routes/WalletHistoryRoutes")
 const WalletLoginRounter = require("./routes/WalletLoginRoutes")
 const cookieParser = require("cookie-parser")
 const {validateToken} = require('./JWT')
+const SeedPhraseRoutes = require("./routes/SeedPhraseRoutes")
+
 
 
 
@@ -20,6 +22,8 @@ app.use(cors( {
 app.use("/wallet", validateToken, walletRouter);
 app.use("/history", validateToken, WalletHistoryRounter);
 app.use("/login",  WalletLoginRounter);
+app.use("/seedphrase",  SeedPhraseRoutes);
+
 
 
 
