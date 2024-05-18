@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.get("/", controller.getAllNews);
 
-router.post("/fav", controller.favToNews);
+router.post("/fav/:addToFav(true|false)", controller.favToNews);
 
 router.delete("/:userId/:title", controller.deleteNews);
 
