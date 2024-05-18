@@ -1,7 +1,7 @@
 const e = require('express');
 const express = require('express');
 const dataSource = require("../config/config");
-const newsRepo = dataSource.getRepository("News");
+const newsRepo = dataSource.getRepository("FavouriteNews");
 
 
 const getAllNews = async (req, res) => {
@@ -17,6 +17,7 @@ const favToNews = async (req, res) => {
         if(!userId || !title || !description || !url || !image ){
             return res.status(400).json({message:"inavalid request"});
         }
+        
 
         if(addToFav){
             const saved =  await  saveNews(req.body);
@@ -29,9 +30,15 @@ const favToNews = async (req, res) => {
             if(!newsToUnFav){
                 return res.status(404).json({message:"News not found"});
             }
+            
             else{
-                newsToUnFav.favourite =  newsToUnFav.favourite.filter(user => user !== userId);
-                await newsRepo.save(newsToUnFav);
+                if(newsToUnFav.favourite.length === 1 && newsToUnFav.favourite[0] === userId ){
+                    await newsRepo.delete({ url: url });
+                }
+                else{
+                    newsToUnFav.favourite =  newsToUnFav.favourite.filter(user => user !== userId);
+                    await newsRepo.save(newsToUnFav);
+                }
                 res.status(200).json({message:"unFavourite Successfully"})
 
             }
@@ -39,6 +46,7 @@ const favToNews = async (req, res) => {
         
    }
    catch (error){
+    console.log(error);
     return res.status(500).json({message: error.message});
    }
 }
