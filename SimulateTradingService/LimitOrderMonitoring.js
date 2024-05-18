@@ -58,7 +58,7 @@ const checkOrders = () => {
                     await updateOrderTime(order.orderId, time[order.coin]);
                     console.log(`Order ${order.orderId} status updated to 'Completed'`);
 
-                    fetch('http://localhost:8002/alert/send', {
+                    fetch('http://localhost:8002/alert/send/push', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
