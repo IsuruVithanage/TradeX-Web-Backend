@@ -12,6 +12,15 @@ app.use("/forum", forumRouter);
 // Mount the answer router at the "/answers" endpoint
 app.use("/answers", answerRouter); 
 
+//adding socket.io configuration
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const { Socket } = require("dgram");
+const io = new Server(server);
+
+
+
 // Handle 404 errors
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
@@ -27,12 +36,19 @@ app.use((error, req, res) => {
         message: error.message
     });
 });
+io.on('connection',(socket)=>{
+    console.log("a user connection",socket.id);
+})
+
+exports.io=io
+
+const PORT = 8010;
 
 dataSource.initialize()
     .then(() => {
         console.log("Database connected!!");
-        app.listen(8010, () => {
-            console.log("User Service running on Port 8010");
+        server.listen(PORT, () => {
+            console.log(`User Service running on Port ${PORT}`);
         });
     })
     .catch((err) => {
