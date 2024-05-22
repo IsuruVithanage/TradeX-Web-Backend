@@ -6,7 +6,7 @@ const dataSource = new typeorm.DataSource({
     host: "localhost",
     port: 5432,
     username: "postgres",
-    password: "isuruvithanage",
+    password: "database12345",
     database: "notification_service_db",
     synchronize: true,
     logging : ["error", "warn"],

@@ -1,9 +1,10 @@
 const WebSocket = require('ws');
 const axios = require('axios');
-const { getAllOrdersByType, updateOrderStatus } = require('./controllers/OrderController');
+const { getAllOrdersByType, updateOrderStatus, updateOrderTime } = require('./controllers/OrderController');
 
 let coinList = [];
 let marketPrice = {};
+let time = {};
 let orders = [];
 let wss;
 
@@ -16,7 +17,7 @@ const startRealtimeMonitoring = async () => {
         coinList = JSON.parse(response.data.coinsList);
         //console.log(coinList);
 
-        wss = new WebSocket.Server({ port: 8080 });
+        wss = new WebSocket.Server({ port: 8081 });
 
         wss.on('connection', (ws) => {
             console.log('WebSocket connection established with client');
@@ -32,7 +33,7 @@ const startRealtimeMonitoring = async () => {
 
         setInterval(() => {
             checkOrders();
-            //console.log(marketPrice);
+            //console.log(time);
         }, 1000);
     } catch (error) {
         console.log('Realtime monitoring error:', error);
@@ -54,9 +55,10 @@ const checkOrders = () => {
                     };
 
                     await updateOrderStatus(order.orderId, 'Completed');
+                    await updateOrderTime(order.orderId, time[order.coin]);
                     console.log(`Order ${order.orderId} status updated to 'Completed'`);
 
-                    fetch('http://localhost:8002/alert/send', {
+                    fetch('http://localhost:8002/alert/send/push', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -101,6 +103,7 @@ const connectWebSocket = () => {
                         const priceData = JSON.parse(data);
                         if (priceData && priceData.s && priceData.c) {
                             marketPrice[priceData.s.slice(0, -4)] = parseFloat(priceData.c);
+                            time[priceData.s.slice(0, -4)] = priceData.E;
                         }
                     } catch (error) {
                         console.error('Error parsing message:', error);

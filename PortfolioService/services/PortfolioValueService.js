@@ -1,7 +1,7 @@
 const dataSource = require("../config/config");
 
 
-const getPortfolioValueData = async (userId) => {
+const getPortfolioValueData = async (userId, timezoneOffset) => {
     try {
         const queryResult = await dataSource.query(
         `   SELECT 'Hourly' AS "type", "time", "value"
@@ -20,40 +20,36 @@ const getPortfolioValueData = async (userId) => {
             FROM "portfolioWeeklyValue"
             WHERE "userId" = $1
             
-            ORDER BY "type" ASC, "time" ASC; 
+            ORDER BY "type" DESC, "time" DESC; 
         `, 
         [userId]);
 
 
+        const hourlyData = [];
+        const dailyData = [];
+        const weeklyData = [];
 
 
-        const hourlyData = queryResult
-            .filter(data => data.type === 'Hourly')
-            .map(data => ({ ...data, time: data.time.getTime()/1000 - (new Date().getTimezoneOffset() * 60) }));
+        while(queryResult.length > 0){
+            let data = queryResult.pop();
+            data.time = data.time.getTime()/1000 - (timezoneOffset * 60);
 
-        // const dailyData = queryResult
-        //     .filter(data => data.type === 'Daily')
-        //     .map(data => ({ ...data, time: new Date(data.time).toLocaleDateString('en-CA') }));
-
-        // const weeklyData = queryResult
-        //     .filter(data => data.type === 'Weekly')
-        //     .map(data => ({ ...data, time: new Date(data.time).toLocaleDateString('en-CA') }));
-
-
-        const dailyData = queryResult
-            .filter(data => data.type === 'Daily')
-            .map(data => ({ ...data, time: data.time.getTime()/1000 - (new Date().getTimezoneOffset() * 60) }));
-
-        const weeklyData = queryResult
-            .filter(data => data.type === 'Weekly')
-            .map(data => ({ ...data, time: data.time.getTime()/1000 - (new Date().getTimezoneOffset() * 60) }));
-
+            if(data.type === 'Hourly'){
+                hourlyData.push(data);
+            }
+            else if(data.type === 'Daily'){
+                dailyData.push(data);
+            }
+            else if(data.type === 'Weekly'){
+                weeklyData.push(data);
+            }
+        }
 
             
         return {
-            Hourly: hourlyData,
-            Daily: dailyData,
-            Weekly: weeklyData
+            Hourly: { showTime: true,   data: hourlyData },
+            Daily:  { showTime: true,  data: dailyData  },
+            Weekly: { showTime: true,  data: weeklyData }
         };
 
     } catch (error) {
@@ -68,9 +64,13 @@ const getPortfolioValueData = async (userId) => {
 
 const getAvgValuesFrom = async (fromTable) => {
     try {
-        const avgValues = await dataSource.query(
-            `SELECT "userId", AVG("value") AS "value" FROM "portfolio${fromTable}Value" GROUP BY "userId";`
-        );
+        const avgValues = await dataSource
+            .getRepository(`Portfolio${fromTable}Value`)
+            .createQueryBuilder("p")
+            .select("p.userId", "userId")
+            .addSelect('AVG("value")', 'value')
+            .groupBy("p.userId")
+            .getRawMany();
 
         return avgValues;
     }
@@ -86,11 +86,13 @@ const getAvgValuesFrom = async (fromTable) => {
 
 const updateValueOf = async (dataToUpdate, intoTable) => {
     try {
-        const query= `INSERT INTO "portfolio${intoTable}Value" VALUES ` + dataToUpdate.map(data => {
-            return `(${data.userId}, 1, '${data.time}', ${data.value})`;
-        }).join(", ") + `;`;
-
-        await dataSource.query(query);
+        await dataSource
+            .getRepository(`Portfolio${intoTable}Value`)
+            .createQueryBuilder()
+            .insert()
+            .into(`portfolio${intoTable}Value`)
+            .values(dataToUpdate)
+            .execute();
     }
 
     catch (error) {
