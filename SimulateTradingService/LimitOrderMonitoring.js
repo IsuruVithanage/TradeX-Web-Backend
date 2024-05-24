@@ -104,7 +104,10 @@ const connectWebSocket = () => {
                         const priceData = JSON.parse(data);
                         if (priceData && priceData.s && priceData.c) {
                             marketPrice[priceData.s.slice(0, -4)] = parseFloat(priceData.c);
-                            time[priceData.s.slice(0, -4)] = priceData.E;
+
+                            const date = new Date(priceData.E);
+                            date.setSeconds(0, 0); // Set milliseconds to 0
+                            time[priceData.s.slice(0, -4)] = date.getTime();
                         }
                     } catch (error) {
                         console.error('Error parsing message:', error);
