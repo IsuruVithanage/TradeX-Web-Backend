@@ -44,6 +44,7 @@ const checkOrders = () => {
     try {
         orders.forEach(async (order) => {
             if (marketPrice[order.coin] !== undefined && order.category === 'Limit') {
+                console.log('Checking order:', order.price, marketPrice[order.coin]);
                 if (order.price <= marketPrice[order.coin]) {
                     console.log('Order matched:', order);
 
@@ -58,7 +59,7 @@ const checkOrders = () => {
                     await updateOrderTime(order.orderId, time[order.coin]);
                     console.log(`Order ${order.orderId} status updated to 'Completed'`);
 
-                    fetch('http://localhost:8002/alert/send', {
+                    fetch('http://localhost:8002/alert/send/push', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

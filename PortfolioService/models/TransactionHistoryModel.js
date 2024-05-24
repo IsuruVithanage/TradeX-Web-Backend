@@ -29,12 +29,12 @@ module.exports = new EntitySchema({
         sendingWallet: {
             type: "varchar",
             length: 25,
-            nullable: false,
+            nullable: true,
         },
         receivingWallet: {
             type: "varchar",
             length: 25,
-            nullable: false,
+            nullable: true,
         },
     },
 })
