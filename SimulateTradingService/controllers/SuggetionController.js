@@ -5,7 +5,8 @@ const genAI = new GoogleGenerativeAI('AIzaSyBepmoqxvpcfnhoCfcHmJnxNwhyRS964Gs');
 const model = genAI.getGenerativeModel({model: "gemini-pro"});
 const buyOrderSuggestion = async (req, res) => {
     try {
-        const {coinName, tradePrice, tradingData} = req.body;
+        console.log('Request Body:', req.body);
+        const {coinName, tradePrice, tradingData, quantity} = req.body;
 
         if (!coinName || !tradePrice || !tradingData) {
             return res.status(400).json({error: 'Bad Request: Missing required fields'});
@@ -13,18 +14,19 @@ const buyOrderSuggestion = async (req, res) => {
 
         const tradingDataString = JSON.stringify(tradingData);
 
-        const prompt = `Consider the scenario where you recently made a trade involving ${coinName}. You purchased 2 units of ${coinName} at a price of $${tradePrice}. Throughout this trade, the price of ${coinName} fluctuated as follows:
+        const prompt = `Consider the scenario where you recently made a trade involving ${coinName}. You purchased ${quantity} units of ${coinName} at a price of $${tradePrice}. Throughout this trade, the price of ${coinName} fluctuated as follows:
 ${tradingDataString}.
 Now, based on this trade, I'd like your suggestions on how to optimize future buy orders and some advice for improving trading strategies.
 Please format your response in JSON like this:
 {
   "coin": "Bitcoin",
   "bestPrice": "1000",
+  "time":"1716257160",
   "profitFromBestPrice": "100",
   "suggestions": "",
   "advices": ""
 }.
-Ensure all fields are represented as strings.`;
+Ensure all fields are represented as strings and the suggestions and the advices should be point form.`;
 
 
         console.log(prompt);
@@ -35,6 +37,7 @@ Ensure all fields are represented as strings.`;
         const suggestions = JSON.parse(response.text());
 
         if (suggestions.bestPrice !== null && suggestions.profitFromBestPrice !== null) {
+            console.log('Suggestions:', suggestions);
             res.json(suggestions);
         } else {
             await buyOrderSuggestion(req, res);
@@ -44,11 +47,6 @@ Ensure all fields are represented as strings.`;
         res.status(500).json({error: 'Internal Server Error'});
     }
 }
-
-module.exports = {
-    buyOrderSuggestion
-};
-
 
 module.exports = {
     buyOrderSuggestion
