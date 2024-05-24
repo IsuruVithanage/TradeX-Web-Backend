@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const axios = require('axios');
-const { getAllRunningAlerts, editAlert, sendNotification } = require('./controllers/AlertController');
+const { getAllRunningAlerts, editAlert, sendNotification} = require('./controllers/AlertController');
+
 
 let coinList = [];
 let marketPrice = {};
@@ -67,9 +68,6 @@ const updateStreams = () => {
                 if(newStreams.length > 0){
                     ws.send(JSON.stringify({ method: 'SUBSCRIBE', params: newStreams, id: 1 }));
                 }
-                else{
-                    ws.close();
-                }
             }
 
             prevStreams
@@ -90,24 +88,49 @@ const updateStreams = () => {
 const checkAlerts = () => {
     try{
         alerts.forEach((alert) => {
-            const {coin, condition, price, runningStatus} = alert;
+            const {deviceToken, userId, coin, condition, price, emailActiveStatus, runningStatus} = alert;
+            const currentPrice = marketPrice[coin];
 
-            if (marketPrice[coin] !== undefined && runningStatus) {
+            if (currentPrice !== undefined && runningStatus) {
                 if( 
-                    ( condition === 'Above' && marketPrice[coin] > price ) ||
-                    ( condition === 'Below' && marketPrice[coin] < price ) ||
-                    ( condition === 'Equals' && marketPrice[coin] === price )
-                ){ 
-                    const coinName = coinList[alert.coin].name;
+                    ( condition === 'Above' && currentPrice > price ) ||
+                    ( condition === 'Below' && currentPrice < price ) ||
+                    ( condition === 'Equals' && currentPrice === price )
+                ){  
+
+                    const coinName = coinList[coin].name;
+                    const type = emailActiveStatus ? 'both' : 'push';
+                    const localPrice = "$ " + currentPrice.toLocaleString();
                     alert.runningStatus = false;
+
                     editAlert({query: {alertId: alert.alertId}, body: {runningStatus: false}})
                     .then(async() => {
-                        sendNotification({ body: {
-                            token: alert.deviceToken,
-                            title: coinName,
-                            body: `Hello there! ${coinName} is now at ${marketPrice[alert.coin]}`,
-                            onClick: 'http://localhost:3000/alert'
-                        }})
+                        sendNotification({ 
+                            params: {type: type }, 
+                            body: {
+                                userId: userId,
+                                deviceToken: deviceToken,
+                                title: coinName + "  -  " + localPrice,
+                                body: "Hello there! " + coinName + " is now at " + localPrice,
+                                onClick: 'http://localhost:3000/alert',
+                                emailHeader: `
+                                    <img width="5%" height="5%" style="margin: auto 1% auto 0;"
+                                    src="${coinList[coin].img}" alt="${coinName}"/>
+                                    ${coinName} is now at ${localPrice}
+                                `,
+                                emailBody: `
+                                    <p style="margin-top: 7%;">Hello Trader,</p>
+                                    <p>
+                                        We wanted to inform you that <span  style="font-weight: bold;">${coinName} (${coin})</span>
+                                        has now reached a price of <span  style="font-weight: bold;">${localPrice}</span>. 
+                                        Stay updated on market prices and make your best decisions.
+                                    </p>
+                                    <p>Good luck and happy trading!</p><br>
+                                    <p style="margin: 0;">Best regards,</p>
+                                    <p style="margin-top: 0;">TradeX Team.</p>
+                                `,
+                            }
+                        })
                         .catch (() => {
                             editAlert({query: {alertId: alert.alertId}, body: {runningStatus: true}});
                             console.log('\x1b[31mNotification sending failed\x1b[0m for alertID:', alert.alertId);

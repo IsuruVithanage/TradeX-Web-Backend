@@ -1,8 +1,7 @@
 const getPortfolioValueData = require("../services/PortfolioValueService").getPortfolioValueData;
 const updateTransactionHistory = require("./TransactionHistoryController").updateTransactionHistory;
-const e = require("express");
 const assetService = require("../services/AssetService");
-const walletAddress = require("../services/WalletAddressService");
+const WalletAddressService = require("../services/WalletAddressService");
 const axios = require("axios");
 
 
@@ -54,7 +53,7 @@ const getPortfolioData = async (req, res) => {
                 portfolioValue += totalBalance;
             }
             else{
-                const assetValue = asset.marketPrice *  totalBalance;
+                const assetValue = (asset.marketPrice || 1) *  totalBalance;
                 portfolioValue += assetValue;
                 updatedAsset.value = assetValue;
                 updatedAsset.marketPrice = "$ " + asset.marketPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 10,});
@@ -67,7 +66,7 @@ const getPortfolioData = async (req, res) => {
                     updatedAsset.ROI = "- - -";
                     updatedAsset.RoiColor = '#FFFFFF';
                 } else {
-                    const currentMarketPrice = ( asset.marketPrice > 0 ) ? asset.marketPrice : asset.AvgPurchasePrice
+                    const currentMarketPrice = asset.marketPrice || asset.AvgPurchasePrice
                     const ROI = ( currentMarketPrice - asset.AvgPurchasePrice ) * ( 100 / asset.AvgPurchasePrice );
                     updatedAsset.ROI = `${ROI.toFixed(2)} %`;
                     updatedAsset.RoiColor = ( ROI > 0 ) ? '#21DB9A' : ( ROI < 0 ) ? '#FF0000' : '#FFFFFF';
@@ -85,7 +84,7 @@ const getPortfolioData = async (req, res) => {
             return updatedAsset;
         })
         .filter(asset => Object.keys(asset).length > 0)
-        .sort((a, b) => b.value - a.value);
+        .sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
 
 
         if(wallet !== 'overview'){
@@ -119,7 +118,7 @@ const getPortfolioData = async (req, res) => {
                 percentages: percentages, 
                 historyData: await getPortfolioValueData(userId, Number(req.query.timezoneOffset)) 
             } : {
-                walletAddress: await walletAddress.getWalletAddress(userId)
+                walletAddress: await WalletAddressService.getWalletAddress(userId)
             })
         }); 
     }
@@ -244,7 +243,7 @@ const transferAsset = async (req, res) => {
 
 const receiveFromEx = async (req, res) => {
     try {
-        const { coin, quantity, AvgPurchasePrice, type, receivingWallet, sendingWallet } = req.body;
+        const { coin, quantity, AvgPurchasePrice, receivingWallet, sendingWallet } = req.body;
         if( 
             !receivingWallet || 
             !sendingWallet || 
@@ -252,12 +251,12 @@ const receiveFromEx = async (req, res) => {
             !quantity ||
             quantity <= 0 ||
             !AvgPurchasePrice ||
-            !type 
+            AvgPurchasePrice <= 0
         ){  return res.status(400).json({ message:"invalid request body"}); }
 
         AvgPurchasePrice = (coin === 'USD') ? 1 : AvgPurchasePrice;
 
-        const userId = await walletAddress.getUserId(receivingWallet);
+        const userId = await WalletAddressService.getUserId(receivingWallet);
 
         if(!userId){ return res.status(400).json({message: 'Invalid Wallet Address'}); }
 
@@ -405,13 +404,14 @@ const executeTrade = async (req, res) => {
             quantity <= 0 ||
             price <= 0 ||
             coin === 'USD' ||
-            (category !== 'Market' && category !== 'Limit') ||
-            (type !== 'Buy' && type !== 'Sell')
+            (type !== 'Buy' && type !== 'Sell') ||
+            (category !== 'Market' && category !== 'Limit' && category !== 'ExecuteLimit')
         ){  return res.status(400).json({ message:"invalid request body"}); }
 
 
         let assetToUpdate = ( await assetService.getAssets(userId, coin))[0];
         let usdAsset = ( await assetService.getAssets(userId, 'USD'))[0];
+        const wallet = category === 'ExecuteLimit' ? 'holdingBalance' : 'tradingBalance';
         const totalValue = quantity * price;
 
 
@@ -421,11 +421,16 @@ const executeTrade = async (req, res) => {
 
         
         if(type === 'Buy'){
-            if(usdAsset.tradingBalance < totalValue){
+            if(usdAsset[wallet] < totalValue){
                 return res.status(400).json({message: 'Insufficient USD balance in trading wallet'});
             }
 
-            if(category === 'Market'){
+            if (category === 'Limit'){
+                usdAsset.tradingBalance -= totalValue;
+                usdAsset.holdingBalance += totalValue;
+            }
+
+            else {
                 if (!assetToUpdate){
                     assetToUpdate = {
                         userId: userId,
@@ -445,12 +450,7 @@ const executeTrade = async (req, res) => {
                     assetToUpdate.tradingBalance += quantity;
                 }
 
-                usdAsset.tradingBalance -= totalValue;
-            }
-
-            else{
-                usdAsset.tradingBalance -= totalValue;
-                usdAsset.holdingBalance += totalValue;
+                usdAsset[wallet] -= totalValue;
             }
         }
 
@@ -461,18 +461,18 @@ const executeTrade = async (req, res) => {
                 return res.status(404).json({message: 'Asset not found'});
             }
 
-            if(assetToUpdate.tradingBalance < quantity){
+            if(assetToUpdate[wallet] < quantity){
                 return res.status(400).json({message: 'Insufficient balance in trading wallet'});
             }
 
-            if(category === 'Market'){
+            if(category === 'Limit'){
                 assetToUpdate.tradingBalance -= quantity;
-                usdAsset.tradingBalance += totalValue;
+                assetToUpdate.holdingBalance += quantity;
             }
 
             else{
-                assetToUpdate.tradingBalance -= quantity;
-                assetToUpdate.holdingBalance += quantity;
+                assetToUpdate[wallet] -= quantity;
+                usdAsset.tradingBalance += totalValue;
             }         
         }
 
@@ -502,7 +502,7 @@ const allocateUSD = async (req, res) => {
             return res.status(400).json({message: 'Invalid Request Body'});
         }
 
-        await walletAddress.generateWalletAddress(req, null);
+        await WalletAddressService.generateWalletAddress(req, null)
 
         await assetService.saveAsset({
             userId: userId,

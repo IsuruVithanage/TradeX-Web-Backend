@@ -12,6 +12,6 @@ router.delete("/", controller.deleteAlert);
 
 router.post("/deviceToken", controller.saveDeviceToken);
 
-router.post("/send", controller.sendNotification);
+router.post("/send/:type(email|push|both)", controller.sendNotification);
 
 module.exports = router

@@ -20,37 +20,37 @@ const getPortfolioValueData = async (userId, timezoneOffset) => {
             FROM "portfolioWeeklyValue"
             WHERE "userId" = $1
             
-            ORDER BY "type" ASC, "time" ASC; 
+            ORDER BY "type" DESC, "time" DESC; 
         `, 
         [userId]);
 
-        const hourlyData = queryResult
-            .filter(data => data.type === 'Hourly')
-            .map(data => ({ ...data, time: data.time.getTime()/1000 - (timezoneOffset * 60) }));
 
-        // const dailyData = queryResult
-        //     .filter(data => data.type === 'Daily')
-        //     .map(data => ({ ...data, time: new Date(data.time).toLocaleDateString('en-CA') }));
-
-        // const weeklyData = queryResult
-        //     .filter(data => data.type === 'Weekly')
-        //     .map(data => ({ ...data, time: new Date(data.time).toLocaleDateString('en-CA') }));
+        const hourlyData = [];
+        const dailyData = [];
+        const weeklyData = [];
 
 
-        const dailyData = queryResult
-            .filter(data => data.type === 'Daily')
-            .map(data => ({ ...data, time: data.time.getTime()/1000 - (timezoneOffset * 60) }));
+        while(queryResult.length > 0){
+            let data = queryResult.pop();
+            data.time = data.time.getTime()/1000;
+            //data.time = data.time.getTime()/1000 - (timezoneOffset * 60);
 
-        const weeklyData = queryResult
-            .filter(data => data.type === 'Weekly')
-            .map(data => ({ ...data, time: data.time.getTime()/1000 - (timezoneOffset * 60) }));
-
+            if(data.type === 'Hourly'){
+                hourlyData.push(data);
+            }
+            else if(data.type === 'Daily'){
+                dailyData.push(data);
+            }
+            else if(data.type === 'Weekly'){
+                weeklyData.push(data);
+            }
+        }
 
             
         return {
-            Hourly: hourlyData,
-            Daily: dailyData,
-            Weekly: weeklyData
+            Hourly: { showTime: true,   data: hourlyData },
+            Daily:  { showTime: true,  data: dailyData  },
+            Weekly: { showTime: true,  data: weeklyData }
         };
 
     } catch (error) {

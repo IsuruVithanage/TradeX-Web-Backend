@@ -1,6 +1,15 @@
-const dataSource = require('../config/config');
+const dataSource = require('./config/config');
 
-const update_portfolio_value_trigger = async () => {
+
+const createTriggerFunctions = async () => {
+    await portfolioValueQueue();
+    await emptyAssetsDeleter();
+}
+
+
+
+
+const portfolioValueQueue = async () => {
 
     const sqlQuery = `
     CREATE OR REPLACE FUNCTION update_portfolio_value() RETURNS TRIGGER AS $$
@@ -57,4 +66,51 @@ const update_portfolio_value_trigger = async () => {
     }
 }
 
-module.exports = update_portfolio_value_trigger;
+
+
+
+const emptyAssetsDeleter = async () => {
+
+    const sqlQuery = `
+        CREATE OR REPLACE FUNCTION emptyAssetsDeleter()
+        RETURNS TRIGGER AS $$
+        DECLARE
+            total_balance FLOAT;
+        BEGIN
+            IF NEW.symbol = 'USD' THEN
+                RETURN NEW;
+            END IF;
+        
+        
+            SELECT "tradingBalance" + "holdingBalance" + "fundingBalance" INTO total_balance
+            FROM asset
+            WHERE "userId" = NEW."userId" AND "symbol" = NEW."symbol";
+        
+            IF total_balance <= 0 THEN
+                DELETE FROM asset WHERE "userId" = NEW."userId" AND "symbol" = NEW."symbol";
+            END IF;
+        
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        
+        CREATE OR REPLACE TRIGGER check_and_delete_asset_on_insert_trigger
+        AFTER INSERT ON asset
+        FOR EACH ROW
+        EXECUTE FUNCTION emptyAssetsDeleter();
+        
+        CREATE OR REPLACE TRIGGER check_and_delete_asset_on_update_trigger
+        AFTER UPDATE ON asset
+        FOR EACH ROW
+        EXECUTE FUNCTION emptyAssetsDeleter();`
+    ;
+
+    try {
+        await dataSource.query(sqlQuery);
+    } catch (error) {
+        console.error('\n\nError creating emptyAssetsDeleter trigger function:\n\n', error);
+    }
+}
+
+module.exports = createTriggerFunctions;

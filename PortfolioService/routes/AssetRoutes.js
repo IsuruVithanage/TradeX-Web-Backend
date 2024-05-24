@@ -1,7 +1,7 @@
 const express = require('express');
-const AssetController = require("../controllers/AssetController");
 const router = express.Router();
-const { getRealtimeTotalValues } = require('../services/AssetService');
+const AssetController = require("../controllers/AssetController");
+
 
 router.get("/:wallet", AssetController.getPortfolioData);       // get all portfolio data - portfolio
 
@@ -18,8 +18,6 @@ router.post("/trade", AssetController.executeTrade);            // change balanc
 router.post("/transfer", AssetController.receiveFromEx);        // add after a transaction - external wallet
 
 router.post("/allocate", AssetController.allocateUSD);          // allocate USD to a user - Quiz
-
-router.get("/test/test/test", getRealtimeTotalValues);
 
 
 module.exports = router

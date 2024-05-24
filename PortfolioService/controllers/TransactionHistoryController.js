@@ -78,20 +78,7 @@ const updateTransactionHistory = async (historyData) => {
 }
 
 
-const getTradingHistory = async (req, res) => {
-    try {        
-        const tradingHistoryData = require('../services/tradingHistory.json');
-        res.status(200).json(tradingHistoryData);
-    }
-    
-    catch (error) {
-        console.log("\nError fetching trading history:", error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
 module.exports = {
     getTransactionHistory,
-    updateTransactionHistory,
-    getTradingHistory
+    updateTransactionHistory
 };
