@@ -6,7 +6,7 @@ const model = genAI.getGenerativeModel({model: "gemini-pro"});
 const buyOrderSuggestion = async (req, res) => {
     try {
         console.log('Request Body:', req.body);
-        const {coinName, tradePrice, tradingData, quantity} = req.body;
+        const {coinName, tradePrice, tradingData, quantity,orderCategory} = req.body;
 
         if (!coinName || !tradePrice || !tradingData) {
             return res.status(400).json({error: 'Bad Request: Missing required fields'});
@@ -15,18 +15,19 @@ const buyOrderSuggestion = async (req, res) => {
         const tradingDataString = JSON.stringify(tradingData);
 
         const prompt = `Consider the scenario where you recently made a trade involving ${coinName}. You purchased ${quantity} units of ${coinName} at a price of $${tradePrice}. Throughout this trade, the price of ${coinName} fluctuated as follows:
-${tradingDataString}.
+${tradingDataString}. And consider the order type is a ${orderCategory} order.
 Now, based on this trade, I'd like your suggestions on how to optimize future buy orders and some advice for improving trading strategies.
+And also add some resources to learn more about mentioned suggestions.
 Please format your response in JSON like this:
 {
   "coin": "Bitcoin",
   "bestPrice": "1000",
   "time":"1716257160",
   "profitFromBestPrice": "100",
-  "suggestions": "",
-  "advices": ""
+  "suggestions": [""],
+  "resources": [""]
 }.
-Ensure all fields are represented as strings and the suggestions and the advices should be point form.`;
+Ensure all fields are represented as strings and the suggestions and make sure the bestPrice should be lower than the tradePrice.`;
 
 
         console.log(prompt);
