@@ -17,7 +17,7 @@ const buyOrderSuggestion = async (req, res) => {
         const prompt = `Consider the scenario where you recently made a trade involving ${coinName}. You purchased ${quantity} units of ${coinName} at a price of $${tradePrice}. Throughout this trade, the price of ${coinName} fluctuated as follows:
 ${tradingDataString}. And consider the order type is a ${orderCategory} order.
 Now, based on this trade, I'd like your suggestions on how to optimize future buy orders and some advice for improving trading strategies.
-And also add some resources to learn more about mentioned suggestions.
+And also add some resources(article links and youtube links) to learn more about mentioned suggestions.
 Please format your response in JSON like this:
 {
   "coin": "Bitcoin",
