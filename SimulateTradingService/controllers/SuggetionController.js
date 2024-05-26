@@ -6,7 +6,7 @@ const model = genAI.getGenerativeModel({model: "gemini-pro"});
 const buyOrderSuggestion = async (req, res) => {
     try {
         console.log('Request Body:', req.body);
-        const {coinName, tradePrice, tradingData, quantity,orderCategory} = req.body;
+        const {coinName, tradePrice, tradingData, quantity, orderCategory, boughtPrice, orderType} = req.body;
 
         if (!coinName || !tradePrice || !tradingData) {
             return res.status(400).json({error: 'Bad Request: Missing required fields'});
@@ -14,25 +14,45 @@ const buyOrderSuggestion = async (req, res) => {
 
         const tradingDataString = JSON.stringify(tradingData);
 
-        const prompt = `Consider the scenario where you recently made a trade involving ${coinName}. You purchased ${quantity} units of ${coinName} at a price of $${tradePrice}. Throughout this trade, the price of ${coinName} fluctuated as follows:
+        const promptBuy = `Consider the scenario where you recently made a trade involving ${coinName}. You purchased ${quantity} units of ${coinName} at a price of $${tradePrice}. Throughout this trade, the price of ${coinName} fluctuated as follows:
 ${tradingDataString}. And consider the order type is a ${orderCategory} order.
 Now, based on this trade, I'd like your suggestions on how to optimize future buy orders and some advice for improving trading strategies.
 And also add some resources(article links and youtube links) to learn more about mentioned suggestions.
 Please format your response in JSON like this:
 {
   "coin": "Bitcoin",
-  "bestPrice": "1000",
-  "time":"1716257160",
-  "profitFromBestPrice": "100",
+  "bestPrice": 1000,
+  "time":1716257160,
+  "profitFromBestPrice": 100,
   "suggestions": [""],
-  "resources": [""]
+  "resources": [
+        "https://www.coindesk.com/',
+        "https://www.investopedia.com/articles/basics/03/dollarcostaveraging.asp"
+    ]
 }.
-Ensure all fields are represented as strings and the suggestions and make sure the bestPrice should be lower than the tradePrice.`;
+Ensure the bestPrice should be lower than the tradePrice.`;
 
+        const promptSell = `Consider the scenario where you recently made a trade involving ${coinName}. You sold ${quantity} units of ${coinName} at a price of $${tradePrice}. You bought ${coinName} unit for $${boughtPrice}. Throughout this trade, the price of ${coinName} fluctuated as follows:
+${tradingDataString}. And consider the order type is a ${orderCategory} order.
+Now, based on this trade, I'd like your suggestions on how to optimize future buy orders and some advice for improving trading strategies.
+And also add some resources(article links and youtube links) to learn more about mentioned suggestions.
+Please format your response in JSON like this:
+{
+  "coin": "Bitcoin",
+  "bestPrice": 1000,
+  "time":1716257160,
+  "profitFromBestPrice": 100,
+  "suggestions": [""],
+  "resources": [
+        "https://www.coindesk.com/',
+        "https://www.investopedia.com/articles/basics/03/dollarcostaveraging.asp"
+    ]
+}.
+Ensure the bestPrice should be greater than the tradePrice. Make sure to calculate profit using boughtPrice`;
 
-        console.log(prompt);
+        console.log(orderType === "Buy" ? promptBuy : promptSell);
 
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(orderType === "Buy" ? promptBuy : promptSell);
         const response = await result.response;
         console.log('Response Text:', response.text());
         const suggestions = JSON.parse(response.text());
@@ -48,6 +68,7 @@ Ensure all fields are represented as strings and the suggestions and make sure t
         res.status(500).json({error: 'Internal Server Error'});
     }
 }
+
 
 module.exports = {
     buyOrderSuggestion
