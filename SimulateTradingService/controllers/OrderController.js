@@ -34,19 +34,22 @@ const getAllOrdersByCato = async (req,res) => {
     }
 };
 
-const getAllLimitOrdersByCoin = async (req, res) => {
+const getAllOrdersByCoinAndCategory = async (req, res) => {
     try {
         const coin = req.params.coin;
+        const category = req.params.category;
         const userId = req.params.userId;
+        console.log(coin,category, userId);
         const OrderRepo = dataSource.getRepository("Order");
-        const orders=await OrderRepo.find({where: {coin: coin, userId: userId, category: 'Limit', orderStatus: 'Pending'}});
+        const orders=await OrderRepo.find({where: {coin: coin, userId: userId, category: category, orderStatus: 'Pending'}});
         res.json(orders);
+        console.log('0000000000000000000')
+        console.log(orders);
     } catch (error) {
         console.error(`Error fetching orders:`, error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
-
 
 
 const saveOrder = async (req, res) => {
@@ -77,6 +80,29 @@ const updateOrderStatus = async (orderId, newStatus) => {
         order.orderStatus = newStatus;
         await OrderRepo.save(order);
         console.log(`Order ${orderId} status updated to '${newStatus}'`);
+    } catch (error) {
+        console.error(`Error updating order status for order ${orderId}:`, error);
+        throw error;
+    }
+};
+
+const updateOrderCategory = async (orderId, category) => {
+    try {
+        const OrderRepo = dataSource.getRepository("Order");
+        const order= await OrderRepo.findOne({
+            where: {
+                orderId: orderId,
+            },
+        });
+
+        if (!order) {
+            console.error(`Order with ID ${orderId} not found.`);
+            return;
+        }
+
+        order.category = category;
+        await OrderRepo.save(order);
+        console.log(`Order ${orderId} status updated to '${category}'`);
     } catch (error) {
         console.error(`Error updating order status for order ${orderId}:`, error);
         throw error;
@@ -136,7 +162,8 @@ module.exports = {
     deleteOrder,
     getAllOrdersByType,
     updateOrderStatus,
-    getAllLimitOrdersByCoin,
+    getAllOrdersByCoinAndCategory,
     getAllOrdersByCato,
-    updateOrderTime
+    updateOrderTime,
+    updateOrderCategory
 };
