@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const controller = require("../controllers/ForumController");
 const router = express.Router();
 
@@ -6,10 +6,16 @@ router.get("/getAllQuestions", controller.getAllQuestions);
 
 router.get("/getQuestionsByUserId/:userId", controller.getQuestionsByUserId);
 
-router.get("/getQuestionsByQuestionId/:questionId", controller.getQuestionsByQuestionId);
+router.get(
+  "/getQuestionsByQuestionId/:questionId",
+  controller.getQuestionsByQuestionId
+);
 router.post("/", controller.saveQuestion);
 
 router.delete("/:id", controller.deleteQuestion);
 
+router.post("/addFavorite", controller.addFavorite);
 
-module.exports = router
+router.get("/getFavoritesByUserId/:userId", controller.getFavoritesByUserId);
+
+module.exports = router;
