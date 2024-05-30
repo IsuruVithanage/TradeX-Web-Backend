@@ -3,6 +3,7 @@ const express = require('express');
 const dataSource = require("../config/config");
 const newsRepo = dataSource.getRepository("News");
 const favRepo = dataSource.getRepository("Favourite");
+const likeRepo = dataSource.getRepository("Like");
 const axios = require('axios');
 
 axios.get('https://newsapi.org/v2/everything?q=bitcoin&apiKey=bc6db274836c4c21aa4569104f316c17')
@@ -51,11 +52,11 @@ const addToFav = async (req, res) => {
             return res.status(400).json({message:"inavalid request"});
         }
         
-        const news = await favRepo.find({where:{userId,newsId}});
+        const isFaved = await favRepo.findOne({where:{userId,newsId}});
 
 
         if(addToFav){
-            if(news){
+            if(isFaved){
                 return res.status(200).json({message:"Added to Favourite"});
             }            
             await newsRepo.update(newsId, { favourite: true });
@@ -63,7 +64,7 @@ const addToFav = async (req, res) => {
             res.status(200).json({message:"Added to Favourite"}) 
         }
         else{
-            if(!news){
+            if(!isFaved){
                 return res.status(200).json({message:"Removed from Favourite"});
             }        
             await favRepo.remove({userId,newsId })
@@ -80,14 +81,21 @@ const addToFav = async (req, res) => {
 
 const like = async (req, res) => {
     try{
+        console.log(req.body)
         const {isLike, userId, newsId} = req.body;
-        if(!isLike || !userId || !newsId){
+        if(isLike === undefined || !userId || !newsId){
             return res.status(400).json({message: "invalid request"});
         }
-        const isLiked = await favRepo.find({where:{userId,newsId}});
+        const isLiked = await likeRepo.findOne({where:{userId,newsId}});
+        const news = await newsRepo.findOne({where:{newsId}})
+
+        if(!news){
+            return res.status(404).json({message:"News not found"});
+        }
 
         if(isLike){
             if(isLiked){
+                console.log("run",isLiked)
                 return res.status(200).json({message:"Liked"});
             }            
             await likeRepo.save({userId,newsId })
@@ -95,10 +103,10 @@ const like = async (req, res) => {
         }
         else{
             if(!isLiked){
-                return res.status(200).json({message:"Removed from Favourite"});
+                return res.status(200).json({message:"Unliked"});
             }        
-            await favRepo.remove({userId,newsId })
-            res.status(200).json({message:"Removed from Favourite"})  
+            await likeRepo.remove({userId,newsId })
+            res.status(200).json({message:"unliked"})  
         }
 
     }
