@@ -8,7 +8,11 @@ router.get("/fav", controller.getFavNews);
 
 router.post("/fav/:addToFav(true|false)", controller.addToFav);
 
+router.post("/like", controller.like);
+
 router.delete("/:userId/:title", controller.deleteNews);
+
+
 
 
 
