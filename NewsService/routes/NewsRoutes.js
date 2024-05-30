@@ -6,7 +6,7 @@ router.get("/", controller.getAllNews);
 
 router.get("/fav", controller.getFavNews);
 
-router.post("/fav/:addToFav(true|false)", controller.favToNews);
+router.post("/fav/:addToFav(true|false)", controller.addToFav);
 
 router.delete("/:userId/:title", controller.deleteNews);
 

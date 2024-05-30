@@ -1,16 +1,16 @@
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
-    name: "FavouriteNews",
-    tableName: "favouriteNews",
+    name: "News",
+    tableName: "news",
     columns: {
         newsId: {
             type: "int",
             generated: true,
+            primary: true,
             nullable: false
         },
         url: {
-            primary: true,
             type: "varchar",
             length: 255,
             nullable: false
@@ -18,7 +18,7 @@ module.exports = new EntitySchema({
         image: {
             type: "varchar",
             length: 255,
-            nullable: false
+            nullable: true
         },
         title: {
             type: "varchar",
@@ -26,25 +26,18 @@ module.exports = new EntitySchema({
         },
         description: {
             type: "varchar",
-            nullable: false
-        },
-        like: {
-            type: "int",
-            array: true,
             nullable: true
-
         },
-        dislike: {
-            type: "int",
-            array: true,
-            nullable: true
-
+        latest: {
+            type: "boolean",
+            nullable: false,
+            default: true
         },
+       
         favourite:{
-            type: "int",
-            array: true,
-            nullable: true
-
+            type: "boolean",
+            nullable: false,
+            default: false
         },
         
         
