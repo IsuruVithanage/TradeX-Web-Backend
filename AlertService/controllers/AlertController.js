@@ -1,26 +1,7 @@
 const dataSource = require("../config/config");
 const alertRepo = dataSource.getRepository("Alert");
-const admin = require('firebase-admin');
-require('dotenv').config();
-
-try{
-    admin.initializeApp({credential: admin.credential.cert({
-        type: process.env.TYPE,
-        project_id: process.env.PROJECT_ID,
-        private_key_id: process.env.PRIVATE_KEY_ID,
-        private_key: process.env.PRIVATE_KEY,
-        client_email: process.env.CLIENT_EMAIL,
-        client_id: process.env.CLIENT_ID,
-        auth_uri: process.env.AUTH_URI,
-        token_uri: process.env.TOKEN_URI,
-        auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
-        client_x509_cert_url: process.env.CLIENT_X509_CERT_URL
-    })});
-}
-catch (error) {
-    console.log('Firebase admin initialization error', error);
-}
-
+const sendPushNotification = require("../SendNotification/Push");
+const sendEmailNotification = require("../SendNotification/Email");
 
 
 
@@ -192,64 +173,77 @@ const saveDeviceToken = async (req, res) => {
 
 
 
+
 const sendNotification = async (req, res) => {
     try {
-        let token = req.body.token;
+        const { userId, title, body, onClick, emailHeader, emailBody, attachments } = req.body;
+        let { deviceToken, receiverEmail } = req.body;
+        const type = req.params.type;
 
-        if(res){
-            if(!req.body.userId){
-                return res.status(400).json({message: 'userId not found'});
-            } else{
+
+        if(( type !== 'push' && !emailBody ) || !title ){
+            throw Object.assign(new Error('invalid request'), { status: 400 });
+        }
+
+
+        if(type !== 'email'){
+            if(!deviceToken){
+                if(!userId){
+                    throw Object.assign(new Error('User ID not found'), { status: 404 });
+                }
+
                 const user = await dataSource
                     .getRepository("DeviceToken")
-                    .findOne({where: {userId: req.body.userId} });
+                    .findOne({where: {userId: userId} });
 
-                token = !user ? null : user.deviceToken;
-            }  
-        }
+                deviceToken = !user ? null : user.deviceToken;
+            }
 
-        if(!token){
-            if (!res) {
-                throw new Error('Device Token not found');
+            if(!deviceToken){
+                throw Object.assign(new Error('Device Token not found'), { status: 404 });
             } else {
-                return res.status(400).json({message: 'Device Token not found'});
+                sendPushNotification(deviceToken, title, body, onClick);
             }
         }
 
 
+        if(type !== 'push'){
+            if(!receiverEmail){
+                if(!userId){
+                    throw Object.assign(new Error('User ID not found'), { status: 404 });
+                }
 
-        await admin.messaging().send({
-            token: token,
-            notification: {	
-                title: req.body.title || 'TradeX',
-                body: req.body.body,
-                
-            },
-            webpush: {
-                notification: {
-                    icon: 'https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/TradeX-mini-logo.png'
-                },
-                fcmOptions: {
-                    link: req.body.onClick || 'http://localhost:3000/'
-                },
+                receiverEmail = 'ashansalinda5@gmail.com'
             }
-        });
+
+            if(!receiverEmail){
+                throw Object.assign(new Error('Receiver Email Address not found'), { status: 404 });
+            } else {
+                sendEmailNotification(title, emailHeader, emailBody, receiverEmail, attachments);
+            }
+        }
 
 
-        if (res){
+        if(!res){
+            return true;
+        } else {
             res.status(200).json({message: 'Notification sent successfully'});
         }
+        
     }
 
     catch (error) {
+        console.log("Error sending notification:", error);
+
         if (!res) {
             throw error;
         } else {
-            console.log("Error sending notification:", error);
-            res.status(500).json({message: 'Error sending Notification'});
+            res.status(error.status || 500).json({message: error.message});
         }
     }
 }
+
+
 
 
 module.exports = {

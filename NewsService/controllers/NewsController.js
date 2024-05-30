@@ -9,6 +9,28 @@ const getAllNews = async (req, res) => {
     res.json(await newsRepo.find());
 };
 
+const getFavNews  = async (req, res)  => {
+   try{
+    if(!req.body.userId){
+        return res.status(400).json({message:"userID not found"});
+    }
+    const favNews = await newsRepo.find({
+        where: {
+            favourite: "{" + req.body.userId + "}"
+        }
+        
+    });
+    console.log(favNews);
+    res.status(200).json(favNews);
+   }
+   catch(error){
+    console.log ("error getting favourite news", error);
+    res.status(500).json({message:"error getting favourite news"});
+
+   }
+   
+}
+
 const favToNews = async (req, res) => {
    try{
         const addToFav = req.params.addToFav === "true";
@@ -110,5 +132,6 @@ module.exports = {
     getAllNews,
     saveNews,
     deleteNews,
-    favToNews
+    favToNews,
+    getFavNews
 }

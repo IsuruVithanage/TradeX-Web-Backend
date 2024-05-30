@@ -32,7 +32,8 @@ const getPortfolioValueData = async (userId, timezoneOffset) => {
 
         while(queryResult.length > 0){
             let data = queryResult.pop();
-            data.time = data.time.getTime()/1000 - (timezoneOffset * 60);
+            data.time = data.time.getTime()/1000;
+            //data.time = data.time.getTime()/1000 - (timezoneOffset * 60);
 
             if(data.type === 'Hourly'){
                 hourlyData.push(data);

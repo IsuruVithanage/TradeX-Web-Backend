@@ -8,7 +8,10 @@ const suggestionRouter = require("./routes/SuggetionRoutes");
 const startRealtimeMonitoring = require("./LimitOrderMonitoring");
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow requests from localhost:3000
+    credentials: true, // Allow credentials if needed
+}));
 app.use("/quiz",quizRouter);
 app.use("/order",orderRouter);
 app.use("/suggestion",suggestionRouter);
