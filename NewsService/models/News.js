@@ -1,8 +1,8 @@
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
-    name: "News",
-    tableName: "news",
+    name: "FavouriteNews",
+    tableName: "favouriteNews",
     columns: {
         newsId: {
             type: "int",
@@ -22,12 +22,10 @@ module.exports = new EntitySchema({
         },
         title: {
             type: "varchar",
-            length: 255,
             nullable: false
         },
         description: {
             type: "varchar",
-            length: 255,
             nullable: false
         },
         like: {
