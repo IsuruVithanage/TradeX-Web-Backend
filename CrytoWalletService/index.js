@@ -9,10 +9,6 @@ const cookieParser = require("cookie-parser")
 const {validateToken} = require('./JWT')
 const SeedPhraseRoutes = require("./routes/SeedPhraseRoutes")
 
-
-
-
-
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors( {
@@ -21,7 +17,7 @@ app.use(cors( {
 }));
 app.use("/wallet", validateToken, walletRouter);
 app.use("/history", validateToken, WalletHistoryRounter);
-app.use("/login",  WalletLoginRounter);
+app.use("/walletLogin",  WalletLoginRounter);
 app.use("/seedphrase",  SeedPhraseRoutes);
 
 
