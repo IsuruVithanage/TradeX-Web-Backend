@@ -1,0 +1,74 @@
+http:
+  port: 8080
+
+admin:
+  port: 9876
+  host: localhost
+
+apiEndpoints:
+  order-api:
+    host: 'localhost'
+    paths: '/order/*'
+  quiz-api:
+    host: 'localhost'
+    paths: '/quiz/*'
+  suggestion-api:
+    host: 'localhost'
+    paths: '/suggestion/*'
+  user-api:
+    host: 'localhost'
+    paths: '/user/*'
+
+serviceEndpoints:
+  order-service:
+    url: 'http://localhost:8005'
+  quiz-service:
+    url: 'http://localhost:8005'
+  suggestion-service:
+    url: 'http://localhost:8005'
+  user-service:
+    url: 'http://localhost:8004'
+
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+
+pipelines:
+  order-pipeline:
+    apiEndpoints:
+      - order-api
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: order-service
+              changeOrigin: true
+  user-pipeline:
+    apiEndpoints:
+      - user-api
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: user-service
+              changeOrigin: true
+  quiz-pipeline:
+    apiEndpoints:
+      - quiz-api
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: quiz-service
+              changeOrigin: true
+  suggestion-pipeline:
+    apiEndpoints:
+      - suggestion-api
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: suggestion-service
+              changeOrigin: true
