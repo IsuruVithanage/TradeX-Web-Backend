@@ -1,7 +1,8 @@
 const {GoogleGenerativeAI} = require("@google/generative-ai");
+require('dotenv').config();
 
-// Access your API key as an environment variable AIzaSyBepmoqxvpcfnhoCfcHmJnxNwhyRS964Gs
-const genAI = new GoogleGenerativeAI('AIzaSyBepmoqxvpcfnhoCfcHmJnxNwhyRS964Gs');
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({model: "gemini-pro"});
 const buyOrderSuggestion = async (req, res) => {
     try {
