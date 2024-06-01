@@ -1,5 +1,6 @@
 const express = require("express");
 const dataSource = require("../config/config");
+const { removeLike } = require("./AnswerController");
 
 const getAllQuestions = async (req, res) => {
   const QuestionRepo = dataSource.getRepository("Forum-question");
@@ -49,13 +50,94 @@ const deleteQuestion = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+//add like
+const addLike = async (req, res, next) => {
+  const questionId = parseInt(req.params.qid);
+  const userId = parseInt(req.params.uid);
+
+  try {
+    const PostRepo = dataSource.getRepository("Forum-addlikes");
+
+    // Find the post by its ID
+    let post = await PostRepo.findOne({ where: { questionId: questionId } });
+
+    if (!post) {
+      // If the post does not exist, create a new entry with the likes array
+      post = PostRepo.create({ questionId: questionId, likes: [userId] });
+    } else {
+      // If the post exists, update the likes array
+      if (!post.likes.includes(userId)) {
+        post.likes.push(userId);
+      } else {
+        return res
+          .status(400)
+          .json({ success: false, message: "User already liked this post" });
+      }
+    }
+
+    await PostRepo.save(post);
+
+    // Emit the updated likes if needed
+    main.io.emit("add-like", post);
+
+    res.status(200).json({
+      success: true,
+      post,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//remove like
+exports.removeLike = async (req, res, next) => {
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      {
+        $pull: { likes: req.user._id },
+      },
+      { new: true }
+    );
+
+    const posts = await Post.find()
+      .sort({ createdAt: -1 })
+      .populate("postedBy", "name");
+    main.io.emit("remove-like", posts);
+
+    res.status(200).json({
+      success: true,
+      post,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Adding favorites
 const addFavorite = async (req, res) => {
   const { userId, questionId, title } = req.body;
   try {
     const FavoriteRepo = dataSource.getRepository("Favourites"); // Use the Favourites entity schema
-    const newFavorite = await FavoriteRepo.save({ userId, questionId, title });
-    res.status(200).json(newFavorite);
+    const existingFavorite = await FavoriteRepo.findOne({
+      where: { userId, questionId },
+    });
+
+    if (existingFavorite) {
+      // Remove favorite
+      await FavoriteRepo.remove(existingFavorite);
+      res.status(200).json({ message: "Favorite removed" });
+    } else {
+      // Add favorite
+      const newFavorite = await FavoriteRepo.save({
+        userId,
+        questionId,
+        title,
+      });
+      await FavoriteRepo.save(newFavorite);
+      res.status(200).json(newFavorite);
+    }
   } catch (error) {
     console.error("Error adding favorite:", error);
     res.status(500).json({ error: error.message });
@@ -82,4 +164,6 @@ module.exports = {
   getQuestionsByQuestionId,
   addFavorite,
   getFavoritesByUserId,
+  addLike,
+  removeLike,
 };
