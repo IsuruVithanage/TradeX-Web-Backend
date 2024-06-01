@@ -9,12 +9,16 @@ const startRealtimeMonitoring = require("./LimitOrderMonitoring");
 
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow requests from localhost:3000
-    credentials: true, // Allow credentials if needed
+    origin: 'http://localhost:3000',
+    credentials: true,
 }));
 app.use("/quiz",quizRouter);
 app.use("/order",orderRouter);
 app.use("/suggestion",suggestionRouter);
+
+app.get('/endpoint/hello', (req, res) => {
+    res.json({ message: "Hello from the microservice!" });
+});
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
@@ -29,6 +33,7 @@ app.use((error, req, res) => {
         message: error.message
     });
 });
+
 
 dataSource.initialize()
 
