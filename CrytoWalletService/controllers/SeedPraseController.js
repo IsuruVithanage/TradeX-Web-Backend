@@ -25,7 +25,8 @@ const shuffleWords = () => {
 };
 const getSeedPreseById = async (req,res) => {
     try {
-        const id = req.body;
+        console.log(req.body);
+        const id = req.body.userId;
         const seedPhraseRepo = dataSource.getRepository("SeedPhrase");
         const words = await seedPhraseRepo.find({where: {userId:id}});
         res.json(words);
