@@ -1,6 +1,10 @@
 const dataSource = require("../config/config"); // Assuming dataSource is where your TypeORM connection is established
 const main = require("../index");
 
+const stripHtmlTags = (str) => {
+  return str.replace(/<\/?[^>]+(>|$)/g, "");
+};
+
 const saveAnswer = async (req, res) => {
   const AnswerRepo = dataSource.getRepository("Forum-answers");
   const Answersave = AnswerRepo.save(req.body);
@@ -15,10 +19,22 @@ const getAnswersByQuestionId = async (req, res) => {
 };
 
 const getAnswersByUserId = async (req, res) => {
-  const userId = req.params.userId;
-  const AnswerRepo = dataSource.getRepository("Forum-answers");
-  const answers = await AnswerRepo.find({ where: { userId: userId } });
-  res.json(answers);
+  const userId = parseInt(req.params.userId, 10); // Ensure userId is an integer
+
+  console.log("Received userId:", userId); // Log to verify
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ success: false, message: "Invalid userId" });
+  }
+
+  try {
+    const AnswerRepo = dataSource.getRepository("Forum-answers");
+    const answers = await AnswerRepo.find({ where: { userId: userId } });
+    res.json(answers);
+  } catch (error) {
+    console.error("Error fetching answers by userId:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
 };
 //add like
 const addLike = async (req, res, next) => {
