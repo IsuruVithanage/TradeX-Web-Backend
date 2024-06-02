@@ -15,6 +15,11 @@ apiEndpoints:
   suggestion-api:
     host: 'localhost'
     paths: '/suggestion/*'
+  user-public-api:
+    host: 'localhost'
+    paths:
+      - '/user/register'
+      - '/user/login'
   user-api:
     host: 'localhost'
     paths: '/user/*'
@@ -113,6 +118,7 @@ policies:
   - oauth2
   - proxy
   - rate-limit
+  - jwt
 
 pipelines:
   order-pipeline:
@@ -123,10 +129,22 @@ pipelines:
           - action:
               serviceEndpoint: order-service
               changeOrigin: true
+  user-public-pipeline:
+    apiEndpoints:
+      - user-public-api
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: user-service
+              changeOrigin: true
   user-pipeline:
     apiEndpoints:
       - user-api
     policies:
+      - jwt:
+          - action:
+              secretOrPublicKey: ${env.JWT_SECRET}
+              algorithms: [ 'HS256' ]
       - proxy:
           - action:
               serviceEndpoint: user-service
