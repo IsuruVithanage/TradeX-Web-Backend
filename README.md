@@ -29,7 +29,6 @@ tradex-backend
 │     └─ AdminRoutes.js
 ├─ AlertService
 │  ├─ .gitignore
-│  ├─ .env
 │  ├─ .vscode
 │  │  └─ settings.json
 │  ├─ config
