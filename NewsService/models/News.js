@@ -25,8 +25,12 @@ module.exports = new EntitySchema({
             nullable: false
         },
         description: {
-            type: "varchar",
+            type: "text",
             nullable: true
+        },
+        publishedAt: {
+            type: "timestamp",
+            nullable: false
         },
         latest: {
             type: "boolean",
