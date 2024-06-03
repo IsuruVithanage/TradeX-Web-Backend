@@ -229,19 +229,22 @@ const like = async (req, res) => {
         }
 
         if(isLike){
-            if(isLiked){
-                return res.status(200).json({message:"Liked"});
+            if(!isLiked){
+                await likeRepo.save({userId,newsId });
             }            
-            await likeRepo.save({userId,newsId })
-            res.status(200).json({message:"Liked"}) 
         }
         else{
-            if(!isLiked){
-                return res.status(200).json({message:"Unliked"});
+            if(isLiked){
+                await likeRepo.remove({userId,newsId })
             }        
-            await likeRepo.remove({userId,newsId })
-            res.status(200).json({message:"unliked"})  
         }
+
+        const likeCount = await likeRepo.createQueryBuilder('like')
+            .select('COUNT(*)', 'likeCount')
+            .where('like.newsId = :newsId', { newsId })
+            .getRawOne();
+
+        res.status(200).json(likeCount);
 
     }
     catch(error){
@@ -264,19 +267,22 @@ const dislike = async (req, res) => {
         }
 
         if(isDislike){
-            if(isDisliked){
-                return res.status(200).json({message:"disliked"});
+            if(!isDisliked){
+                await dislikeRepo.save({userId,newsId })
             }            
-            await dislikeRepo.save({userId,newsId })
-            res.status(200).json({message:"disliked"}) 
         }
         else{
-            if(!isDisliked){
-                return res.status(200).json({message:"Undisliked"});
+            if(isDisliked){
+                await dislikeRepo.remove({userId,newsId })
             }        
-            await dislikeRepo.remove({userId,newsId })
-            res.status(200).json({message:"undisliked"})  
         }
+
+        const dislikeCount = await dislikeRepo.createQueryBuilder('dislike')
+            .select('COUNT(*)', 'dislikeCount')
+            .where('dislike.newsId = :newsId', { newsId })
+            .getRawOne();
+
+        res.status(200).json(dislikeCount);
 
     }
     catch(error){
@@ -310,6 +316,8 @@ const saveNews = async (news) => {
     .sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt) )
    
     await newsRepo.save(newsToSave);
+    console.log("new news count", newsToSave.length)
+
    }
    catch (error){
         console.log("error saving news", error);
