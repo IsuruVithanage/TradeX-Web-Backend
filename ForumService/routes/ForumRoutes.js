@@ -14,6 +14,8 @@ router.post("/", controller.saveQuestion);
 
 router.delete("/:id", controller.deleteQuestion);
 
+router.put("/addLike/:qid/:uid", controller.addLike);
+
 router.post("/addFavorite", controller.addFavorite);
 
 router.get("/getFavoritesByUserId/:userId", controller.getFavoritesByUserId);

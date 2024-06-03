@@ -9,5 +9,6 @@ router.get(
 );
 
 router.get("/getAnswersByUserId/:userId", controller.getAnswersByUserId);
+
 router.put("/addLike/:qid/:uid", controller.addLike);
 module.exports = router;

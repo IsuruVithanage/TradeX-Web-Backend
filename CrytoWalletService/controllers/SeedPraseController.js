@@ -1,6 +1,7 @@
 const express = require('express');
 const dataSource = require("../config/config");
 const { shuffle } = require("lodash"); // Import shuffle function from lodash
+const { request } = require('express');
 
 const words = [
     "word1",
@@ -21,6 +22,29 @@ const shuffleWords = () => {
     // Shuffle the words array
     const shuffledWords = shuffle(words);
     return shuffledWords.join(','); // Join shuffled words into a single string
+};
+const getSeedPreseById = async (req,res) => {
+    try {
+        console.log(req.body);
+        const id = req.body.userId;
+        const seedPhraseRepo = dataSource.getRepository("SeedPhrase");
+        const words = await seedPhraseRepo.find({where: {userId:id}});
+        res.json(words);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const saveSeedPrase = async (req, res) => {
+    const seedPhraseRepo = dataSource.getRepository("SeedPhrase");
+    try {
+        const saveSeedPrase = await seedPhraseRepo.save(req.body);
+        res.json(saveSeedPrase);
+    } catch (error) {
+        console.error("Error saving order:", error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 };
 
 const checkSimilarities = async (shuffledWords) => {
@@ -47,5 +71,7 @@ const getUniqueShuffledWords = async (req, res) => {
 };
 
 module.exports = {
-    getUniqueShuffledWords
+    getUniqueShuffledWords,
+    getSeedPreseById,
+    saveSeedPrase
 };

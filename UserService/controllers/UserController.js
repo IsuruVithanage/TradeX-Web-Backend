@@ -2,14 +2,8 @@ const express = require("express");
 const dataSource = require("../config/config");
 const bcrypt = require("bcrypt");
 const User = require("../models/UserModel");
-const { createTokens } = require("../JWT");
+const { createTokens, validateToken } = require("../JWT");
 
-// const getAllUsers = async (req, res) => {
-//   const userRepo = dataSource.getRepository("User");
-//   res.json(await userRepo.find());
-// };
-
-// register a user
 const register = async (req, res) => {
   const { userName, password, email } = req.body;
   try {
@@ -27,12 +21,10 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
-
 const login = async (req, res) => {
   const userRepository = dataSource.getRepository("User");
-  const { userName, password } = req.body;
-  const user = await userRepository.findOne({ where: { userName: userName } });
+  const { email, password } = req.body;
+  const user = await userRepository.findOne({ where: { email: email } });
 
   if (!user) {
     return res.status(400).json({ error: "User doesn't exist" });
@@ -43,8 +35,8 @@ const login = async (req, res) => {
 
   if (!match) {
     return res
-      .status(400)
-      .json({ error: "Wrong Username and Password Combination!" });
+        .status(400)
+        .json({ error: "Wrong Username and Password Combination!" });
   }
 
   const accessToken = createTokens(user);
@@ -53,8 +45,9 @@ const login = async (req, res) => {
     httpOnly: true,
   });
 
-  res.json("logged in");
+  res.json({ message: "Logged in", token: accessToken });
 };
+
 
 const profile = async (req, res) => {
   res.json("profile");

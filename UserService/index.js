@@ -3,6 +3,7 @@ const cors = require("cors");
 const app = express();
 const dataSource = require("./config/config");
 const userRouter = require("./routes/UserRoutes");
+require('dotenv').config();
 const cookieParser = require("cookie-parser");
 
 app.use(express.json());

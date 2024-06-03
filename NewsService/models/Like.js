@@ -23,7 +23,11 @@ module.exports = new EntitySchema({
             type: "many-to-one",
             target: "News",
             joinColumn: { name: "newsId" },
+<<<<<<< HEAD
             onDelete: "CASCADE"
+=======
+            onDelete:"CASCADE"
+>>>>>>> upstream/dev
         },
     },
 })

@@ -15,8 +15,4 @@ router.post("/dislike", controller.dislike);
 router.delete("/:userId/:title", controller.deleteNews);
 
 
-
-
-
-
 module.exports = router
