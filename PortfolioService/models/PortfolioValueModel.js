@@ -13,7 +13,7 @@ const columns = {
         nullable: false,
     },
     time: {
-        type: "timestamp with time zone",
+        type: "float",
         nullable: false,
     },
     value: {
