@@ -5,9 +5,15 @@ const newsRepo = dataSource.getRepository("News");
 const favRepo = dataSource.getRepository("Favourite");
 const likeRepo = dataSource.getRepository("Like");
 const dislikeRepo = dataSource.getRepository("Dislike");
+<<<<<<< HEAD
+const Like = require("../models/Like")
+const Dislike = require("../models/Dislike")
+const Favorite = require("../models/Favourite")
+=======
 const Like = require("../models/Like");
 const Dislike = require('../models/Dislike');
 const Favourite = require("../models/Favourite");
+>>>>>>> upstream/dev
 const axios = require('axios');
 
 axios.get('https://newsapi.org/v2/everything?q=bitcoin&apiKey=bc6db274836c4c21aa4569104f316c17')
@@ -22,11 +28,14 @@ axios.get('https://newsapi.org/v2/everything?q=bitcoin&apiKey=bc6db274836c4c21aa
 const getAllNews = async (req, res) => {
     try{
         const userId = req.params.userId;
+<<<<<<< HEAD
+=======
         
         if(!userId){
             return res.status(400).json({message:"userId not found"});
         }
 
+>>>>>>> upstream/dev
         const news = await newsRepo.createQueryBuilder('news')
         .leftJoin(
             qb => qb
@@ -70,7 +79,11 @@ const getAllNews = async (req, res) => {
             qb => qb
                 .select('favorite.newsId', 'newsId')
                 .addSelect('BOOL_OR(favorite.userId = :userId)', 'isFavorite')
+<<<<<<< HEAD
+                .from(Favorite, 'favorite')
+=======
                 .from(Favourite, 'favorite')
+>>>>>>> upstream/dev
                 .groupBy('favorite.newsId')
                 .setParameter('userId', userId),
             'user_favorites',
@@ -93,17 +106,32 @@ const getAllNews = async (req, res) => {
         .getRawMany();
 
         res.status(200).json(news);
+<<<<<<< HEAD
+    }
+
+    catch(error){
+        console.log("error getting news", error);
+        res.status(500).json({message:"error getting news"});
+    }
+    
+=======
 
     }
     catch(error){
         console.log("error getting news", error);
         res.status(500).json({message: "error getting news"})
     }
+>>>>>>> upstream/dev
 };
 
 const getFavNews  = async (req, res)  => {
    try{
     const userId = req.params.userId;
+<<<<<<< HEAD
+    if(!userId){
+        return res.status(400).json({message:"userID not found"});
+    }
+=======
 
     if(!userId){
         return res.status(400).json({message:"userID not found"});
@@ -174,9 +202,74 @@ const getFavNews  = async (req, res)  => {
    catch(error){
     console.log ("error getting favourite news", error);
     res.status(500).json({message:"error getting favourite news"});
+>>>>>>> upstream/dev
 
-   }
-   
+    const news = await newsRepo.createQueryBuilder('news')
+        .innerJoin(
+            'favourite', 'fav',
+            'fav.newsId = news.newsId AND fav.userId = :userId',
+            { userId }
+        )
+        .leftJoin(
+            qb => qb
+                .select('like.newsId', 'newsId')
+                .addSelect('COUNT(*)', 'likeCount')
+                .from(Like, 'like')
+                .groupBy('like.newsId'),
+            'like_counts',
+            'like_counts."newsId" = news.newsId'
+        )
+        .leftJoin(
+            qb => qb
+                .select('dislike.newsId', 'newsId')
+                .addSelect('COUNT(*)', 'dislikeCount')
+                .from(Dislike, 'dislike')
+                .groupBy('dislike.newsId'),
+            'dislike_counts',
+            'dislike_counts."newsId" = news.newsId'
+        )
+        .leftJoin(
+            qb => qb
+                .select('like.newsId', 'newsId')
+                .addSelect('BOOL_OR(like.userId = :userId)', 'isLiked')
+                .from(Like, 'like')
+                .groupBy('like.newsId')
+                .setParameter('userId', userId),
+            'user_likes',
+            'user_likes."newsId" = news.newsId'
+        )
+        .leftJoin(
+            qb => qb
+                .select('dislike.newsId', 'newsId')
+                .addSelect('BOOL_OR(dislike.userId = :userId)', 'isDisliked')
+                .from(Dislike, 'dislike')
+                .groupBy('dislike.newsId')
+                .setParameter('userId', userId),
+            'user_dislikes',
+            'user_dislikes."newsId" = news.newsId'
+        )
+        .select([
+            'news.newsId AS "newsId"',
+            'news.title AS "title"',
+            'news.description AS "description"',
+            'news.url AS "url"',
+            'news.image AS "image"',
+            'news.publishedAt AS "publishedAt"',
+            'like_counts."likeCount" AS "likeCount"',
+            'dislike_counts."dislikeCount" AS "dislikeCount"',
+            'user_likes."isLiked" AS "isLiked"',
+            'user_dislikes."isDisliked" AS "isDisliked"',
+            'true AS "isFavorite"'
+        ])
+        .orderBy('news.publishedAt', 'DESC')
+        .getRawMany();
+
+        res.status(200).json(news);
+    }
+    catch(error){
+        console.log ("error getting favourite news", error);
+        res.status(500).json({message:"error getting favourite news"});
+    }
 }
 
 const addToFav = async (req, res) => {
@@ -202,8 +295,24 @@ const addToFav = async (req, res) => {
         else{
             if(!isFaved){
                 return res.status(200).json({message:"Removed from Favourite"});
-            }        
+            }   
             await favRepo.remove({userId,newsId })
+
+            const favCount = await favRepo.createQueryBuilder('favourite')
+                .select('COUNT(*)', 'favCount')
+                .where('favourite.newsId = :newsId', { newsId })
+                .getRawOne();
+
+            if(favCount.favCount === '0'){
+                const isLatest = await newsRepo.findOne({select: ['latest'], where:{newsId}});
+
+                if(isLatest.latest){
+                    await newsRepo.update(newsId, { favourite: false });
+                }
+                else{
+                    await newsRepo.remove({newsId});
+                }
+            }
             res.status(200).json({message:"Removed from Favourite"})  
         }
         
@@ -221,6 +330,7 @@ const like = async (req, res) => {
         if(isLike === undefined || !userId || !newsId){
             return res.status(400).json({message: "invalid request"});
         }
+
         const isLiked = await likeRepo.findOne({where:{userId,newsId}});
         const news = await newsRepo.findOne({where:{newsId}})
 
@@ -230,7 +340,11 @@ const like = async (req, res) => {
 
         if(isLike){
             if(!isLiked){
+<<<<<<< HEAD
+                await likeRepo.save({userId,newsId })
+=======
                 await likeRepo.save({userId,newsId });
+>>>>>>> upstream/dev
             }            
         }
         else{
@@ -245,11 +359,15 @@ const like = async (req, res) => {
             .getRawOne();
 
         res.status(200).json(likeCount);
+<<<<<<< HEAD
+=======
 
+>>>>>>> upstream/dev
     }
+
     catch(error){
-    console.log(error);
-    return res.status(500).json({message: error.message});
+        console.log(error);
+        return res.status(500).json({message: error.message});
     }
 }
 
@@ -259,6 +377,7 @@ const dislike = async (req, res) => {
         if(isDislike === undefined || !userId || !newsId){
             return res.status(400).json({message: "invalid request"});
         }
+
         const isDisliked = await dislikeRepo.findOne({where:{userId,newsId}});
         const news = await newsRepo.findOne({where:{newsId}})
 
@@ -283,7 +402,10 @@ const dislike = async (req, res) => {
             .getRawOne();
 
         res.status(200).json(dislikeCount);
+<<<<<<< HEAD
+=======
 
+>>>>>>> upstream/dev
     }
     catch(error){
     console.log(error);
@@ -293,6 +415,31 @@ const dislike = async (req, res) => {
 
 const saveNews = async (news) => {
    try{
+<<<<<<< HEAD
+    const currentURLs = (await newsRepo.find()).map((news) => news.url);
+
+    const newsToSave = news
+        .map((newsItem) => {
+            if (currentURLs.includes(newsItem.url)) {
+                return null;
+            } else {
+                return{
+                    url: newsItem.url,
+                    image: newsItem.urlToImage,
+                    title: newsItem.title,
+                    description: newsItem.description,
+                    publishedAt: newsItem.publishedAt,
+                    latest: true,
+                };
+            }
+        })
+        .filter((item) => item !== null)
+        .sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt));
+
+        console.log("newsToSave", newsToSave);
+    
+    await newsRepo.save(newsToSave);
+=======
     const currentURLs = (await newsRepo.find()).map((news) => news.url)
 
     const newsToSave = news
@@ -318,7 +465,9 @@ const saveNews = async (news) => {
     await newsRepo.save(newsToSave);
     console.log("new news count", newsToSave.length)
 
+>>>>>>> upstream/dev
    }
+
    catch (error){
         console.log("error saving news", error);
    }
