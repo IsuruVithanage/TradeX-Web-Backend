@@ -10,13 +10,15 @@ const Dislike = require('../models/Dislike');
 const Favourite = require("../models/Favourite");
 const axios = require('axios');
 
-axios.get('https://newsapi.org/v2/everything?q=bitcoin&apiKey=bc6db274836c4c21aa4569104f316c17')
-.then((res)=>{
-  saveNews(res.data.articles)
-})
-.catch((error)=>{
-    console.log(error);
-})
+setInterval(() => {
+    axios.get('https://newsapi.org/v2/everything?q=bitcoin&apiKey=bc6db274836c4c21aa4569104f316c17')
+    .then((res)=>{
+    saveNews(res.data.articles)
+    })
+    .catch((error)=>{
+        console.log(error);
+    })
+}, 60000);
 
 
 const getAllNews = async (req, res) => {
@@ -82,6 +84,7 @@ const getAllNews = async (req, res) => {
             'news.description AS "description"',
             'news.url AS "url"',
             'news.image AS "image"',
+            'news.publishedAt AS "publishedAt"',	
             'like_counts."likeCount" AS "likeCount"',
             'dislike_counts."dislikeCount" AS "dislikeCount"',
             'user_likes."isLiked" AS "isLiked"',
