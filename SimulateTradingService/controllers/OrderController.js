@@ -1,5 +1,6 @@
 const dataSource = require("../config/config");
 
+
 const getAllOrders = async (req, res) => {
     const orderRepo = dataSource.getRepository("Order");
     try {
@@ -23,6 +24,7 @@ const getAllOrdersByType = async (type, orderStatus) => {
 
 const getAllOrdersByCato = async (req,res) => {
     try {
+
         const type = req.params.type;
         const OrderRepo = dataSource.getRepository("Order");
         const orders=await OrderRepo.find({where: {type: type}});
