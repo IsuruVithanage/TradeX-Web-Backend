@@ -6,14 +6,17 @@ const quizRouter = require("./routes/QuizRoutes");
 const orderRouter = require("./routes/OrderRoutes");
 const suggestionRouter = require("./routes/SuggetionRoutes");
 const startRealtimeMonitoring = require("./LimitOrderMonitoring");
+const verifyToken = require("../auth");
 
 app.use(express.json());
 app.use(cors({
     origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 }));
 app.use("/quiz",quizRouter);
-app.use("/order",orderRouter);
+app.use("/order",verifyToken,orderRouter);
 app.use("/suggestion",suggestionRouter);
 
 app.get('/endpoint/hello', (req, res) => {
