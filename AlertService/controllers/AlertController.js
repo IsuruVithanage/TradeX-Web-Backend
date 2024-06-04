@@ -159,6 +159,26 @@ const deleteAlert = async (req, res) => {
 
 
 
+const clearNotifiedAlerts = async (req, res) => {
+    try {
+        await alertRepo.delete({ userId: req.query.userId, runningStatus: false });
+
+        await getAlerts({ 
+            query: { 
+                userId: req.query.userId,
+                runningStatus: false
+            }
+        }, res );
+    } 
+    
+    catch (error) {
+        console.log("\nError clearing notified alerts:", error);
+        res.status(500).json({message: error.message});
+    }
+};
+
+
+
 const saveDeviceToken = async (req, res) => {
     try {        
         await dataSource.getRepository("DeviceToken").save(req.body);
@@ -170,7 +190,6 @@ const saveDeviceToken = async (req, res) => {
         res.status(500).json({message: error.message});
     }
 }
-
 
 
 
@@ -202,7 +221,7 @@ const sendNotification = async (req, res) => {
             if(!deviceToken){
                 throw Object.assign(new Error('Device Token not found'), { status: 404 });
             } else {
-                sendPushNotification(deviceToken, title, body, onClick);
+                await sendPushNotification(deviceToken, title, body, onClick);
             }
         }
 
@@ -219,7 +238,7 @@ const sendNotification = async (req, res) => {
             if(!receiverEmail){
                 throw Object.assign(new Error('Receiver Email Address not found'), { status: 404 });
             } else {
-                sendEmailNotification(title, emailHeader, emailBody, receiverEmail, attachments);
+                await sendEmailNotification(title, emailHeader, emailBody, receiverEmail, attachments);
             }
         }
 
@@ -252,6 +271,7 @@ module.exports = {
     addAlert,
     editAlert,
     deleteAlert,
+    clearNotifiedAlerts,
     saveDeviceToken,
     sendNotification
 };

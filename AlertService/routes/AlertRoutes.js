@@ -10,6 +10,8 @@ router.put("/", controller.editAlert);
 
 router.delete("/", controller.deleteAlert);
 
+router.delete("/clearAll", controller.clearNotifiedAlerts);
+
 router.post("/deviceToken", controller.saveDeviceToken);
 
 router.post("/send/:type(email|push|both)", controller.sendNotification);

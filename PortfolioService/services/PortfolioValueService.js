@@ -20,37 +20,15 @@ const getPortfolioValueData = async (userId, timezoneOffset) => {
             FROM "portfolioWeeklyValue"
             WHERE "userId" = $1
             
-            ORDER BY "type" DESC, "time" DESC; 
+            ORDER BY "type" ASC, "time" ASC; 
         `, 
         [userId]);
 
-
-        const hourlyData = [];
-        const dailyData = [];
-        const weeklyData = [];
-
-
-        while(queryResult.length > 0){
-            let data = queryResult.pop();
-            data.time = data.time.getTime()/1000;
-            //data.time = data.time.getTime()/1000 - (timezoneOffset * 60);
-
-            if(data.type === 'Hourly'){
-                hourlyData.push(data);
-            }
-            else if(data.type === 'Daily'){
-                dailyData.push(data);
-            }
-            else if(data.type === 'Weekly'){
-                weeklyData.push(data);
-            }
-        }
-
             
         return {
-            Hourly: { showTime: true,   data: hourlyData },
-            Daily:  { showTime: true,  data: dailyData  },
-            Weekly: { showTime: true,  data: weeklyData }
+            Hourly: { showTime: true,   data: queryResult.filter(data => data.type === 'Hourly')},
+            Daily:  { showTime: true,  data: queryResult.filter(data => data.type === 'Daily')},
+            Weekly: { showTime: true,  data: queryResult.filter(data => data.type === 'Weekly')}
         };
 
     } catch (error) {

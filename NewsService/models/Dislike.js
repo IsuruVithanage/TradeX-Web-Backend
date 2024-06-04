@@ -16,13 +16,19 @@ module.exports = new EntitySchema({
             primary: true
 
         },
-        
     },
+
     relations: {
-        newsId: {
+        news: {
             type: "many-to-one",
             target: "News",
             joinColumn: { name: "newsId" },
+<<<<<<< HEAD
+            onDelete: "CASCADE"
+=======
+            onDelete:"CASCADE"
+
+>>>>>>> upstream/dev
         },
     },
 })
