@@ -6,7 +6,6 @@ const quizRouter = require("./routes/QuizRoutes");
 const orderRouter = require("./routes/OrderRoutes");
 const suggestionRouter = require("./routes/SuggetionRoutes");
 const startRealtimeMonitoring = require("./LimitOrderMonitoring");
-const verifyToken = require("../auth");
 
 app.use(express.json());
 app.use(cors({
@@ -16,12 +15,8 @@ app.use(cors({
     credentials: true,
 }));
 app.use("/quiz",quizRouter);
-app.use("/order",verifyToken,orderRouter);
+app.use("/order",orderRouter);
 app.use("/suggestion",suggestionRouter);
-
-app.get('/endpoint/hello', (req, res) => {
-    res.json({ message: "Hello from the microservice!" });
-});
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
