@@ -33,14 +33,14 @@ const startRealtimeMonitoring = async() => {
 
             updateStreams();
 
-        }, 5000);
+        }, 3000);
 
-
-
-        setInterval(() => {
+        
+         
+        setInterval(async() => {
             if(ws.readyState === 1){
-            checkAlerts(); 
-            console.log(marketPrice);
+                checkAlerts(); 
+                console.log(marketPrice);
             }
         }, 1000);
     }
