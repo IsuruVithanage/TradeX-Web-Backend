@@ -7,7 +7,6 @@ const verifyToken = (req, res, next) => {
     jwt.verify(token.split(' ')[1], process.env.JWT_SECRET, (err, decoded) => {
         if (err) return res.status(500).json({ message: 'Failed to authenticate token' });
 
-        // If token is valid, save the decoded information to request for use in other routes
         req.userId = decoded.id;
         next();
     });

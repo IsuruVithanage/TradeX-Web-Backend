@@ -17,6 +17,7 @@ const loadConfig = (filePath) => {
 
 const configFilePath = path.join(__dirname, 'config', 'gateway.config.yml');
 
+
 const config = loadConfig(configFilePath);
 console.log(config);
 
