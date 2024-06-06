@@ -5,7 +5,7 @@ const User = require("../models/UserModel");
 const { createTokens, validateToken } = require("../JWT");
 
 const register = async (req, res) => {
-  const { userName, password, email } = req.body;
+  const { userName, password, email, isVerified, hasTakenQuiz, level } = req.body;
   try {
     const hash = await bcrypt.hash(password, 10);
     const userRepository = dataSource.getRepository("User");
@@ -13,9 +13,19 @@ const register = async (req, res) => {
       userName: userName,
       email: email,
       password: hash,
+      isVerified: isVerified,
+      hasTakenQuiz: hasTakenQuiz,
+      level: level,
     });
     await userRepository.save(user);
-    res.json("USER REGISTERED");
+
+    const accessToken = createTokens(user);
+    res.cookie("access-token", accessToken, {
+      maxAge: 60 * 60 * 24 * 30 * 1000,
+      httpOnly: true,
+    });
+
+    res.json({ message: "Logged in", token: accessToken, user: user});
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -45,7 +55,29 @@ const login = async (req, res) => {
     httpOnly: true,
   });
 
-  res.json({ message: "Logged in", token: accessToken });
+  res.json({ message: "Logged in", token: accessToken, user: user});
+};
+
+
+const updateUserHasTakenQuiz = async (req, res) => {
+  const userRepo = dataSource.getRepository("User");
+  const userId = req.params.id;
+
+  try {
+    const user = await userRepo.findOne({ where: { id: userId } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.hasTakenQuiz = true;
+    await userRepo.save(user);
+
+    res.json({ message: "User quiz status updated successfully" });
+  } catch (error) {
+    console.error("Error updating user quiz status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 
@@ -165,4 +197,5 @@ module.exports = {
   register,
   login,
   profile,
+  updateUserHasTakenQuiz,
 };
