@@ -141,7 +141,7 @@ const getPendingUsers = async (req, res) => {
   try {
     const pendingUsers = await userRepo.find({
       where: {
-        Verified: "Pending",
+        isVerified: "Pending",
       },
     });
     res.json(pendingUsers);
@@ -156,7 +156,7 @@ const getVerifiedUserCount = async (req, res) => {
   try {
     const verifiedUserCount = await userRepo.count({
       where: {
-        Verified: "Yes",
+        isVerified: "Yes",
       },
     });
     res.json({ count: verifiedUserCount });
@@ -172,7 +172,7 @@ const getUsersWithVerificationIssues = async (req, res) => {
     const usersWithIssues = await userRepo
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.issue", "issue")
-      .where("user.Verified != :verified", { verified: "Yes" })
+      .where("user.isVerified != :verified", { isVerified: "Yes" })
       .getMany();
     const formattedData = usersWithIssues.map((user) => ({
       userId: user.userId,

@@ -49,9 +49,9 @@ const checkOrders = () => {
     try {
         orders.forEach(async (order) => {
             if (marketPrice[order.coin] !== undefined && order.category === 'Limit') {
-                //console.log('Checking order:', order.price, marketPrice[order.coin]);
+                console.log('Checking order:', order.price, marketPrice[order.coin]);
                 if (order.price <= marketPrice[order.coin]) {
-                    //console.log('Order matched:', order);
+                    console.log('Order matched:', order);
 
                     const requestBody = {
                         userId: 1,
