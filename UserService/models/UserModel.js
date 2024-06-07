@@ -27,13 +27,5 @@ module.exports = new EntitySchema({
         Verified: {
             type: "varchar",
         },
-    },
-
-    relations: {
-        Issue: {
-            type: "one-to-many",
-            target: "Issue", // Name of the Issue entity
-            inverseSide: "user" // Name of the property in the Issue entity that maps back to User
-        }
     }
 })
