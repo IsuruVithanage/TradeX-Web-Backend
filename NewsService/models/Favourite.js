@@ -15,14 +15,15 @@ module.exports = new EntitySchema({
             nullable: false,
             primary: true
 
-        },
-        
+        },   
     },
-    relations: { 
-        newsId: {
+    
+    relations: {
+        news: {
             type: "many-to-one",
             target: "News",
             joinColumn: { name: "newsId" },
+            onDelete: "CASCADE"
         },
     },
 })

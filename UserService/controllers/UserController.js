@@ -2,16 +2,10 @@ const express = require("express");
 const dataSource = require("../config/config");
 const bcrypt = require("bcrypt");
 const User = require("../models/UserModel");
-const { createTokens } = require("../JWT");
+const { createTokens, validateToken } = require("../JWT");
 
-// const getAllUsers = async (req, res) => {
-//   const userRepo = dataSource.getRepository("User");
-//   res.json(await userRepo.find());
-// };
-
-// register a user
 const register = async (req, res) => {
-  const { userName, password, email } = req.body;
+  const { userName, password, email, isVerified, hasTakenQuiz, level } = req.body;
   try {
     const hash = await bcrypt.hash(password, 10);
     const userRepository = dataSource.getRepository("User");
@@ -19,20 +13,28 @@ const register = async (req, res) => {
       userName: userName,
       email: email,
       password: hash,
+      isVerified: isVerified,
+      hasTakenQuiz: hasTakenQuiz,
+      level: level,
     });
     await userRepository.save(user);
-    res.json("USER REGISTERED");
+
+    const accessToken = createTokens(user);
+    res.cookie("access-token", accessToken, {
+      maxAge: 60 * 60 * 24 * 30 * 1000,
+      httpOnly: true,
+    });
+
+    res.json({ message: "Logged in", token: accessToken, user: user});
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
 
-// Login user
-
 const login = async (req, res) => {
   const userRepository = dataSource.getRepository("User");
-  const { userName, password } = req.body;
-  const user = await userRepository.findOne({ where: { userName: userName } });
+  const { email, password } = req.body;
+  const user = await userRepository.findOne({ where: { email: email } });
 
   if (!user) {
     return res.status(400).json({ error: "User doesn't exist" });
@@ -43,8 +45,8 @@ const login = async (req, res) => {
 
   if (!match) {
     return res
-      .status(400)
-      .json({ error: "Wrong Username and Password Combination!" });
+        .status(400)
+        .json({ error: "Wrong Username and Password Combination!" });
   }
 
   const accessToken = createTokens(user);
@@ -53,8 +55,31 @@ const login = async (req, res) => {
     httpOnly: true,
   });
 
-  res.json("logged in");
+  res.json({ message: "Logged in", token: accessToken, user: user});
 };
+
+
+const updateUserHasTakenQuiz = async (req, res) => {
+  const userRepo = dataSource.getRepository("User");
+  const userId = req.params.id;
+
+  try {
+    const user = await userRepo.findOne({ where: { id: userId } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.hasTakenQuiz = true;
+    await userRepo.save(user);
+
+    res.json({ message: "User quiz status updated successfully" });
+  } catch (error) {
+    console.error("Error updating user quiz status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 const profile = async (req, res) => {
   res.json("profile");
@@ -116,7 +141,7 @@ const getPendingUsers = async (req, res) => {
   try {
     const pendingUsers = await userRepo.find({
       where: {
-        Verified: "Pending",
+        isVerified: "Pending",
       },
     });
     res.json(pendingUsers);
@@ -131,7 +156,7 @@ const getVerifiedUserCount = async (req, res) => {
   try {
     const verifiedUserCount = await userRepo.count({
       where: {
-        Verified: "Yes",
+        isVerified: "Yes",
       },
     });
     res.json({ count: verifiedUserCount });
@@ -147,7 +172,7 @@ const getUsersWithVerificationIssues = async (req, res) => {
     const usersWithIssues = await userRepo
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.issue", "issue")
-      .where("user.Verified != :verified", { verified: "Yes" })
+      .where("user.isVerified != :verified", { isVerified: "Yes" })
       .getMany();
     const formattedData = usersWithIssues.map((user) => ({
       userId: user.userId,
@@ -172,4 +197,5 @@ module.exports = {
   register,
   login,
   profile,
+  updateUserHasTakenQuiz,
 };

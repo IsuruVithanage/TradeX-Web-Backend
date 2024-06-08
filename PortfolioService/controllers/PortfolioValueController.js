@@ -23,7 +23,7 @@ const updatePortfolioValueOf = async (intoTable) => {
         if (dataToUpdate.length === 0) { return }
 
         dataToUpdate.forEach(data => {
-            data.time = new Date().toISOString();
+            data.time = Math.floor((new Date().getTime()) / 1000);
         });
 
         await valueOperations.updateValueOf(dataToUpdate, intoTable);

@@ -8,6 +8,7 @@ const { validateToken } = require("../JWT");
 //router.post("/saveUser", controller.saveUser);
 
 router.delete("/:id", controller.deleteUser);
+router.put("/updateUserHasTakenQuiz/:id", controller.updateUserHasTakenQuiz);
 
 router.get("/getUserCount", controller.getUserCount);
 

@@ -6,8 +6,8 @@ module.exports = new EntitySchema({
     columns: {
         newsId: {
             type: "int",
-            generated: true,
             primary: true,
+            generated: true,
             nullable: false
         },
         url: {
@@ -25,8 +25,12 @@ module.exports = new EntitySchema({
             nullable: false
         },
         description: {
-            type: "varchar",
+            type: "text",
             nullable: true
+        },
+        publishedAt: {
+            type: "timestamp",
+            nullable: false
         },
         latest: {
             type: "boolean",
@@ -39,7 +43,5 @@ module.exports = new EntitySchema({
             nullable: false,
             default: false
         },
-        
-        
     },
-})
+});

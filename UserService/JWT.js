@@ -1,28 +1,36 @@
-const { sign, verify } = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const createTokens = (user) => {
-  const accessToken = sign(
-    { userName: user.userName, userId: user.userId },
-    "jwtpasschanges"
-  );
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not defined');
+  }
 
-  return accessToken;
+  return jwt.sign(
+      { id: user.userId, userName: user.userName, roles: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+  );
 };
 
 const validateToken = (req, res, next) => {
-  const accessToken = req.cookies["access-Token"];
+  const token = req.cookies["access-token"];
 
-  if (!accessToken)
-    return res.status(400).json({ error: "User not Authenticated!" });
+  if (!token) {
+    return res.status(400).json({ error: "User not authenticated" });
+  }
 
   try {
-    const validToken = verfity(accessToken, "jwtpasschanges");
+    const validToken = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = validToken;
+
     if (validToken) {
-      req.authenticated = true;
       return next();
     }
   } catch (err) {
-    return res.status(400).json({ error: err });
+    return res.status(400).json({ error: err.message });
   }
 };
+
 module.exports = { createTokens, validateToken };

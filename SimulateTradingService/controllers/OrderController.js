@@ -1,5 +1,6 @@
 const dataSource = require("../config/config");
 
+
 const getAllOrders = async (req, res) => {
     const orderRepo = dataSource.getRepository("Order");
     try {
@@ -14,8 +15,7 @@ const getAllOrders = async (req, res) => {
 const getAllOrdersByType = async (type, orderStatus) => {
     try {
         const OrderRepo = dataSource.getRepository("Order");
-        const orders = await OrderRepo.find({ where: { category: type, orderStatus: orderStatus } });
-        return orders;
+        return await OrderRepo.find({where: {category: type, orderStatus: orderStatus}});
     } catch (error) {
         console.error(`Error fetching ${type} orders with status ${orderStatus}:`, error);
         throw error;
@@ -24,6 +24,7 @@ const getAllOrdersByType = async (type, orderStatus) => {
 
 const getAllOrdersByCato = async (req,res) => {
     try {
+
         const type = req.params.type;
         const OrderRepo = dataSource.getRepository("Order");
         const orders=await OrderRepo.find({where: {type: type}});
