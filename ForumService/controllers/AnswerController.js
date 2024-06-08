@@ -29,7 +29,9 @@ const getAnswersByUserId = async (req, res) => {
 
   try {
     const AnswerRepo = dataSource.getRepository("Forum-answers");
-    const answers = await AnswerRepo.find({ where: { userId: userId } });
+    const answers = await AnswerRepo.find({
+      where: { userId: userId },
+    });
     res.json(answers);
   } catch (error) {
     console.error("Error fetching answers by userId:", error);
