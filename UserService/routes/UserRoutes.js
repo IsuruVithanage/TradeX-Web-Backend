@@ -27,6 +27,8 @@ router.post(
 );
 
 router.post("/register", controller.register);
+router.post("/updateUserVerifyStatus", controller.updateUserVerifyStatus);
+
 
 router.post("/login", controller.login);
 
