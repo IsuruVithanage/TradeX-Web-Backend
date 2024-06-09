@@ -1,6 +1,7 @@
 const express = require('express');
-const AssetController = require("../controllers/AssetController");
 const router = express.Router();
+const AssetController = require("../controllers/AssetController");
+
 
 router.get("/:wallet", AssetController.getPortfolioData);       // get all portfolio data - portfolio
 
@@ -8,12 +9,15 @@ router.get("/:userId/:coin", AssetController.getBalance);       // get balance o
 
 router.put("/", AssetController.transferAsset);                 // transfer assets between internal wallets - portfolio
 
-router.put("/hold", AssetController.holdAsset);                 // hold a asset's balance - trading platform
+router.put("/release", AssetController.releaseAsset);           // release a held asset's balance - trading platform
 
-router.post("/:actionType", AssetController.addAsset);          // add after buy or transfer from external wallet
+router.put("/deduct", AssetController.deductAsset);             // deduct after execute a limit order - trading platform
 
-router.post("/deduct/:source", AssetController.deductAsset);    // deduct after sell - trading platform
+router.post("/trade", AssetController.executeTrade);            // change balances after a trade - trading platform
 
+router.post("/transfer", AssetController.receiveFromEx);        // add after a transaction - external wallet
+
+router.post("/allocate", AssetController.allocateUSD);          // allocate USD to a user - Quiz
 
 
 module.exports = router

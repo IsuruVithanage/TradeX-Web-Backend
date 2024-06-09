@@ -23,19 +23,18 @@ module.exports = new EntitySchema({
             nullable: false,
         },
         date: {
-            type: "varchar",
-            length: 10,
+            type: "timestamp with time zone",
             nullable: false,
         },
         sendingWallet: {
             type: "varchar",
-            length: 15,
-            nullable: false,
+            length: 25,
+            nullable: true,
         },
         receivingWallet: {
             type: "varchar",
-            length: 15,
-            nullable: false,
+            length: 25,
+            nullable: true,
         },
     },
 })

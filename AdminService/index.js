@@ -29,7 +29,6 @@ dataSource.initialize()
 
         app.listen(8003, () => {
             console.log("User Service running on Port 8003");
-       
         })
     })
 

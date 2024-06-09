@@ -15,16 +15,32 @@ module.exports = new EntitySchema({
         type: {
             type: "varchar",
         },
+        category: {
+            type: "varchar",
+        },
+        date: {
+            type: "varchar",
+            nullable: true
+        },
         coin: {
             type: "varchar",
         },
         price: {
-            type: "varchar",
+            type: "float",
         },
         quantity: {
-            type: "varchar",
+            type: "float",
+        },
+        stopLimit: {
+            type: "float",
         },
         totalPrice: {
+            type: "float",
+        },
+        time: {
+            type: "bigint",
+        },
+        orderStatus: {
             type: "varchar",
         },
     },

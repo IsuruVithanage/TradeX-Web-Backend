@@ -1,5 +1,8 @@
 const express = require("express");
 const dataSource = require("../config/config");
+const bcrypt = require("bcrypt");
+const User = require("../models/UserModel");
+const { createTokens, validateToken } = require("../JWT");
 
 const getAllUsers = async (req, res) => {
   const userRepo = dataSource.getRepository("User");
@@ -7,10 +10,97 @@ const getAllUsers = async (req, res) => {
 };
 
 
-const saveUser = async (req, res) => {
+const register = async (req, res) => {
+  const { userName, password, email, isVerified, hasTakenQuiz, level } = req.body;
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    const userRepository = dataSource.getRepository("User");
+    const user = userRepository.create({
+      userName: userName,
+      email: email,
+      password: hash,
+      isVerified: isVerified,
+      hasTakenQuiz: hasTakenQuiz,
+      level: level,
+    });
+    await userRepository.save(user);
+
+    const accessToken = createTokens(user);
+    res.cookie("access-token", accessToken, {
+      maxAge: 60 * 60 * 24 * 30 * 1000,
+      httpOnly: true,
+    });
+
+    res.json({ message: "Logged in", token: accessToken, user: user});
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const login = async (req, res) => {
+  const userRepository = dataSource.getRepository("User");
+  const { email, password } = req.body;
+  const user = await userRepository.findOne({ where: { email: email } });
+
+  if (!user) {
+    return res.status(400).json({ error: "User doesn't exist" });
+  }
+
+  const dbPassword = user.password;
+  const match = await bcrypt.compare(password, dbPassword);
+
+  if (!match) {
+    return res
+        .status(400)
+        .json({ error: "Wrong Username and Password Combination!" });
+  }
+
+  const accessToken = createTokens(user);
+  res.cookie("access-token", accessToken, {
+    maxAge: 60 * 60 * 24 * 30 * 1000,
+    httpOnly: true,
+  });
+
+  res.json({ message: "Logged in", token: accessToken, user: user});
+};
+
+
+const updateUserHasTakenQuiz = async (req, res) => {
   const userRepo = dataSource.getRepository("User");
-  const usersave = userRepo.save(req.body);
-  res.json(usersave);
+  const userId = req.params.id;
+
+  try {
+    const user = await userRepo.findOne({ where: { id: userId } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.hasTakenQuiz = true;
+    await userRepo.save(user);
+
+    res.json({ message: "User quiz status updated successfully" });
+  } catch (error) {
+    console.error("Error updating user quiz status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+const profile = async (req, res) => {
+  res.json("profile");
+};
+
+
+const getAllIssues = async (req, res) => {
+  const IssueRepo = dataSource.getRepository("Issue");
+  res.json(await IssueRepo.find());
+};
+
+const saveUserVerificationDetails = async (req, res) => {
+  const verifyRepo = dataSource.getRepository("UserVerificationDetail");
+  const verifySave = verifyRepo.save(req.body);
+  res.json(verifySave);
 };
 
 const deleteUser = async (req, res) => {
@@ -52,7 +142,7 @@ const getPendingUsers = async (req, res) => {
   try {
     const pendingUsers = await userRepo.find({
       where: {
-        Verified: "Pending",
+        isVerified: "Pending",
       },
     });
     res.json(pendingUsers);
@@ -67,7 +157,7 @@ const getVerifiedUserCount = async (req, res) => {
   try {
     const verifiedUserCount = await userRepo.count({
       where: {
-        Verified: "Yes",
+        isVerified: "Yes",
       },
     });
     res.json({ count: verifiedUserCount });
@@ -81,8 +171,8 @@ const getUsersWithVerificationIssues = async (req, res) => {
   try {
     const usersWithIssues = await dataSource.query(
       `SELECT "userId", "userName", "IssueName" AS "issue"  FROM public."user"
-            JOIN "Issue" ON "Issue"."IssueId" = "user"."Verified"
-            WHERE "Verified" != 'Yes' AND "Verified" != 'No' AND "Verified" != 'Pending';`
+            JOIN "Issue" ON "Issue"."IssueId" = "user"."isVerified"
+            WHERE "isVerified" != 'Yes' AND "isVerified" != 'No' AND "isVerified" != 'Pending';`
     );
 
     res.json(usersWithIssues);
@@ -94,11 +184,15 @@ const getUsersWithVerificationIssues = async (req, res) => {
 
 module.exports = {
   getAllUsers,
-  saveUser,
   deleteUser,
   getUserCount,
   getPendingUsers,
   getVerifiedUserCount,
   getUsersWithVerificationIssues,
-  
+  getAllIssues,
+  saveUserVerificationDetails,
+  register,
+  login,
+  profile,
+  updateUserHasTakenQuiz,
 };

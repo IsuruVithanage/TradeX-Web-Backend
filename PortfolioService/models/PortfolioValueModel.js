@@ -9,10 +9,11 @@ const columns = {
     recordNo: {
         primary: true,
         type: "int",
+        default: 1,
         nullable: false,
     },
     time: {
-        type: "timestamp with time zone",
+        type: "float",
         nullable: false,
     },
     value: {

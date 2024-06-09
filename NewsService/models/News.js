@@ -4,24 +4,44 @@ module.exports = new EntitySchema({
     name: "News",
     tableName: "news",
     columns: {
-        title: {
+        newsId: {
+            type: "int",
             primary: true,
-            type: "varchar",
-            length: 100,
+            generated: true,
             nullable: false
         },
-        like: {
-            type: "int",
-            array: true
+        url: {
+            type: "varchar",
+            length: 255,
+            nullable: false
         },
-        dislike: {
-            type: "int",
-            array: true
+        image: {
+            type: "varchar",
+            length: 255,
+            nullable: true
         },
-        favorite:{
-            type: "int",
-            array: true
-        }
-        
+        title: {
+            type: "varchar",
+            nullable: false
+        },
+        description: {
+            type: "text",
+            nullable: true
+        },
+        publishedAt: {
+            type: "timestamp",
+            nullable: false
+        },
+        latest: {
+            type: "boolean",
+            nullable: false,
+            default: true
+        },
+       
+        favourite:{
+            type: "boolean",
+            nullable: false,
+            default: false
+        },
     },
-})
+});
