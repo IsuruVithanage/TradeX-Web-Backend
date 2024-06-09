@@ -1,0 +1,16 @@
+{
+  "name": "tradexa-backend",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node -e \"console.log('\\x1b[31mError: \\'npm start\\' is not allowed here. Please navigate to a subfolder...!\\x1b[0m\\n')\""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cookie-parse": "^0.4.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
