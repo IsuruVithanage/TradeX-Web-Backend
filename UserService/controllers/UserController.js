@@ -2,7 +2,7 @@ const express = require("express");
 const dataSource = require("../config/config");
 const bcrypt = require("bcrypt");
 const User = require("../models/UserModel");
-const {createTokens, validateToken} = require("../JWT");
+const { createTokens, validateToken } = require("../JWT");
 
 const register = async (req, res) => {
     const {userName, password, email, isVerified, hasTakenQuiz, level} = req.body;
@@ -107,11 +107,6 @@ const profile = async (req, res) => {
     res.json("profile");
 };
 
-// const saveUser = async (req, res) => {
-//     const userRepo = dataSource.getRepository("User");
-//     const usersave = userRepo.save(req.body);
-//     res.json(usersave);
-// };
 
 const getAllIssues = async (req, res) => {
     const IssueRepo = dataSource.getRepository("Issue");
@@ -189,36 +184,35 @@ const getVerifiedUserCount = async (req, res) => {
 };
 
 const getUsersWithVerificationIssues = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    try {
-        const usersWithIssues = await userRepo
-            .createQueryBuilder("user")
-            .leftJoinAndSelect("user.issue", "issue")
-            .where("user.isVerified != :verified", {isVerified: "Yes"})
-            .getMany();
-        const formattedData = usersWithIssues.map((user) => ({
-            userId: user.userId,
-            userName: user.userName,
-            issue: user.issue ? user.issue.IssueName : "",
-        }));
-        res.json(formattedData);
-    } catch (error) {
-        console.error("Error fetching users with verification issues:", error);
-        res.status(500).json({message: "Internal server error"});
-    }
+  const userRepo = dataSource.getRepository("User");
+  try {
+    const usersWithIssues = await userRepo
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.issue", "issue")
+      .where("user.isVerified != :verified", { isVerified: "Yes" })
+      .getMany();
+    const formattedData = usersWithIssues.map((user) => ({
+      userId: user.userId,
+      userName: user.userName,
+      issue: user.issue ? user.issue.IssueName : "",
+    }));
+    res.json(formattedData);
+  } catch (error) {
+    console.error("Error fetching users with verification issues:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 module.exports = {
-    deleteUser,
-    getUserCount,
-    getPendingUsers,
-    getVerifiedUserCount,
-    getUsersWithVerificationIssues,
-    getAllIssues,
-    saveUserVerificationDetails,
-    register,
-    login,
-    profile,
-    updateUserHasTakenQuiz,
-    updateUserVerifyStatus
+  deleteUser,
+  getUserCount,
+  getPendingUsers,
+  getVerifiedUserCount,
+  getUsersWithVerificationIssues,
+  getAllIssues,
+  saveUserVerificationDetails,
+  register,
+  login,
+  profile,
+  updateUserHasTakenQuiz,
 };

@@ -12,13 +12,5 @@ module.exports = new EntitySchema({
             type: "varchar",
         },
         
-    },
-
-    relations: {
-        user: {
-            type: "many-to-one",
-            target: "user",
-            inverseSide: "Issue"
-        }
     }
 })
