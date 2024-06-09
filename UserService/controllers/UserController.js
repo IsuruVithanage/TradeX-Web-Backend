@@ -64,7 +64,7 @@ const updateUserHasTakenQuiz = async (req, res) => {
   const userId = req.params.id;
 
   try {
-    const user = await userRepo.findOne({ where: { id: userId } });
+    const user = await userRepo.findOne({ where: { userId: userId } });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
