@@ -3,11 +3,10 @@ const controller = require("../controllers/UserController");
 const router = express.Router();
 const { validateToken } = require("../JWT");
 
-//router.get("/getAllUsers", controller.getAllUsers);
-
-//router.post("/saveUser", controller.saveUser);
+router.get("/getAllUsers", controller.getAllUsers);
 
 router.delete("/:id", controller.deleteUser);
+router.put("/updateUserHasTakenQuiz/:id", controller.updateUserHasTakenQuiz);
 
 router.get("/getUserCount", controller.getUserCount);
 
@@ -20,7 +19,7 @@ router.get(
   controller.getUsersWithVerificationIssues
 );
 
-router.get("/getAllIssues", controller.getAllIssues);
+
 
 router.post(
   "/saveUserVerificationDetails",
@@ -28,6 +27,8 @@ router.post(
 );
 
 router.post("/register", controller.register);
+router.post("/updateUserVerifyStatus", controller.updateUserVerifyStatus);
+
 
 router.post("/login", controller.login);
 

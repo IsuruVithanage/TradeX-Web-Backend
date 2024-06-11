@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const createTokens = (user) => {
   if (!process.env.JWT_SECRET) {
@@ -7,7 +8,7 @@ const createTokens = (user) => {
   }
 
   return jwt.sign(
-      { id: user.id, userName: user.userName, roles: user.roles },
+      { id: user.userId, userName: user.userName, roles: user.email },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
   );

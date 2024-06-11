@@ -10,17 +10,15 @@ const Dislike = require('../models/Dislike');
 const Favourite = require("../models/Favourite");
 const axios = require('axios');
 
-
-
-setTimeout(() => {
+setInterval(() => {
     axios.get('https://newsapi.org/v2/everything?q=bitcoin&apiKey=bc6db274836c4c21aa4569104f316c17')
     .then((res)=>{
-        saveNews(res.data.articles)
+    saveNews(res.data.articles)
     })
     .catch((error)=>{
         console.log(error);
     })
-}, 60000)
+}, 60000);
 
 
 const getAllNews = async (req, res) => {
@@ -86,7 +84,7 @@ const getAllNews = async (req, res) => {
             'news.description AS "description"',
             'news.url AS "url"',
             'news.image AS "image"',
-            'news.publishedAt AS "publishedAt"',
+            'news.publishedAt AS "publishedAt"',	
             'like_counts."likeCount" AS "likeCount"',
             'dislike_counts."dislikeCount" AS "dislikeCount"',
             'user_likes."isLiked" AS "isLiked"',
@@ -109,10 +107,10 @@ const getAllNews = async (req, res) => {
 const getFavNews  = async (req, res)  => {
    try{
     const userId = req.params.userId;
-
     if(!userId){
         return res.status(400).json({message:"userID not found"});
     }
+
     const news = await newsRepo.createQueryBuilder('news')
         .innerJoin(
             'favourite', 'fav',
@@ -173,15 +171,12 @@ const getFavNews  = async (req, res)  => {
         .orderBy('news.publishedAt', 'DESC')
         .getRawMany();
 
-    console.log("news",req.params);
-    res.status(200).json(news);
-   }
-   catch(error){
-    console.log ("error getting favourite news", error);
-    res.status(500).json({message:"error getting favourite news"});
-
-   }
-   
+        res.status(200).json(news);
+    }
+    catch(error){
+        console.log ("error getting favourite news", error);
+        res.status(500).json({message:"error getting favourite news"});
+    }
 }
 
 const addToFav = async (req, res) => {
@@ -207,8 +202,24 @@ const addToFav = async (req, res) => {
         else{
             if(!isFaved){
                 return res.status(200).json({message:"Removed from Favourite"});
-            }        
+            }   
             await favRepo.remove({userId,newsId })
+
+            const favCount = await favRepo.createQueryBuilder('favourite')
+                .select('COUNT(*)', 'favCount')
+                .where('favourite.newsId = :newsId', { newsId })
+                .getRawOne();
+
+            if(favCount.favCount === '0'){
+                const isLatest = await newsRepo.findOne({select: ['latest'], where:{newsId}});
+
+                if(isLatest.latest){
+                    await newsRepo.update(newsId, { favourite: false });
+                }
+                else{
+                    await newsRepo.remove({newsId});
+                }
+            }
             res.status(200).json({message:"Removed from Favourite"})  
         }
         
@@ -226,6 +237,7 @@ const like = async (req, res) => {
         if(isLike === undefined || !userId || !newsId){
             return res.status(400).json({message: "invalid request"});
         }
+
         const isLiked = await likeRepo.findOne({where:{userId,newsId}});
         const news = await newsRepo.findOne({where:{newsId}})
 
@@ -250,11 +262,11 @@ const like = async (req, res) => {
             .getRawOne();
 
         res.status(200).json(likeCount);
-
     }
+
     catch(error){
-    console.log(error);
-    return res.status(500).json({message: error.message});
+        console.log(error);
+        return res.status(500).json({message: error.message});
     }
 }
 
@@ -264,6 +276,7 @@ const dislike = async (req, res) => {
         if(isDislike === undefined || !userId || !newsId){
             return res.status(400).json({message: "invalid request"});
         }
+
         const isDisliked = await dislikeRepo.findOne({where:{userId,newsId}});
         const news = await newsRepo.findOne({where:{newsId}})
 
@@ -288,7 +301,6 @@ const dislike = async (req, res) => {
             .getRawOne();
 
         res.status(200).json(dislikeCount);
-
     }
     catch(error){
     console.log(error);
@@ -324,6 +336,7 @@ const saveNews = async (news) => {
     console.log("new news count", newsToSave.length)
 
    }
+
    catch (error){
         console.log("error saving news", error);
    }

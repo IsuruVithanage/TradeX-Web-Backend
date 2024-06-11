@@ -8,13 +8,11 @@ admin:
 apiEndpoints:
   order-api:
     host: 'localhost'
-    paths: '/order/*'
-  quiz-api:
-    host: 'localhost'
-    paths: '/quiz/*'
-  suggestion-api:
-    host: 'localhost'
-    paths: '/suggestion/*'
+    paths:
+      - '/order/*'
+      - '/order'
+      - '/quiz/*'
+      - '/suggestion/*'
   user-public-api:
     host: 'localhost'
     paths:
@@ -31,48 +29,35 @@ apiEndpoints:
     paths: '/alert/*'
   wallet-api:
     host: 'localhost'
-    paths: '/wallet/*'
-  history-api:
-    host: 'localhost'
-    paths: '/history/*'
-  walletLogin-api:
-    host: 'localhost'
-    paths: '/walletLogin/*'
-  seedphrase-api:
-    host: 'localhost'
-    paths: '/seedphrase/*'
+    paths:
+      - '/wallet/*'
+      - '/history/*'
+      - '/walletLogin/*'
+      - '/seedphrase/*'
   education-api:
     host: 'localhost'
     paths: '/education/*'
   forum-api:
     host: 'localhost'
-    paths: '/forum/*'
-  answers-api:
-    host: 'localhost'
-    paths: '/answers/*'
+    paths:
+      - '/forum/*'
+      - '/answers/*'
   news-api:
     host: 'localhost'
     paths: '/news/*'
-  asset-api:
+  portfolio-api:
     host: 'localhost'
-    paths: '/portfolio/asset/*'
-  value-api:
-    host: 'localhost'
-    paths: '/portfolio/value/*'
-  address-api:
-    host: 'localhost'
-    paths: '/portfolio/address/*'
-  portHistory-api:
-    host: 'localhost'
-    paths: '/portfolio/history/*'
+    paths:
+      - '/portfolio/asset/*'
+      - '/portfolio/value/*'
+      - '/portfolio/address/*'
+      - '/portfolio/history/*'
   watchList-api:
     host: 'localhost'
     paths: '/watchList/*'
 
 serviceEndpoints:
   order-service:
-    url: 'http://localhost:8005'
-  quiz-service:
     url: 'http://localhost:8005'
   suggestion-service:
     url: 'http://localhost:8005'
@@ -84,27 +69,13 @@ serviceEndpoints:
     url: 'http://localhost:8002'
   wallet-service:
     url: 'http://localhost:8006'
-  history-service:
-    url: 'http://localhost:8006'
-  walletLogin-service:
-    url: 'http://localhost:8006'
-  seedphrase-service:
-    url: 'http://localhost:8006'
   education-service:
     url: 'http://localhost:8009'
   forum-service:
     url: 'http://localhost:8010'
-  answers-service:
-    url: 'http://localhost:8010'
   news-service:
     url: 'http://localhost:8008'
-  asset-service:
-    url: 'http://localhost:8011'
-  value-service:
-    url: 'http://localhost:8011'
-  address-service:
-    url: 'http://localhost:8011'
-  portHistory-service:
+  portfolio-service:
     url: 'http://localhost:8011'
   watchList-service:
     url: 'http://localhost:8007'
@@ -125,6 +96,15 @@ pipelines:
     apiEndpoints:
       - order-api
     policies:
+      - cors:
+          - action:
+              origin: 'http://localhost:3000'
+              methods: [ 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS' ]
+              headers: [ 'Authorization', 'Content-Type' ]
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
       - proxy:
           - action:
               serviceEndpoint: order-service
@@ -141,6 +121,11 @@ pipelines:
     apiEndpoints:
       - user-api
     policies:
+      - cors:
+          - action:
+              origin: 'http://localhost:3000'
+              methods: [ 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS' ]
+              headers: [ 'Authorization', 'Content-Type' ]
       - jwt:
           - action:
               secretOrPublicKey: ${env.JWT_SECRET}
@@ -148,22 +133,6 @@ pipelines:
       - proxy:
           - action:
               serviceEndpoint: user-service
-              changeOrigin: true
-  quiz-pipeline:
-    apiEndpoints:
-      - quiz-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: quiz-service
-              changeOrigin: true
-  suggestion-pipeline:
-    apiEndpoints:
-      - suggestion-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: suggestion-service
               changeOrigin: true
   admin-pipeline:
     apiEndpoints:
@@ -189,30 +158,6 @@ pipelines:
           - action:
               serviceEndpoint: wallet-service
               changeOrigin: true
-  history-pipeline:
-    apiEndpoints:
-      - history-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: history-service
-              changeOrigin: true
-  walletLogin-pipeline:
-    apiEndpoints:
-      - walletLogin-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: walletLogin-service
-              changeOrigin: true
-  seedphrase-pipeline:
-    apiEndpoints:
-      - seedphrase-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: seedphrase-service
-              changeOrigin: true
   education-pipeline:
     apiEndpoints:
       - education-api
@@ -229,14 +174,6 @@ pipelines:
           - action:
               serviceEndpoint: forum-service
               changeOrigin: true
-  answers-pipeline:
-    apiEndpoints:
-      - answers-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: answers-service
-              changeOrigin: true
   news-pipeline:
     apiEndpoints:
       - news-api
@@ -245,37 +182,13 @@ pipelines:
           - action:
               serviceEndpoint: news-service
               changeOrigin: true
-  asset-pipeline:
+  portfolio-pipeline:
     apiEndpoints:
-      - asset-api
+      - portfolio-api
     policies:
       - proxy:
           - action:
-              serviceEndpoint: asset-service
-              changeOrigin: true
-  value-pipeline:
-    apiEndpoints:
-      - value-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: value-service
-              changeOrigin: true
-  address-pipeline:
-    apiEndpoints:
-      - address-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: address-service
-              changeOrigin: true
-  portHistory-pipeline:
-    apiEndpoints:
-      - portHistory-api
-    policies:
-      - proxy:
-          - action:
-              serviceEndpoint: portHistory-service
+              serviceEndpoint: portfolio-service
               changeOrigin: true
   watchList-pipeline:
     apiEndpoints:
