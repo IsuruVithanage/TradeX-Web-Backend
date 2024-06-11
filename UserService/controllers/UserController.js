@@ -88,8 +88,13 @@ const refreshToken = (req, res) => {
 };
 
 const logout = (req, res) => {
-    res.clearCookie('refresh-token');
-    res.status(200).json({ message: "Logged out successfully" });
+    res.clearCookie('refresh-token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+    });
+
+    res.status(200).json({ message: 'Logged out successfully' });
 };
 
 const updateUserHasTakenQuiz = async (req, res) => {
