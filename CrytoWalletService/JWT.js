@@ -16,6 +16,7 @@ const validateToken = (req,res,next) => {
 
      try{
         const validToken = verify(accessToken,"jwtsecretplschange")
+        // const validToken = true;
         if (validToken){
             req.authenticated = true
             return next()
