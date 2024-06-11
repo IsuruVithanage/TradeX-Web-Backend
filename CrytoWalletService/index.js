@@ -12,7 +12,8 @@ const SeedPhraseRoutes = require("./routes/SeedPhraseRoutes")
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors( {
-    origin: 'http://localhost:3000', 
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true, 
 }));
 app.use("/wallet", validateToken, walletRouter);
