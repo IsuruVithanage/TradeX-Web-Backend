@@ -61,7 +61,7 @@ const refreshToken = (req, res) => {
 };
 
 const register = async (req, res) => {
-    const {username,password} = req.body;
+    const {username,password,seedphrase} = req.body;
 
     bcrypt.hash(password,10).then(async(hash) => {
         const user = await userRepo.findOne({  where: {  "userName": username} });
@@ -72,7 +72,11 @@ const register = async (req, res) => {
 
         userRepo.save({
             "userName": username, 
-            "password": hash
+            "password": hash,
+            "seedphrase":seedphrase
+
+
+
         }).then(()=>{
             console.log(hash)
             res.status(200).json({"hash": hash, "password": password})
