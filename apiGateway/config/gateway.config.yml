@@ -28,7 +28,9 @@ apiEndpoints:
     paths: '/admin/*'
   alert-api:
     host: 'localhost'
-    paths: '/alert/*'
+    paths:
+      - '/alert/*'
+      - '/notification/*'
   wallet-api:
     host: 'localhost'
     paths:
