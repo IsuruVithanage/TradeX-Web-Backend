@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const axios = require('axios');
-const { getAllRunningAlerts, editAlert, sendNotification} = require('./controllers/AlertController');
+const { getAllRunningAlerts, editAlert } = require('./controllers/AlertController');
+const { sendNotification } = require('./controllers/NotificationController');
 
 
 let coinList = [];
@@ -40,7 +41,7 @@ const startRealtimeMonitoring = async() => {
         setInterval(async() => {
             if(ws.readyState === 1){
                 checkAlerts(); 
-                console.log(marketPrice);
+                //console.log(marketPrice);
             }
         }, 1000);
     }
@@ -99,14 +100,13 @@ const checkAlerts = () => {
                 ){  
 
                     const coinName = coinList[coin].name;
-                    const type = emailActiveStatus ? 'both' : 'push';
                     const localPrice = "$ " + currentPrice.toLocaleString();
                     alert.runningStatus = false;
 
                     editAlert({query: {alertId: alert.alertId}, body: {runningStatus: false}})
                     .then(async() => {
                         sendNotification({ 
-                            params: {type: type }, 
+                            params: {type: emailActiveStatus ? 'push,email' : 'push' }, 
                             body: {
                                 userId: userId,
                                 deviceToken: deviceToken,
@@ -156,7 +156,7 @@ const connectWebSocket = () => {
             ws = new WebSocket('wss://stream.binance.com:9443/ws');
 
             ws.on('open', () => {
-                console.log('WebSocket connection established.');
+                console.log('Binance WebSocket connection established.');
                 resolve();
             });
 
@@ -168,17 +168,17 @@ const connectWebSocket = () => {
             });
             
             ws.on('error', (error) => {
-                console.error('WebSocket error:', error);
+                console.error('Binance WebSocket connection error:', error);
                 reject();
             });
             
             ws.on('close', () => {
-                console.log('WebSocket connection closed.');
+                console.log('Binance WebSocket connection closed.');
             });
         }
 
         catch (error) {
-            console.log('WebSocket connection error:', error);
+            console.log('Binance WebSocket connection error:', error);
             reject();
         }
     });
