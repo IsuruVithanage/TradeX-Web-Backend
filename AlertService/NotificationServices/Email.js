@@ -8,7 +8,7 @@ const fs = require('fs');
 const sendEmailNotification = async (title, emailHeader, emailBody, receiverEmail, attachments) => {
     try{
         const html = fs
-            .readFileSync('./SendNotification/emailTemplate.html', 'utf8')
+            .readFileSync('./NotificationServices/emailTemplate.html', 'utf8')
             .replace('{{header}}', emailHeader || title)
             .replace('{{body}}', emailBody);
 
@@ -18,10 +18,16 @@ const sendEmailNotification = async (title, emailHeader, emailBody, receiverEmai
             client_secret: process.env.MAIL_CLIENT_SECRET,
             refresh_token: process.env.MAIL_REFRESH_TOKEN,
             grant_type: 'refresh_token'
-        });
+        })
 
 
-        nodemailer.createTransport({
+        if(!accessToken || !accessToken.data.access_token){
+            throw new Error('Error fetching access token');
+        }
+
+
+
+        await nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 type: 'OAuth2',
@@ -29,7 +35,7 @@ const sendEmailNotification = async (title, emailHeader, emailBody, receiverEmai
                 clientId: process.env.MAIL_CLIENT_ID,
                 clientSecret: process.env.MAIL_CLIENT_SECRET,
                 refreshToken: process.env.MAIL_REFRESH_TOKEN,
-                accessToken: accessToken
+                accessToken: accessToken.data.access_token
                 //  user: process.env.MAIL_EMAIL,
                 //  pass: process.env.MAIL_PASSWORD
             }

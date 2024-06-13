@@ -21,29 +21,36 @@ catch (error) {
 
 
 
-const sendPushNotification = async (deviceToken, title, body, onClick) => {
+const sendFcmNotification = async (deviceToken, type, title, body, icon, onClick) => {
     try {
-
         if(!deviceToken){
-                throw new Error('Device Token not found');
+            throw new Error('Device Token not found');
         }
 
-        await admin.messaging().send({
+        const message = {
             token: deviceToken,
-            notification: {	
+        }
+
+        if(type.includes('push')){
+            message.notification = {	
                 title: title || 'TradeX',
                 body: body,
-                
-            },
-            webpush: {
-                notification: {
-                    icon: 'https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/TradeX-mini-logo.png'
-                },
-                fcmOptions: {
-                    link: onClick || 'http://localhost:3000/'
-                },
-            }
-        });
+            };
+
+            message.webpush = {
+                notification: { icon: icon },
+                fcmOptions: { link: onClick || 'http://localhost:3000/' },
+            };
+        }
+
+        if(type.includes('app')){
+            message.data = {
+                app: "App Notification",
+            };
+        }
+
+        
+        await admin.messaging().send(message);
 
         return true;
     }
@@ -55,4 +62,4 @@ const sendPushNotification = async (deviceToken, title, body, onClick) => {
 }
 
 
-module.exports = sendPushNotification;
+module.exports = sendFcmNotification;
