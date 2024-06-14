@@ -1,7 +1,5 @@
 const dataSource = require("../config/config");
 const alertRepo = dataSource.getRepository("Alert");
-const sendPushNotification = require("../SendNotification/Push");
-const sendEmailNotification = require("../SendNotification/Email");
 
 
 
@@ -179,91 +177,6 @@ const clearNotifiedAlerts = async (req, res) => {
 
 
 
-const saveDeviceToken = async (req, res) => {
-    try {        
-        await dataSource.getRepository("DeviceToken").save(req.body);
-        res.status(200).json({message: 'Device token saved successfully'});    
-    } 
-    
-    catch (error) {
-        console.log("\nError saving device token:", error);
-        res.status(500).json({message: error.message});
-    }
-}
-
-
-
-const sendNotification = async (req, res) => {
-    try {
-        const { userId, title, body, onClick, emailHeader, emailBody, attachments } = req.body;
-        let { deviceToken, receiverEmail } = req.body;
-        const type = req.params.type;
-
-
-        if(( type !== 'push' && !emailBody ) || !title ){
-            throw Object.assign(new Error('invalid request'), { status: 400 });
-        }
-
-
-        if(type !== 'email'){
-            if(!deviceToken){
-                if(!userId){
-                    throw Object.assign(new Error('User ID not found'), { status: 404 });
-                }
-
-                const user = await dataSource
-                    .getRepository("DeviceToken")
-                    .findOne({where: {userId: userId} });
-
-                deviceToken = !user ? null : user.deviceToken;
-            }
-
-            if(!deviceToken){
-                throw Object.assign(new Error('Device Token not found'), { status: 404 });
-            } else {
-                await sendPushNotification(deviceToken, title, body, onClick);
-            }
-        }
-
-
-        if(type !== 'push'){
-            if(!receiverEmail){
-                if(!userId){
-                    throw Object.assign(new Error('User ID not found'), { status: 404 });
-                }
-
-                receiverEmail = 'ashansalinda5@gmail.com'
-            }
-
-            if(!receiverEmail){
-                throw Object.assign(new Error('Receiver Email Address not found'), { status: 404 });
-            } else {
-                await sendEmailNotification(title, emailHeader, emailBody, receiverEmail, attachments);
-            }
-        }
-
-
-        if(!res){
-            return true;
-        } else {
-            res.status(200).json({message: 'Notification sent successfully'});
-        }
-        
-    }
-
-    catch (error) {
-        console.log("Error sending notification:", error);
-
-        if (!res) {
-            throw error;
-        } else {
-            res.status(error.status || 500).json({message: error.message});
-        }
-    }
-}
-
-
-
 
 module.exports = {
     getAllRunningAlerts,
@@ -271,7 +184,5 @@ module.exports = {
     addAlert,
     editAlert,
     deleteAlert,
-    clearNotifiedAlerts,
-    saveDeviceToken,
-    sendNotification
+    clearNotifiedAlerts
 };

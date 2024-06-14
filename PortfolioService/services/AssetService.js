@@ -118,9 +118,24 @@ const saveAsset = async (asset) => {
 }
 
 
+
+
+
+const deleteAll = async (userId) => {
+    try {
+        await assetRepo.delete({userId: userId});
+    }
+
+    catch (error) {
+        console.log("\nError deleting assets:", error);
+    }
+}
+
+
 module.exports = {
     getAssets,
     getRealtimeTotalValues,
     getAssetsWithMarketPrice,
-    saveAsset
+    saveAsset,
+    deleteAll
 };

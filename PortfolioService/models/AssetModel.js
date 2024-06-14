@@ -1,3 +1,5 @@
+const { on } = require("ws")
+
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
@@ -35,4 +37,13 @@ module.exports = new EntitySchema({
             nullable: false,
         },
     },
+
+    relations: {
+        walletAddress: {
+            type: "many-to-one",
+            target: "WalletAddress",
+            joinColumn: { name: "userId" },
+            onDelete: "CASCADE",
+        },
+    }
 })

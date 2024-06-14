@@ -6,18 +6,19 @@ const walletRouter = require("./routes/WalletRoutes");
 const WalletHistoryRounter = require("./routes/WalletHistoryRoutes")
 const WalletLoginRounter = require("./routes/WalletLoginRoutes")
 const cookieParser = require("cookie-parser")
-const {validateToken} = require('./JWT')
 const SeedPhraseRoutes = require("./routes/SeedPhraseRoutes")
+const bodyParser = require('body-parser');
 
 app.use(express.json());
+app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors( {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true, 
 }));
-app.use("/wallet", validateToken, walletRouter);
-app.use("/history", validateToken, WalletHistoryRounter);
+app.use("/wallet", walletRouter);
+app.use("/history", WalletHistoryRounter);
 app.use("/walletLogin",  WalletLoginRounter);
 app.use("/seedphrase",  SeedPhraseRoutes);
 
