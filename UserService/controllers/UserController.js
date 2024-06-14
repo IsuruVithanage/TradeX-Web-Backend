@@ -2,7 +2,7 @@ const express = require("express");
 const dataSource = require("../config/config");
 const bcrypt = require("bcrypt");
 const User = require("../models/UserModel");
-const {createTokens, validateToken, createAccessToken, createRefreshToken} = require("../JWT");
+const {createAccessToken, createRefreshToken} = require("../JWT");
 const jwt = require('jsonwebtoken');
 
 
@@ -18,16 +18,33 @@ const register = async (req, res) => {
             isVerified: isVerified,
             hasTakenQuiz: hasTakenQuiz,
             level: level,
+            role: "User",
         });
         await userRepository.save(user);
 
-        const accessToken = createTokens(user);
-        res.cookie("access-token", accessToken, {
-            maxAge: 60 * 60 * 24 * 30 * 1000,
+        const accessToken = createAccessToken(user);
+        const refreshToken = createRefreshToken(user);
+
+
+        res.cookie("refresh-token", refreshToken, {
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
             httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
         });
 
-        res.json({message: "Logged in", token: accessToken, user: user});
+        const userDetail = {
+            id: user.userId,
+            userName: user.userName,
+            email: user.email,
+            isVerified: user.isVerified,
+            hasTakenQuiz: user.hasTakenQuiz,
+            level: user.level,
+            role: user.role,
+        }
+
+        res.json({ message: "Logged in", accessToken , user: userDetail});
+
     } catch (err) {
         res.status(400).json({error: err.message});
     }
@@ -67,6 +84,7 @@ const login = async (req, res) => {
         isVerified: user.isVerified,
         hasTakenQuiz: user.hasTakenQuiz,
         level: user.level,
+        role: user.role,
     }
 
     res.json({ message: "Logged in", accessToken , user: userDetail});
