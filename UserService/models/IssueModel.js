@@ -4,13 +4,14 @@ module.exports = new EntitySchema({
     name: "Issue",
     tableName: "Issue",
     columns: {
-        IssueId: {
-            type: "varchar",
+        issueId: {
+            type: "int",
             primary: true,
+            generated: true
         },
-        IssueName: {
+        issueName: {
             type: "varchar",
         },
         
-    }
+    },
 })

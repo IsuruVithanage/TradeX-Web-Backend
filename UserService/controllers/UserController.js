@@ -240,24 +240,27 @@ const getVerifiedUserCount = async (req, res) => {
 };
 
 const getUsersWithVerificationIssues = async (req, res) => {
-  const userRepo = dataSource.getRepository("User");
-  try {
-    const usersWithIssues = await userRepo
-      .createQueryBuilder("user")
-      .leftJoinAndSelect("user.issue", "issue")
-      .where("user.isVerified != :verified", { isVerified: "Yes" })
-      .getMany();
-    const formattedData = usersWithIssues.map((user) => ({
-      userId: user.userId,
-      userName: user.userName,
-      issue: user.issue ? user.issue.IssueName : "",
-    }));
-    res.json(formattedData);
-  } catch (error) {
-    console.error("Error fetching users with verification issues:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
+    const userRepo = dataSource.getRepository("User");
+    try {
+      const usersWithIssues = await userRepo
+        .createQueryBuilder("user")
+        .leftJoinAndSelect("user.issues", "issue")
+        .where("user.isVerified NOT IN (:...statuses)", { statuses: ['Yes', 'No', 'Pending'] })
+        .getMany();
+  
+      const formattedData = usersWithIssues.map((user) => ({
+        userId: user.userId,
+        userName: user.userName,
+        issues: user.issues.map(issue => issue.issueName)
+      }));
+  
+      res.json(formattedData);
+    } catch (error) {
+      console.error("Error fetching users with verification issues:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+  
 
 module.exports = {
     deleteUser,
