@@ -3,7 +3,7 @@ const gateway = require('express-gateway');
 
 const fs = require('fs');
 const yaml = require('js-yaml');
-require('dotenv').config();
+require('dotenv').config({path: path.join(__dirname, '..', '.env')});
 
 const replaceEnvVariables = (content) => {
     return content.replace(/\$\{(\w+)\}/g, (_, n) => process.env[n]);

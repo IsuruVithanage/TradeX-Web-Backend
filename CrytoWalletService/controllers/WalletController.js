@@ -2,11 +2,13 @@
 const axios = require("axios");
 const dataSource = require("../config/config");
 const walletRepo = dataSource.getRepository("Capital");
-const updateWalletHistory = require("./WalletHistoryContrller").updateWalletHistory;
+const updateWalletHistory = require("./WalletHistoryController").updateWalletHistory;
+const address = require("./WalletAddress");
 
 // Function to get all balances for a user
 const getAllBalances = async (req, res) => {
     try {
+        // address.generateWalletAddress({body:{userId:1,userName:"sayya"}});
         // Extract userId from request parameters
         const userId = req.params.userId;	
         let usdBalance = 0;
@@ -81,6 +83,7 @@ const getAllBalances = async (req, res) => {
             usdBalance: usdBalance,
             portfolioValue: portfolioValue,
             assets: updatedAssets,
+            address: await address.getWalletAddress(userId)
         }); 
     } catch (error) {
         console.log("\nError getting PortfolioData:", error);
