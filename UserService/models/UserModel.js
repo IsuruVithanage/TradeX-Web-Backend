@@ -23,6 +23,10 @@ module.exports = new EntitySchema({
     isVerified: {
       type: "varchar",
     },
+    issueId: {
+      type: "int",
+      nullable: true
+    },
     hasTakenQuiz: {
       type: "boolean",
     },
@@ -30,5 +34,18 @@ module.exports = new EntitySchema({
       type: "varchar",
     },
   },
+
+  relations: {
+    user_verification_detail: {
+      type: "one-to-one",
+      target: "UserVerificationDetail",
+      joinColumn: {name: "userId"}
+    },
+    Issue: {
+      type: "many-to-one",
+      target: "Issue",
+      joinColumn: { name: "issueId"}
+    }
+  }
 });
 
