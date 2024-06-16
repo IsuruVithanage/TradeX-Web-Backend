@@ -248,7 +248,7 @@ const transferAsset = async (req, res) => {
 
 const receiveFromEx = async (req, res) => {
     try {
-        const { coin, quantity, AvgPurchasePrice, receivingWallet, sendingWallet } = req.body;
+        let { coin, quantity, AvgPurchasePrice, receivingWallet, sendingWallet } = req.body;
         if( 
             !receivingWallet || 
             !sendingWallet || 
