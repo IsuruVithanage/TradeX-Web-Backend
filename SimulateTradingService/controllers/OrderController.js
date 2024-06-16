@@ -35,6 +35,20 @@ const getAllOrdersByCato = async (req,res) => {
     }
 };
 
+const getAllOrdersByIdAndCato = async (req,res) => {
+    try {
+
+        const type = req.params.type;
+        const id = req.params.id;
+        const OrderRepo = dataSource.getRepository("Order");
+        const orders=await OrderRepo.find({where: {type: type, userId: id, orderStatus: 'Complete'}});
+        res.json(orders);
+    } catch (error) {
+        console.error(`Error fetching orders:`, error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 const getAllOrdersByCoinAndCategory = async (req, res) => {
     try {
         const coin = req.params.coin;
@@ -166,5 +180,6 @@ module.exports = {
     getAllOrdersByCoinAndCategory,
     getAllOrdersByCato,
     updateOrderTime,
-    updateOrderCategory
+    updateOrderCategory,
+    getAllOrdersByIdAndCato
 };

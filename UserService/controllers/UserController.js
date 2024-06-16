@@ -149,6 +149,10 @@ const updateUserVerifyStatus = async (req, res) => {
         }
 
         user.isVerified = status;
+        if (status === "Yes") {
+            user.role = "Trader";
+        }
+
         await userRepo.save(user);
 
         res.json({message: "User verify status updated successfully"});

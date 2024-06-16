@@ -1,7 +1,7 @@
 require("dotenv").config();
 const secretKey = process.env.SECRET_KEY;
-const walletAddressRepo = dataSource.getRepository("WalletAddress");
 const dataSource = require("../config/config");
+const walletAddressRepo = dataSource.getRepository("WalletAddress");
 const CryptoJS = require("crypto-js");
 
 
