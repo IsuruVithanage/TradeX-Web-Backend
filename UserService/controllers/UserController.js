@@ -16,6 +16,7 @@ const register = async (req, res) => {
             email: email,
             password: hash,
             isVerified: isVerified,
+            issue: "",
             hasTakenQuiz: hasTakenQuiz,
             level: level,
             role: "User",
