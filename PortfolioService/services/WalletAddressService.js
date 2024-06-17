@@ -71,7 +71,7 @@ const getUserId = async (walletAddress) => {
 const getUserName = async (walletAddress) => {
     try{
         return CryptoJS.AES
-        .decrypt(address, secretKey)
+        .decrypt(walletAddress, secretKey)
         .toString(CryptoJS.enc.Utf8)
         .split(":")[0];
     }

@@ -211,10 +211,11 @@ const transferAsset = async (req, res) => {
                     await axios.post(
                         "http://localhost:8006/wallet",
                         {
-                            userId: assetToTransfer.userId ,
                             coin: assetToTransfer.symbol ,
                             quantity: quantity ,
                             purchasePrice: assetToTransfer.AvgPurchasePrice ,
+                            sendingWallet: await WalletAddressService.getUserName(sendingWallet),
+                            receivingWallet: receivingWallet,
                         }
                     )
                     .then(() => {
@@ -296,7 +297,9 @@ const receiveFromEx = async (req, res) => {
             receivingWallet: 'fundingWallet',
         });
         
-        res.status(200).json({message: "Asset Updated"}); 
+        const userName = await WalletAddressService.getUserName(receivingWallet);
+
+        res.status(200).json({message: "Asset Updated", receiverName:userName}); 
     } 
     
     catch (error) {
