@@ -23,6 +23,9 @@ module.exports = new EntitySchema({
     isVerified: {
       type: "varchar",
     },
+    issue: {
+      type: "varchar",
+    },
     hasTakenQuiz: {
       type: "boolean",
     },
