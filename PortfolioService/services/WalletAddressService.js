@@ -76,7 +76,7 @@ const getUserName = async (walletAddress) => {
         .split(":")[0];
     }
     catch(error){
-        console.log("\nError decrypting wallet address:", error);
+        console.log("Error decrypting wallet address:", error);
         return null;
     }
 }
