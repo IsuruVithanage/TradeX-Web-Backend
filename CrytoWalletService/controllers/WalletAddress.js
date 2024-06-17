@@ -5,7 +5,6 @@ require ("dotenv").config();
 
 const generateWalletAddress = async (req, res) => {
     try{
-        console.log("run")
 
         const { userName, userId } = req.body;
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
