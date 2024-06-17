@@ -19,8 +19,8 @@ const startRealtimeMonitoring = async() => {
         .then((response) => {
             coinList = response.data;
         })
-        .catch((error) => {
-            console.log('Coin list fetching error:', error)
+        .catch(() => {
+            console.log('Coin list fetching error')
         });
 
 
@@ -151,7 +151,7 @@ const checkAlerts = () => {
 
 
 const connectWebSocket = () => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         try{
             ws = new WebSocket('wss://stream.binance.com:9443/ws');
 
@@ -167,19 +167,20 @@ const connectWebSocket = () => {
                 };   
             });
             
-            ws.on('error', (error) => {
-                console.error('Binance WebSocket connection error:', error);
-                reject();
+            ws.on('error', () => {
+                console.error('Binance WebSocket connection error:');
+                resolve();
             });
             
             ws.on('close', () => {
                 console.log('Binance WebSocket connection closed.');
+                resolve();
             });
         }
 
         catch (error) {
             console.log('Binance WebSocket connection error:', error);
-            reject();
+            resolve();
         }
     });
 }
