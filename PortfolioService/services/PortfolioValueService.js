@@ -1,7 +1,7 @@
 const dataSource = require("../config/config");
 
 
-const getPortfolioValueData = async (userId, timezoneOffset) => {
+const getPortfolioValueData = async (userId) => {
     try {
         const queryResult = await dataSource.query(
         `   SELECT 'Hourly' AS "type", "time", "value"

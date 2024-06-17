@@ -1,31 +1,30 @@
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
-    name: "EduResources",
-    tableName: "eduResources",
+    name: "UserDetail",
+    tableName: "userdetail",
     columns: {
-        eduId: {
-            primary: true,
+        userId: {
             type: "int",
+            nullable: false,
             generated: true,
         },
-        title: {
+        userName: {
+            primary: true,
             type: "varchar",
+            length: 15,
             nullable: false,
         },
-        description: {
+        password: {
             type: "varchar",
+            length:100,
             nullable: false,
         },
-        image: {
-            type: "varchar",
-            nullable: false,
-        },
-        url: {
+        seedphrase: {
             type: "varchar",
             nullable: false,
         },
         
-
+      
     },
 })

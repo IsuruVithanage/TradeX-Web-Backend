@@ -2,7 +2,9 @@ const express = require("express");
 const dataSource = require("../config/config");
 const bcrypt = require("bcrypt");
 const User = require("../models/UserModel");
-const {createTokens, validateToken} = require("../JWT");
+const {createAccessToken, createRefreshToken} = require("../JWT");
+const jwt = require('jsonwebtoken');
+
 
 const register = async (req, res) => {
     const {userName, password, email, isVerified, hasTakenQuiz, level} = req.body;
@@ -14,18 +16,36 @@ const register = async (req, res) => {
             email: email,
             password: hash,
             isVerified: isVerified,
+            issue: "",
             hasTakenQuiz: hasTakenQuiz,
             level: level,
+            role: "User",
         });
         await userRepository.save(user);
 
-        const accessToken = createTokens(user);
-        res.cookie("access-token", accessToken, {
-            maxAge: 60 * 60 * 24 * 30 * 1000,
+        const accessToken = createAccessToken(user);
+        const refreshToken = createRefreshToken(user);
+
+
+        res.cookie("refresh-token", refreshToken, {
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
             httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
         });
 
-        res.json({message: "Logged in", token: accessToken, user: user});
+        const userDetail = {
+            id: user.userId,
+            userName: user.userName,
+            email: user.email,
+            isVerified: user.isVerified,
+            hasTakenQuiz: user.hasTakenQuiz,
+            level: user.level,
+            role: user.role,
+        }
+
+        res.json({ message: "Logged in", accessToken , user: userDetail});
+
     } catch (err) {
         res.status(400).json({error: err.message});
     }
@@ -33,31 +53,68 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     const userRepository = dataSource.getRepository("User");
-    const {email, password} = req.body;
-    const user = await userRepository.findOne({where: {email: email}});
+    const { email, password } = req.body;
+    const user = await userRepository.findOne({ where: { email: email } });
 
     if (!user) {
-        return res.status(400).json({error: "User doesn't exist"});
+        return res.status(400).json({ error: "User doesn't exist" });
     }
 
     const dbPassword = user.password;
     const match = await bcrypt.compare(password, dbPassword);
 
     if (!match) {
-        return res
-            .status(400)
-            .json({error: "Wrong Username and Password Combination!"});
+        return res.status(400).json({ error: "Wrong Username and Password Combination!" });
     }
 
-    const accessToken = createTokens(user);
-    res.cookie("access-token", accessToken, {
-        maxAge: 60 * 60 * 24 * 30 * 1000,
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+
+
+    res.cookie("refresh-token", refreshToken, {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
     });
 
-    res.json({message: "Logged in", token: accessToken, user: user});
+    const userDetail = {
+        id: user.userId,
+        userName: user.userName,
+        email: user.email,
+        isVerified: user.isVerified,
+        hasTakenQuiz: user.hasTakenQuiz,
+        level: user.level,
+        role: user.role,
+    }
+
+    res.json({ message: "Logged in", accessToken , user: userDetail});
 };
 
+const refreshToken = (req, res) => {
+    const refreshToken = req.cookies["refresh-token"];
+    if (!refreshToken) {
+        return res.status(401).json({ error: "Refresh token not found" });
+    }
+
+    try {
+        const user = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const newAccessToken = createAccessToken(user);
+        res.json({ accessToken: newAccessToken });
+    } catch (err) {
+        return res.status(403).json({ error: "Invalid refresh token" });
+    }
+};
+
+const logout = (req, res) => {
+    res.clearCookie('refresh-token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+    });
+
+    res.status(200).json({ message: 'Logged out successfully' });
+};
 
 const updateUserHasTakenQuiz = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
@@ -93,6 +150,10 @@ const updateUserVerifyStatus = async (req, res) => {
         }
 
         user.isVerified = status;
+        if (status === "Yes") {
+            user.role = "Trader";
+        }
+
         await userRepo.save(user);
 
         res.json({message: "User verify status updated successfully"});
@@ -107,11 +168,6 @@ const profile = async (req, res) => {
     res.json("profile");
 };
 
-// const saveUser = async (req, res) => {
-//     const userRepo = dataSource.getRepository("User");
-//     const usersave = userRepo.save(req.body);
-//     res.json(usersave);
-// };
 
 const getAllIssues = async (req, res) => {
     const IssueRepo = dataSource.getRepository("Issue");
@@ -191,22 +247,25 @@ const getVerifiedUserCount = async (req, res) => {
 const getUsersWithVerificationIssues = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     try {
-        const usersWithIssues = await userRepo
-            .createQueryBuilder("user")
-            .leftJoinAndSelect("user.issue", "issue")
-            .where("user.isVerified != :verified", {isVerified: "Yes"})
-            .getMany();
-        const formattedData = usersWithIssues.map((user) => ({
-            userId: user.userId,
-            userName: user.userName,
-            issue: user.issue ? user.issue.IssueName : "",
-        }));
-        res.json(formattedData);
+      const usersWithIssues = await userRepo
+        .createQueryBuilder("user")
+        .leftJoinAndSelect("user.issues", "issue")
+        .where("user.isVerified NOT IN (:...statuses)", { statuses: ['Yes', 'No', 'Pending'] })
+        .getMany();
+  
+      const formattedData = usersWithIssues.map((user) => ({
+        userId: user.userId,
+        userName: user.userName,
+        issues: user.issues.map(issue => issue.issueName)
+      }));
+  
+      res.json(formattedData);
     } catch (error) {
-        console.error("Error fetching users with verification issues:", error);
-        res.status(500).json({message: "Internal server error"});
+      console.error("Error fetching users with verification issues:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-};
+  };
+  
 
 module.exports = {
     deleteUser,
@@ -220,5 +279,7 @@ module.exports = {
     login,
     profile,
     updateUserHasTakenQuiz,
-    updateUserVerifyStatus
+    updateUserVerifyStatus,
+    refreshToken,
+    logout
 };

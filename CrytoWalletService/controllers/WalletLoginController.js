@@ -2,13 +2,12 @@ const express = require('express');
 const dataSource = require("../config/config");
 const bcrypt = require('bcrypt')
 const userRepo = dataSource.getRepository("UserDetail");
-const {createTokens} = require('../JWT')
+const {createAccessToken, createRefreshToken} = require("../JWT");
 
 
 const login = async (req, res) => {
     const {username,password} = req.body;
-    const accessToken = req.cookies["access-token"] ;
-    console.log("accessToken",accessToken);    
+    
 
     const user = await userRepo.findOne({where: {userName: username}});
 
@@ -23,21 +22,46 @@ const login = async (req, res) => {
         }
         else{
 
-            const accessToken = createTokens(user)
-            res.cookie("access-token", accessToken, {
-                expires: false, // Cookie will expire when the browser is closed
+            const accessToken = createAccessToken(user);
+            const refreshToken = createRefreshToken(user);
+        
+        
+            res.cookie("wallet-refresh-token", refreshToken, {
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Lax',
             });
+        
+            const userDetail = {
+                id: user.userId,
+                userName: user.userName,
+            }
+        
+            res.json({ message: "Logged in", accessToken , user: userDetail});
             
-
-            res.status(200).json({login:true})
-
         }
     })
 
 };
 
+const refreshToken = (req, res) => {
+    const refreshToken = req.cookies["refresh-token"];
+    if (!refreshToken) {
+        return res.status(401).json({ error: "Refresh token not found" });
+    }
+
+    try {
+        const user = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const newAccessToken = createAccessToken(user);
+        res.json({ accessToken: newAccessToken });
+    } catch (err) {
+        return res.status(403).json({ error: "Invalid refresh token" });
+    }
+};
+
 const register = async (req, res) => {
-    const {username,password} = req.body;
+    const {username,password,seedphrase} = req.body;
 
     bcrypt.hash(password,10).then(async(hash) => {
         const user = await userRepo.findOne({  where: {  "userName": username} });
@@ -48,7 +72,11 @@ const register = async (req, res) => {
 
         userRepo.save({
             "userName": username, 
-            "password": hash
+            "password": hash,
+            "seedphrase":seedphrase
+
+
+
         }).then(()=>{
             console.log(hash)
             res.status(200).json({"hash": hash, "password": password})
@@ -69,13 +97,9 @@ const profile = async (req, res) => {
 
 };
 
-
-
-
-
-
 module.exports = {
    register,
    login,
-   profile
+   profile,
+   refreshToken
 }
