@@ -1,5 +1,3 @@
-const { on } = require("ws")
-
 const EntitySchema = require("typeorm").EntitySchema
 
 module.exports = new EntitySchema({
