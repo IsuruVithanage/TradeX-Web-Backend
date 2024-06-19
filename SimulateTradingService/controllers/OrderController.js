@@ -37,11 +37,10 @@ const getAllOrdersByCato = async (req,res) => {
 
 const getAllOrdersByIdAndCato = async (req,res) => {
     try {
-
         const type = req.params.type;
         const id = req.params.id;
         const OrderRepo = dataSource.getRepository("Order");
-        const orders=await OrderRepo.find({where: {type: type, userId: id, orderStatus: 'Complete'}});
+        const orders=await OrderRepo.find({where: {userId: id, type: type, orderStatus: 'Completed'}});
         res.json(orders);
     } catch (error) {
         console.error(`Error fetching orders:`, error);
