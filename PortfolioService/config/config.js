@@ -3,10 +3,10 @@ const path = require("path");
 
 const dataSource = new typeorm.DataSource({
     type: "postgres",
-    host: "localhost",
-    port: 5432,
-    username: "isuruvithanage",
-    password: "",
+    host: process.env.RDS_HOST,
+    port: process.env.RDS_PORT,
+    username: process.env.RDS_USERNAME,
+    password: process.env.RDS_PASSWORD,
     database: "portfolio_service_db",
     synchronize: true,
     logging : ["error", "warn"],
