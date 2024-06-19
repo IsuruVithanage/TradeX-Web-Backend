@@ -12,7 +12,7 @@ module.exports = new EntitySchema({
         userName: {
             primary: true,
             type: "varchar",
-            length: 15,
+            length: 25,
             nullable: false,
         },
         password: {

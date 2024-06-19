@@ -47,6 +47,7 @@ const sendWebSocketNotification = (type, userId, title, body, icon) => {
             }
 
             const payload = {};
+            let alreadySent = false;
 
             if(type.includes('push')){
                 payload.notification = { title, body, icon };
@@ -56,7 +57,17 @@ const sendWebSocketNotification = (type, userId, title, body, icon) => {
                 payload.data = { app: "App Notification" };
             }
 
-            await user.send(JSON.stringify(payload));
+            await wss.clients.forEach(async(client) => {
+                if(client.userId === userId && client.readyState === WebSocket.OPEN){
+                    if(alreadySent && payload.notification){
+                        payload.notification.title = null;
+                    }
+
+                    alreadySent = true;
+                    await client.send(JSON.stringify(payload));
+                }
+            })
+
             return resolve(true);
         });
     }

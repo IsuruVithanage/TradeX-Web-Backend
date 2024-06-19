@@ -95,7 +95,7 @@ const getAllBalances = async (req, res) => {
 const transferBalance = async (req, res) => {
     try {
         // Validate request parameters
-        if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet) {
+        if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet ) {
             return res.status(400).json({
                 message: "Invalid request, contain null values for 'userId', 'coin', 'quantity'"
             });
@@ -103,6 +103,7 @@ const transferBalance = async (req, res) => {
         if (req.body.quantity <= 0) {
             return res.status(400).json({ message: "Invalid quantity" });
         }
+
       
         // Find the asset to transfer
         let assetToTransfer = await walletRepo.findOne({
@@ -124,11 +125,11 @@ const transferBalance = async (req, res) => {
         // Transfer asset
         axios.post("http://localhost:8011/portfolio/asset/transfer", {
             receivingWallet: req.body.receivingWallet,
-            sendingWallet: req.body.sendingWallet,
+            sendingWallet: address.getUserName(req.body.sendingWallet ),
             coin: assetToTransfer.coin,
             quantity: req.body.quantity,
             AvgPurchasePrice: assetToTransfer.AvgPurchasePrice,
-        }).then(async() => {
+        }).then(async({data}) => {
             assetToTransfer.balance -= req.body.quantity;
             await walletRepo.save(assetToTransfer)
             await updateWalletHistory({
@@ -137,7 +138,7 @@ const transferBalance = async (req, res) => {
                 quantity:req.body.quantity,
                 date:new Date(),
                 type:"Send",
-                from_to: req.body.receivingWallet
+                from_to: data.receiverName
             })
             await getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
 
@@ -155,7 +156,7 @@ const transferBalance = async (req, res) => {
 const addCapital = async (req, res) => {
     try {
         // Validate request parameters
-        if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.purchasePrice ){
+        if (!req.body.receivingWallet|| !req.body.sendingWallet || !req.body.coin || !req.body.quantity || !req.body.purchasePrice ){
             return res.status(400).json({ 
                 message:"invalid request, contain null values for 'userId', 'coin', 'quantity' or 'purchasePrice'"
             });
@@ -164,13 +165,18 @@ const addCapital = async (req, res) => {
             return res.status(400).json({ message:"invalid quantity or purchasePrice" });
         }
 
+        const userId = await address.getUserId(req.body.receivingWallet);
+        if(!userId){
+            return res.status(400).json({ message:"invalid wallet address"});
+        }
+
         // Set purchase price to 1 for USD
         req.body.purchasePrice = (req.body.coin === 'USD') ? 1 : req.body.purchasePrice;
 
         // Find existing asset or create new one
         let assetToUpdate = await walletRepo.findOne({
             where:{
-                userId:req.body.userId,
+                userId:userId,
                 coin:req.body.coin
             }
         })
@@ -178,7 +184,7 @@ const addCapital = async (req, res) => {
         // Update asset details
         if (!assetToUpdate){
             assetToUpdate = {
-                userId: req.body.userId,
+                userId:userId,
                 coin: req.body.coin,
                 balance: req.body.quantity,
                 AvgPurchasePrice: req.body.purchasePrice
@@ -191,18 +197,20 @@ const addCapital = async (req, res) => {
             assetToUpdate.AvgPurchasePrice = newAvgPurchasePrice;
             assetToUpdate.balance += req.body.quantity;
         }
-
         // Save updated asset details
         await walletRepo.save(assetToUpdate)
         await updateWalletHistory({
-            userId:req.body.userId,
+            userId:userId,
             coin:req.body.coin,
             quantity:req.body.quantity,
             date:new Date(),
             type:"Recieve",
-            from_to: "tradeX"
+            from_to: req.body.sendingWallet
         })
-        res.status(200).json({message: "Asset Updated"}); 
+        res.status(200).json({
+            message: "Asset Updated",
+            receiverName: address.getUserName(req.body.receivingWallet)
+        }); 
     } catch (error) {
         console.log("\nError adding asset:", error);
         res.status(500).json({message: error.message});

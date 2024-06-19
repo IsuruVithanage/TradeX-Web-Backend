@@ -71,11 +71,12 @@ const updateValueOf = async (dataToUpdate, intoTable) => {
             .insert()
             .into(`portfolio${intoTable}Value`)
             .values(dataToUpdate)
+            .orIgnore()
             .execute();
     }
 
     catch (error) {
-        console.log("\nError updating hourly value:", error);
+        console.log(`\nError inserting ${intoTable} value:`, error);
     }
 };
 
