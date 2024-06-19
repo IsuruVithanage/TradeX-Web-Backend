@@ -11,5 +11,7 @@ router.get("/getVerifiedUserCount", controller.getVerifiedUserCount);
 
 router.get("/getUsersWithVerificationIssues", controller.getUsersWithVerificationIssues);
 
+router.get("/getAllUsers", controller.getAllUsers);
+
 
 module.exports = router;
