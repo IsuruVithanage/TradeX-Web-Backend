@@ -207,7 +207,10 @@ const addCapital = async (req, res) => {
             type:"Recieve",
             from_to: req.body.sendingWallet
         })
-        res.status(200).json({message: "Asset Updated"}); 
+        res.status(200).json({
+            message: "Asset Updated",
+            receiverName: address.getUserName(req.body.receivingWallet)
+        }); 
     } catch (error) {
         console.log("\nError adding asset:", error);
         res.status(500).json({message: error.message});
