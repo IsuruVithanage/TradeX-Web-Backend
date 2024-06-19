@@ -13,5 +13,4 @@ const dataSource = new typeorm.DataSource({
     entities: [path.join(__dirname , ".." , "models/**/*.js")],
 })
 
-
 module.exports = dataSource;
