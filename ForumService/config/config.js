@@ -1,12 +1,6 @@
 const typeorm = require("typeorm");
-
 const path = require("path");
-require('dotenv').config({path: path.join(__dirname, '...', '.env')});
-
-console.log('RDS_HOST:', process.env.RDS_HOST);
-console.log('RDS_PORT:', process.env.RDS_PORT);
-console.log('RDS_USERNAME:', process.env.RDS_USERNAME);
-console.log('RDS_PASSWORD:', process.env.RDS_PASSWORD);
+require('dotenv').config();
 
 const dataSource = new typeorm.DataSource({
     type: "postgres",
@@ -17,6 +11,7 @@ const dataSource = new typeorm.DataSource({
     database: "forum_service_db",
     synchronize: true,
     logging : true,
+    ssl:{rejectUnauthorized: false},
     entities: [path.join(__dirname, "..", "models/**/*.js")],
 });
 

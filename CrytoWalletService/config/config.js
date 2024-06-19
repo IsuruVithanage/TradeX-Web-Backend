@@ -1,5 +1,6 @@
 const typeorm = require("typeorm");
 const path = require("path");
+require("dotenv").config();
 
 const dataSource = new typeorm.DataSource({
     type: "postgres",
@@ -10,6 +11,9 @@ const dataSource = new typeorm.DataSource({
     database: "wallet_service_db",
     synchronize: true,
     logging : true,
+    ssl: {
+        rejectUnauthorized: false
+    },
     entities: [path.join(__dirname , ".." , "models/**/*.js")],
 })
 
