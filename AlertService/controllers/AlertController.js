@@ -40,7 +40,7 @@ const getAllRunningAlerts = async () => {
 const getAlerts = async (req, res) => {
     try {
         if(!req.query.userId){
-            res.status(404).json({message: 'Alerts not found'});
+            res.status(404).json({message: 'User not found'});
         }
 
         else{
@@ -70,8 +70,14 @@ const getAlerts = async (req, res) => {
 
 const addAlert = async (req, res) => {
     try {
+        const { userId, coin, price, condition } = req.body;
+        
+        if(!userId || !coin || !price || !condition){
+            return res.status(400).json({message: 'Invalid alert data'});
+        }
+
         await alertRepo.save(req.body);
-        await getAlerts({ query: { userId: req.body.userId, runningStatus: true}}, res ); 
+        await getAlerts({ query: { userId: userId, runningStatus: true}}, res ); 
     } 
     
     catch (error) {
@@ -86,6 +92,12 @@ const addAlert = async (req, res) => {
 
 const editAlert = async (req, res) => {
     try {
+        const { userId, runningStatus } = req.body;
+        
+        if(!req.query.alertId){
+            return res.status(400).json({message: 'Invalid alert data'});
+        }
+
         const alertToUpdate = await alertRepo.findOne({
             where: {
                 alertId: req.query.alertId,
@@ -104,10 +116,7 @@ const editAlert = async (req, res) => {
                 return true;
             }
             else{
-                await getAlerts({ query: { 
-                    userId: req.body.userId, 
-                    runningStatus: req.query.runningStatus
-                }}, res );
+                await getAlerts({ query: { userId, runningStatus }}, res );
             }
         }
     } 
@@ -127,11 +136,13 @@ const editAlert = async (req, res) => {
 
 const deleteAlert = async (req, res) => {
     try {
-        const alertToDelete = await alertRepo.findOne({
-            where: {
-                alertId: req.query.alertId,
-            },
-        })
+        const { userId, alertId, runningStatus } = req.query;
+
+        if(!userId || !alertId){
+            return res.status(400).json({message: 'Invalid alert data'});
+        }
+
+        const alertToDelete = await alertRepo.findOne({where: { alertId }})
 
         if (!alertToDelete) {
             res.status(404).json({message: 'Alert not found'});
@@ -139,13 +150,7 @@ const deleteAlert = async (req, res) => {
         
         else {
             await alertRepo.remove(alertToDelete);
-
-            await getAlerts({ 
-                query: { 
-                    userId: req.query.userId,
-                    runningStatus: req.query.runningStatus
-                }
-            }, res );
+            await getAlerts({ query: { userId, runningStatus }}, res );
         }
     } 
     
@@ -159,6 +164,10 @@ const deleteAlert = async (req, res) => {
 
 const clearNotifiedAlerts = async (req, res) => {
     try {
+        if(!req.query.userId){
+            return res.status(400).json({message: 'Invalid alert data'});
+        }
+        
         await alertRepo.delete({ userId: req.query.userId, runningStatus: false });
 
         await getAlerts({ 
