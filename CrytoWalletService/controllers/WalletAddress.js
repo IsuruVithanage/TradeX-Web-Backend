@@ -1,23 +1,22 @@
+require ("dotenv").config();
 const CryptoJS = require("crypto-js");
 const dataSource = require("../config/config");
 const addressRepo = dataSource.getRepository("Address");
-require ("dotenv").config();
+const secretKey = process.env.SECRET_KEY
+
 
 const generateWalletAddress = async (req, res) => {
     try{
-        console.log("run")
 
         const { userName, userId } = req.body;
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const iv = CryptoJS.lib.WordArray.random(16);
-        const secretKey = process.env.SECRET_KEY
         let margin = '';
 
         for(let i=0; i < 25 - userName.length; i++){
             margin += (i === 0) ? ':' : characters.charAt(Math.floor(Math.random() * characters.length));
         }
 
-        console.log("data",userId,userName)
 
         if(!userId || !userName){
             return res.status(400).json({message:"invalid request"})
@@ -67,10 +66,25 @@ const getUserId = async (walletAddress) => {
     }
 }
 
+const getUserName = async (walletAddress) => {
+    try{
+        return CryptoJS.AES
+        .decrypt(walletAddress, secretKey)
+        .toString(CryptoJS.enc.Utf8)
+        .split(":")[0];
+    }
+    catch(error){
+        console.log("\nError decrypting wallet address:", error);
+        return null;
+    }
+}
+
+
 
 
 module.exports = {
     generateWalletAddress,
     getWalletAddress,
-    getUserId
+    getUserId,
+    getUserName
 };

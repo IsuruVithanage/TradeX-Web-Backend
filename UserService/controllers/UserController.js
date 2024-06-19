@@ -14,6 +14,7 @@ const register = async (req, res) => {
             email: email,
             password: hash,
             isVerified: isVerified,
+            issue: "",
             hasTakenQuiz: hasTakenQuiz,
             level: level,
             role: "User",
@@ -113,6 +114,19 @@ const logout = (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
+
+const getAllUsers = async (req, res) => {
+    const userRepo = dataSource.getRepository("User");
+    try {
+        const users = await userRepo.find();
+        res.json(users);
+    } catch (error) {
+        console.error("Error fetching all users:", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+
+}
+
 const updateUserHasTakenQuiz = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     const userId = req.params.id;
@@ -147,6 +161,10 @@ const updateUserVerifyStatus = async (req, res) => {
         }
 
         user.isVerified = status;
+        if (status === "Yes") {
+            user.role = "Trader";
+        }
+
         await userRepo.save(user);
 
         res.json({message: "User verify status updated successfully"});
@@ -202,5 +220,6 @@ module.exports = {
     updateUserHasTakenQuiz,
     updateUserVerifyStatus,
     refreshToken,
-    logout
+    logout,
+    getAllUsers
 };

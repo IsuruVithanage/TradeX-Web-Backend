@@ -8,6 +8,8 @@ router.get("/getOrderByCoinAndCategory/:coin/:userId/:category", controller.getA
 
 router.get("/getOrderByCato/:type", controller.getAllOrdersByCato);
 
+router.get("/getAllOrdersByIdAndCato/:type/:id", controller.getAllOrdersByIdAndCato);
+
 router.post("/", controller.saveOrder);
 
 router.delete("/deleteOrder/:orderId", controller.deleteOrder);
