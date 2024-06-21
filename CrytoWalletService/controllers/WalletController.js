@@ -8,7 +8,6 @@ const address = require("./WalletAddress");
 // Function to get all balances for a user
 const getAllBalances = async (req, res) => {
     try {
-        // address.generateWalletAddress({body:{userId:1,userName:"sayya"}});
         // Extract userId from request parameters
         const userId = req.params.userId;	
         let usdBalance = 0;
@@ -25,6 +24,7 @@ const getAllBalances = async (req, res) => {
                 userId: userId,
             },
         });
+
 
         // Fetch market prices for the assets
         await axios.get(
@@ -73,10 +73,8 @@ const getAllBalances = async (req, res) => {
         }).filter(asset => Object.keys(asset).length > 0).sort((a, b) => b.value - a.value);
 
         // Move USD asset to the top of the list
-        updatedAssets = [ 
-            updatedAssets.find(asset => asset.coin === 'USD'), 
-            ...updatedAssets.filter(asset => asset.coin !== 'USD') 
-        ];
+        const usdAsset = updatedAssets.find(asset => asset.coin === 'USD') || {};
+        updatedAssets = [ usdAsset, ...updatedAssets.filter(asset => asset.coin !== 'USD') ];
 
         // Return response with portfolio data
         res.status(200).json({
@@ -86,13 +84,15 @@ const getAllBalances = async (req, res) => {
             address: await address.getWalletAddress(userId)
         }); 
     } catch (error) {
-        console.log("\nError getting PortfolioData:", error);
+        console.log("\nError getting Wallet Data:", error);
         res.status(error.status || 500).json({message: error.message});
     }
 };
 
 // Function to transfer balance between wallets
 const transferBalance = async (req, res) => {
+    const queryRunner = dataSource.createQueryRunner();
+
     try {
         // Validate request parameters
         if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet ) {
@@ -122,38 +122,66 @@ const transferBalance = async (req, res) => {
             return res.status(400).json({ message: "Insufficient balance in sending wallet" });
         }
 
+        else {
+            assetToTransfer.balance -= req.body.quantity;
+        }
+
+        try{
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
+            await queryRunner.manager.withRepository(walletRepo).save(assetToTransfer);
+            await updateWalletHistory(queryRunner, {
+                userId: req.body.userId,
+                coin: req.body.coin,
+                quantity: req.body.quantity,
+                date: new Date(),
+                type: "Send",
+                from_to: await address.getUserName(req.body.receivingWallet)
+            });
+        }
+
+        catch (error) {
+            await queryRunner.rollbackTransaction();
+            console.log("\nError in internal operations:", error.message);
+            return res.status(500).json({ message: "Transaction failed" });
+        }
+
+        
+
         // Transfer asset
-        axios.post("http://localhost:8011/portfolio/asset/transfer", {
+        await axios.post("http://localhost:8011/portfolio/asset/transfer", {
             receivingWallet: req.body.receivingWallet,
-            sendingWallet: address.getUserName(req.body.sendingWallet ),
+            sendingWallet: req.body.sendingWallet,
             coin: assetToTransfer.coin,
             quantity: req.body.quantity,
             AvgPurchasePrice: assetToTransfer.AvgPurchasePrice,
-        }).then(async({data}) => {
-            assetToTransfer.balance -= req.body.quantity;
-            await walletRepo.save(assetToTransfer)
-            await updateWalletHistory({
-                userId:req.body.userId,
-                coin:req.body.coin,
-                quantity:req.body.quantity,
-                date:new Date(),
-                type:"Send",
-                from_to: data.receiverName
-            })
-            await getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
+        }).then(async() => {
+            //commit transaction
+            await queryRunner.commitTransaction();
+            getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
+        }).catch(async (error) => {
+            //rollback transaction
+            await queryRunner.rollbackTransaction();
+            console.log("\nError in External operations:", error.message);
 
-        }).catch((error) => {
-            console.log("\nError transferring asset:", error);
-            res.status(500).json({ message: "Transfer failed: Error transferring asset" });
+            return error.response ? 
+            res.status(400).json({ message: error.response.data.message }) : 
+            res.status(500).json({ message: "Transaction failed" });
         });
+
     } catch (error) {
-        console.log("\nError transferring asset:", error);
-        res.status(500).json({ message: "Transfer failed: " + error.message });
+        console.log("\nError transferring asset:");
+        res.status(500).json({ message: "Transaction failed"});
+        
+    } finally {
+        await queryRunner.release();
     }
 };
 
 // Function to add capital to the wallet
 const addCapital = async (req, res) => {
+    const queryRunner = dataSource.createQueryRunner();
+
     try {
         // Validate request parameters
         if (!req.body.receivingWallet|| !req.body.sendingWallet || !req.body.coin || !req.body.quantity || !req.body.purchasePrice ){
@@ -166,6 +194,7 @@ const addCapital = async (req, res) => {
         }
 
         const userId = await address.getUserId(req.body.receivingWallet);
+
         if(!userId){
             return res.status(400).json({ message:"invalid wallet address"});
         }
@@ -184,12 +213,14 @@ const addCapital = async (req, res) => {
         // Update asset details
         if (!assetToUpdate){
             assetToUpdate = {
-                userId:userId,
+                userId: userId,
                 coin: req.body.coin,
                 balance: req.body.quantity,
                 AvgPurchasePrice: req.body.purchasePrice
             }
-        } else {
+        } 
+        
+        else {
             const newTotalBalance = (assetToUpdate.balance + req.body.quantity);
             const newPurchasePrice = (assetToUpdate.AvgPurchasePrice * assetToUpdate.balance  ) + (req.body.purchasePrice * req.body.quantity);
             const newAvgPurchasePrice = (newPurchasePrice / newTotalBalance);
@@ -197,23 +228,37 @@ const addCapital = async (req, res) => {
             assetToUpdate.AvgPurchasePrice = newAvgPurchasePrice;
             assetToUpdate.balance += req.body.quantity;
         }
-        // Save updated asset details
-        await walletRepo.save(assetToUpdate)
-        await updateWalletHistory({
-            userId:userId,
-            coin:req.body.coin,
-            quantity:req.body.quantity,
-            date:new Date(),
-            type:"Recieve",
-            from_to: req.body.sendingWallet
-        })
-        res.status(200).json({
-            message: "Asset Updated",
-            receiverName: address.getUserName(req.body.receivingWallet)
-        }); 
+
+
+        try{
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
+            await queryRunner.manager.withRepository(walletRepo).save(assetToUpdate);
+            await updateWalletHistory(queryRunner, {
+                userId: userId,
+                coin: req.body.coin,
+                quantity: req.body.quantity,
+                date: new Date(),
+                type: "Recieve",
+                from_to: await address.getUserName(req.body.sendingWallet)
+            });
+        }
+            
+        catch (error) {
+            await queryRunner.rollbackTransaction();
+            console.log("\nError in internal operations:", error.message);
+            return res.status(500).json({ message: "Transaction failed" });
+        }
+
+        await queryRunner.commitTransaction();
+        res.status(200).json({ message: "Asset Updated" }); 
+        
     } catch (error) {
         console.log("\nError adding asset:", error);
-        res.status(500).json({message: error.message});
+        res.status(400).json({ message:"Transaction failed" });
+
+    } finally {
+        await queryRunner.release();
     }
 };
 
