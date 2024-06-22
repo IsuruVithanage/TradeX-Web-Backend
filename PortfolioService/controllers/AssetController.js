@@ -7,6 +7,7 @@ const axios = require("axios");
 
 const getPortfolioData = async (req, res) => {
     try {
+        console.log("hgchcg",req.query,req.params);
         const userId = req.query.userId;	
         const wallet = req.params.wallet;
         let usdBalance = 0;
@@ -249,6 +250,7 @@ const transferAsset = async (req, res) => {
 
 const receiveFromEx = async (req, res) => {
     try {
+        console.log("nng",req.body)
         let { coin, quantity, AvgPurchasePrice, receivingWallet, sendingWallet } = req.body;
         if( 
             !receivingWallet || 
