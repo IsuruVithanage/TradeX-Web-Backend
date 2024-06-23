@@ -22,7 +22,7 @@ const generateWalletAddress = async (req, res) => {
             return res.status(400).json({message:"invalid request"})
         }
 
-        const walletAddress = CryptoJS.AES.encrypt(userName + margin, secretKey, { iv: iv }).toString();
+        const walletAddress = CryptoJS.AES.encrypt(userName + margin, secretKey, {iv: iv}).toString();
 
         const isExists = await addressRepo.exists({ where: { walletAddress } });
 
@@ -45,7 +45,7 @@ const generateWalletAddress = async (req, res) => {
 const getWalletAddress = async (userId) => {
     try{
         const address  = await addressRepo.findOne({ where:{ userId }});
-        return address.walletAddress;
+        return !address ? null : address.walletAddress;
     }
     catch(error){
         console.log("error fetching wallet Address", error);
@@ -58,7 +58,7 @@ const getWalletAddress = async (userId) => {
 const getUserId = async (walletAddress) => {
     try{
         const  address  = await addressRepo.findOne({ where:{ walletAddress }});
-        return address.userId;
+        return !address ? null : address.userId;
     }
     catch(error){
         console.log("error fetching user", error);

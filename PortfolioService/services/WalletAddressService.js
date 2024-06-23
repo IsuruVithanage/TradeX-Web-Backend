@@ -22,7 +22,7 @@ const generateWalletAddress = async (req, res) => {
             margin += (i === 0) ? ':' : characters.charAt(Math.floor(Math.random() * characters.length));
         }
 
-        const walletAddress = CryptoJS.AES.encrypt(userName + margin, secretKey, { iv: iv }).toString();
+        const walletAddress = CryptoJS.AES.encrypt(userName + margin, secretKey, {iv: iv}).toString();
 
         const isExists = await walletAddressRepo.exists({ where: { walletAddress } });
 
