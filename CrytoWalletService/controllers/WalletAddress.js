@@ -1,35 +1,42 @@
 require ("dotenv").config();
 const CryptoJS = require("crypto-js");
 const dataSource = require("../config/config");
-const addressRepo = dataSource.getRepository("Address");
+const userRepo = dataSource.getRepository("UserDetail");
 const secretKey = process.env.SECRET_KEY
 
 
 const generateWalletAddress = async (req, res) => {
     try{
+        const walletId = req.body.walletId;
 
-        const { userName, userId } = req.body;
+        if(!walletId){
+            return res.status(400).json({message:"invalid request"})
+        }
+
+        const user = await userRepo.findOne({ where: {walletId}});
+
+        if(!user){
+            return res.status(404).json({message:"user not found"});
+        }
+
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const iv = CryptoJS.lib.WordArray.random(16);
         let margin = '';
 
-        for(let i=0; i < 25 - userName.length; i++){
+        for(let i=0; i < 25 - user.userName.length; i++){
             margin += (i === 0) ? ':' : characters.charAt(Math.floor(Math.random() * characters.length));
         }
+        
 
+        const walletAddress = CryptoJS.AES.encrypt(user.userName + margin, secretKey, {iv: iv}).toString();
 
-        if(!userId || !userName){
-            return res.status(400).json({message:"invalid request"})
-        }
-
-        const walletAddress = CryptoJS.AES.encrypt(userName + margin, secretKey, {iv: iv}).toString();
-
-        const isExists = await addressRepo.exists({ where: { walletAddress } });
+        const isExists = await userRepo.exists({ where: { walletAddress } });
 
         if (isExists) {
             return await generateWalletAddress(req, res);
         } else {
-            await addressRepo.save({ userId, walletAddress });
+            user.walletAddress = walletAddress;
+            await userRepo.save(user);
             return !res ? true : res.status(200).json({ walletAddress });
         }
     }
@@ -42,9 +49,9 @@ const generateWalletAddress = async (req, res) => {
 
 
 
-const getWalletAddress = async (userId) => {
+const getWalletAddress = async (walletId) => {
     try{
-        const address  = await addressRepo.findOne({ where:{ userId }});
+        const address  = await userRepo.findOne({ where:{ walletId }});
         return !address ? null : address.walletAddress;
     }
     catch(error){
@@ -55,10 +62,13 @@ const getWalletAddress = async (userId) => {
 
 
 
-const getUserId = async (walletAddress) => {
+const getIds = async (walletAddress) => {
     try{
-        const  address  = await addressRepo.findOne({ where:{ walletAddress }});
-        return !address ? null : address.userId;
+        const  user  = await userRepo.findOne({ where:{ walletAddress }});
+        return !user ? null : {
+            walletId: user.walletId,
+            userId: user.userId
+        };
     }
     catch(error){
         console.log("error fetching user", error);
@@ -85,6 +95,6 @@ const getUserName = async (walletAddress) => {
 module.exports = {
     generateWalletAddress,
     getWalletAddress,
-    getUserId,
+    getIds,
     getUserName
 };

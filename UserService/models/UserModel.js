@@ -20,9 +20,6 @@ module.exports = new EntitySchema({
     password: {
       type: "varchar",
     },
-    isVerified: {
-      type: "varchar",
-    },
     issue: {
       type: "varchar",
     },
