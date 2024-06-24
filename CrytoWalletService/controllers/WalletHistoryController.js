@@ -30,9 +30,8 @@ const getWalletHistory = async (req, res) => {
     }
 }
 
-const updateWalletHistory = async (historyData) => {
-    console.log(historyData)
-    await WalletHistoryRepo.save(historyData);
+const updateWalletHistory = async (queryRunner, historyData) => {
+    await queryRunner.manager.withRepository(WalletHistoryRepo).save(historyData);
     return;
 }
 

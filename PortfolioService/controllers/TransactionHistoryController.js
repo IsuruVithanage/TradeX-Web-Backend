@@ -31,8 +31,7 @@ const getTransactionHistory = async (req, res) => {
 }
 
 
-const updateTransactionHistory = async (historyData) => {
-
+const updateTransactionHistory = async (queryRunner, historyData) => {
     switch (historyData.sendingWallet){
         case 'fundingWallet':
             historyData.sendingWallet = 'Funding Wallet';
@@ -68,7 +67,7 @@ const updateTransactionHistory = async (historyData) => {
     historyData.receivingWallet = historyData.receivingWallet || 'External Wallet user';
 
 
-    await TransactionHistoryRepo.save(historyData);
+    await queryRunner.manager.withRepository(TransactionHistoryRepo).save(historyData);
 }
 
 

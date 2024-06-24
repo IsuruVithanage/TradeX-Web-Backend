@@ -89,18 +89,25 @@ const login = async (req, res) => {
     res.json({ message: "Logged in", accessToken , user: userDetail});
 };
 
-const refreshToken = (req, res) => {
-    const refreshToken = req.cookies["refresh-token"];
+const refreshToken = async (req, res) => {
+    const userRepository = dataSource.getRepository("User");
+    const refreshToken = req.cookies['refresh-token'];
     if (!refreshToken) {
-        return res.status(401).json({ error: "Refresh token not found" });
+        return res.status(401).json({ error: 'Refresh token not found' });
     }
 
     try {
-        const user = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const user = await userRepository.findOne({ where: { userId: decoded.userId } });
+
+        if (!user) {
+            return res.status(403).json({ error: 'User not found' });
+        }
+
         const newAccessToken = createAccessToken(user);
         res.json({ accessToken: newAccessToken });
     } catch (err) {
-        return res.status(403).json({ error: "Invalid refresh token" });
+        return res.status(403).json({ error: 'Invalid refresh token' });
     }
 };
 
@@ -162,6 +169,8 @@ const updateUserVerifyStatus = async (req, res) => {
         res.status(500).json({message: "Internal server error"});
     }
 };
+
+
 
 
 const profile = async (req, res) => {

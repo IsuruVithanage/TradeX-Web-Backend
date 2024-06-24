@@ -2,6 +2,7 @@ const express = require('express');
 const dataSource = require("../config/config");
 const bcrypt = require('bcrypt')
 const userRepo = dataSource.getRepository("UserDetail");
+const address = require('./WalletAddress');
 const {createAccessToken, createRefreshToken} = require("../JWT");
 
 
@@ -67,17 +68,20 @@ const register = async (req, res) => {
         const user = await userRepo.findOne({  where: {  "userName": username} });
 
         if(user){
-            return res.status(400).json({"message": "User Already existing"})
+            return res.status(400).json({"message": "User Name Already taken"})
         }
 
         userRepo.save({
             "userName": username, 
             "password": hash,
             "seedphrase":seedphrase
+        }).then(async()=>{
+            const user = await userRepo.findOne({  where: {  "userName": username} });
 
-
-
-        }).then(()=>{
+            if(user){
+                address.generateWalletAddress({body: {userId: user.userId, userName: user.userId}});
+            }
+    
             console.log(hash)
             res.status(200).json({"hash": hash, "password": password})
         }).catch((error)=>{
