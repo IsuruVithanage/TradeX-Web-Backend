@@ -8,6 +8,7 @@ const dataSource = new typeorm.DataSource({
     port: process.env.RDS_PORT,
     username: process.env.RDS_USERNAME,
     password: process.env.RDS_PASSWORD,
+    database: "watchlist_service_db",
     synchronize: true,
     logging : true,
     ssl: {rejectUnauthorized: false},

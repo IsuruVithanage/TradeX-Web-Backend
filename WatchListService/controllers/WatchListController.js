@@ -1,43 +1,40 @@
-const express = require('express');
 const dataSource = require("../config/config");
+const CoinsRepo = dataSource.getRepository("Watchlist");
 
-const getAllCoins = async (req, res) => {
-    const CoinsRepo = dataSource.getRepository("watchlist");
-    res.json(await CoinsRepo.find());
+const getCoins = async (req, res) => {
+    try{
+        if(!req.params.userId){
+            return res.status(400).json({messege:"invalid request"});
+        }
+        console.log("get user id", req.params.userId);
+        const coins = await CoinsRepo.findOne({where:{userId:req.params.userId}});
+        res.status(200).json(coins);
+    }
+    catch(error){
+        console.log("error getting coins", error);
+        res.status(500).json({messege:"error getting coins"});
+        
+    }
 };
 
 const saveCoins = async (req, res) => {
-    const CoinsRepo = dataSource.getRepository("watchlist");
-    const Coinsave = CoinsRepo.save(req.body);
-    res.json(Coinsave);
-};
-
-const deleteCoins = async (req, res) => {
-    const CoinsRepo = dataSource.getRepository("watchlist");
-    const CoinsId = req.params.id;
-
-    try {
-        const CoinsTodelete = await CoinsRepo.findOne({
-            where: {
-                CoinsId: CoinsId,
-            },
-        })
-
-        if (!CoinsTodelete) {
-            return res.status(404).json({message: 'Coins not found'});
+    try{
+        if(!req.body.userId || !Array.isArray(req.body.coins)){
+            return res.status(400).json({messege:"invalid request"});
         }
-
-        await CoinsRepo.delete(CoinsTodelete);
-        res.json({message: 'Coins deleted successfully'});
-    } catch (error) {
-        console.error("Error deleting Coins:", error);
-        res.status(500).json({message: 'Internal server error'});
+        console.log("post user id", req.body.userId);
+        await CoinsRepo.save(req.body);
+        res.status(200).json({messege:"coins updated"});
     }
+    catch(error){
+        console.log("error updating coins", error);
+        res.status(500).json({messege:"error updating coins"});
+    }
+    
 };
 
 
 module.exports = {
-    getAllCoins,
+    getCoins,
     saveCoins,
-    deleteCoins
 }
