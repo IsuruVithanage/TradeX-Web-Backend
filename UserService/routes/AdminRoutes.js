@@ -13,5 +13,6 @@ router.get("/getUsersWithVerificationIssues", controller.getUsersWithVerificatio
 
 router.get("/getAllUsers", controller.getAllUsers);
 
+router.post("/getUserVerificationDetails", controller.getUserVerificationDetails);
 
 module.exports = router;
