@@ -122,17 +122,6 @@ const logout = (req, res) => {
 };
 
 
-const getAllUsers = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    try {
-        const users = await userRepo.find();
-        res.json(users);
-    } catch (error) {
-        console.error("Error fetching all users:", error);
-        res.status(500).json({message: "Internal server error"});
-    }
-
-}
 
 const updateUserHasTakenQuiz = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
@@ -230,5 +219,4 @@ module.exports = {
     updateUserVerifyStatus,
     refreshToken,
     logout,
-    getAllUsers
 };
