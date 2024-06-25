@@ -22,8 +22,13 @@ const saveCoins = async (req, res) => {
         if(!req.body.userId || !Array.isArray(req.body.coins)){
             return res.status(400).json({messege:"invalid request"});
         }
-        console.log("post user id", req.body.userId);
-        await CoinsRepo.save(req.body);
+
+        if(req.body.coins.length === 0){
+            await deleteCoins(req.body.userId);
+        }
+        else{
+            await CoinsRepo.save(req.body);
+        }
         res.status(200).json({messege:"coins updated"});
     }
     catch(error){
@@ -33,8 +38,20 @@ const saveCoins = async (req, res) => {
     
 };
 
+const deleteCoins = async (userId) => {
+    try{
+        await CoinsRepo.delete({userId});
+        return;
+    }
+    catch(error){
+        console.log("error deleting coins", error);
+    }
+    
+};
+
 
 module.exports = {
     getCoins,
     saveCoins,
+    deleteCoins
 }
