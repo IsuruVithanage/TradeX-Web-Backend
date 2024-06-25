@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
+const { initEmptyCapitalRemover } = require("./controllers/WalletController");
 const walletRouter = require("./routes/WalletRoutes");
 const WalletHistoryRounter = require("./routes/WalletHistoryRoutes")
 const WalletLoginRounter = require("./routes/WalletLoginRoutes")
@@ -20,7 +21,7 @@ app.use(cors( {
 app.use("/wallet", walletRouter);
 app.use("/history", WalletHistoryRounter);
 app.use("/walletLogin",  WalletLoginRounter);
-app.use("/seedphrase",  SeedPhraseRoutes);
+app.use("/seedPhrase",  SeedPhraseRoutes);
 
 
 
@@ -41,15 +42,16 @@ app.use((error, req, res) => {
 });
 
 
-dataSource.initialize().then(() => {
+dataSource.initialize()
+.then(async() => {
     console.log("Database connected!!");
-
+    await initEmptyCapitalRemover();
 
     app.listen(8006, () => {
-        console.log("Server Started on Port 8006")
+        console.log("Crypto Wallet Service Started on Port 8006")
 
     })
 })
-    .catch((err) => {
-        console.log(err)
-    })
+.catch((err) => {
+    console.log(err)
+})

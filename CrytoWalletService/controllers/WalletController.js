@@ -5,24 +5,24 @@ const walletRepo = dataSource.getRepository("Capital");
 const updateWalletHistory = require("./WalletHistoryController").updateWalletHistory;
 const address = require("./WalletAddress");
 
+
 // Function to get all balances for a user
 const getAllBalances = async (req, res) => {
     try {
         // Extract userId from request parameters
-        const userId = req.params.userId;	
+        const walletId = req.params.walletId;	
         let usdBalance = 0;
         let portfolioValue = 0;
 
         // Check if userId is provided
-        if (!userId) {
-            return res.status(404).json({ message: 'User Id not found' });
+        if (!walletId || walletId === 'undefined') {
+            return res.status(404).json({ message: 'Invalid request' });
         } 
+
 
         // Retrieve assets for the user
         const assets = await walletRepo.find({
-            where: {
-                userId: userId,
-            },
+            where: { walletId },
         });
 
 
@@ -81,7 +81,7 @@ const getAllBalances = async (req, res) => {
             usdBalance: usdBalance,
             portfolioValue: portfolioValue,
             assets: updatedAssets,
-            address: await address.getWalletAddress(userId)
+            address: await address.getWalletAddress(walletId)
         }); 
     } catch (error) {
         console.log("\nError getting Wallet Data:", error);
@@ -95,10 +95,8 @@ const transferBalance = async (req, res) => {
 
     try {
         // Validate request parameters
-        if (!req.body.userId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet ) {
-            return res.status(400).json({
-                message: "Invalid request, contain null values for 'userId', 'coin', 'quantity'"
-            });
+        if (!req.body.userId || !req.body.walletId || !req.body.coin || !req.body.quantity || !req.body.sendingWallet || !req.body.receivingWallet ) {
+            return res.status(400).json({message: "Invalid request"});
         }
         if (req.body.quantity <= 0) {
             return res.status(400).json({ message: "Invalid quantity" });
@@ -108,7 +106,7 @@ const transferBalance = async (req, res) => {
         // Find the asset to transfer
         let assetToTransfer = await walletRepo.findOne({
             where: {
-                userId: req.body.userId,
+                walletId: req.body.walletId,
                 coin: req.body.coin
             },
         });
@@ -131,7 +129,7 @@ const transferBalance = async (req, res) => {
             await queryRunner.startTransaction();
             await queryRunner.manager.withRepository(walletRepo).save(assetToTransfer);
             await updateWalletHistory(queryRunner, {
-                userId: req.body.userId,
+                walletId: req.body.walletId,
                 coin: req.body.coin,
                 quantity: req.body.quantity,
                 date: new Date(),
@@ -158,7 +156,7 @@ const transferBalance = async (req, res) => {
         }).then(async() => {
             //commit transaction
             await queryRunner.commitTransaction();
-            getAllBalances({ ...req, params: { ...req.params, userId: req.body.userId } }, res);
+            getAllBalances({ params: { walletId: req.body.walletId } }, res);
         }).catch(async (error) => {
             //rollback transaction
             await queryRunner.rollbackTransaction();
@@ -193,9 +191,12 @@ const addCapital = async (req, res) => {
             return res.status(400).json({ message:"invalid quantity or purchasePrice" });
         }
 
-        const userId = await address.getUserId(req.body.receivingWallet);
+        const sendingWallet = await address.getUserName(req.body.sendingWallet)
+        const user = await address.getIds(req.body.receivingWallet);
+        const walletId = user ? user.walletId : null;
+        const userId = user ? user.userId : null;
 
-        if(!userId){
+        if(!walletId){
             return res.status(400).json({ message:"invalid wallet address"});
         }
 
@@ -205,15 +206,15 @@ const addCapital = async (req, res) => {
         // Find existing asset or create new one
         let assetToUpdate = await walletRepo.findOne({
             where:{
-                userId:userId,
-                coin:req.body.coin
+                walletId: walletId,
+                coin: req.body.coin
             }
         })
 
         // Update asset details
         if (!assetToUpdate){
             assetToUpdate = {
-                userId: userId,
+                walletId: walletId,
                 coin: req.body.coin,
                 balance: req.body.quantity,
                 AvgPurchasePrice: req.body.purchasePrice
@@ -235,12 +236,12 @@ const addCapital = async (req, res) => {
             await queryRunner.startTransaction();
             await queryRunner.manager.withRepository(walletRepo).save(assetToUpdate);
             await updateWalletHistory(queryRunner, {
-                userId: userId,
+                walletId: walletId,
                 coin: req.body.coin,
                 quantity: req.body.quantity,
                 date: new Date(),
-                type: "Recieve",
-                from_to: await address.getUserName(req.body.sendingWallet)
+                type: "Receive",
+                from_to: sendingWallet
             });
         }
             
@@ -251,6 +252,18 @@ const addCapital = async (req, res) => {
         }
 
         await queryRunner.commitTransaction();
+
+        await axios.post("http://localhost:8002/notification/send/app", {
+            userId: userId,
+            title: "Asset Received",
+            body: `You have received ${req.body.quantity} ${req.body.coin} from ${sendingWallet}`,
+            onClick: "http://localhost:3000/wallet/dashboard"
+        }).then(() => {
+            console.log("\nNotification sent");
+        }).catch((error) => {
+            console.log("\nError sending notification:", error.message);
+        });
+
         res.status(200).json({ message: "Asset Updated" }); 
         
     } catch (error) {
@@ -262,9 +275,49 @@ const addCapital = async (req, res) => {
     }
 };
 
+
+const initEmptyCapitalRemover = async () => {
+    const sqlQuery = `
+        CREATE OR REPLACE FUNCTION empty_capital_remover()
+        RETURNS TRIGGER AS $$
+        DECLARE
+            total FLOAT;
+        BEGIN
+            SELECT "balance" INTO total
+            FROM capital
+            WHERE "walletId" = NEW."walletId" AND "coin" = NEW."coin";
+        
+            IF total <= 0 THEN
+                DELETE FROM capital WHERE "walletId" = NEW."walletId" AND "coin" = NEW."coin";
+            END IF;
+        
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        
+        CREATE OR REPLACE TRIGGER check_and_delete_capital_on_insert_trigger
+        AFTER INSERT ON capital
+        FOR EACH ROW
+        EXECUTE FUNCTION empty_capital_remover();
+        
+        CREATE OR REPLACE TRIGGER check_and_delete_capital_on_update_trigger
+        AFTER UPDATE ON capital
+        FOR EACH ROW
+        EXECUTE FUNCTION empty_capital_remover();`
+    ;
+
+    try {
+        await dataSource.query(sqlQuery);
+    } catch (error) {
+        console.error('\n\nError creating emptyCapitalRemover trigger function:\n\n', error);
+    }
+}
+
 // Export controller functions
 module.exports = {
     transferBalance,
     getAllBalances,
-    addCapital
+    addCapital,
+    initEmptyCapitalRemover,
 }

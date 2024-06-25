@@ -4,11 +4,8 @@ const router = express.Router();
 
 
 router.get("/getUniqueShuffledWords", SeedPraseController.getUniqueShuffledWords);
-router.get("/getSeedPreseById", SeedPraseController.getSeedPreseById);
-router.post("/saveSeedPrase", SeedPraseController.saveSeedPrase);
-
-
-
+router.get("/getSeedPhraseByUseName/:userName", SeedPraseController.getSeedPhraseByUseName);
+router.get("/getWords", SeedPraseController.getWords);
 
 
 module.exports = router
