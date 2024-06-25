@@ -56,14 +56,14 @@ const getPortfolioData = async (req, res) => {
             else{
                 const assetValue = (asset.marketPrice || 1) *  totalBalance;
                 portfolioValue += assetValue;
-                updatedAsset.value = assetValue;
-                updatedAsset.marketPrice = "$ " + asset.marketPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 10,});
+                updatedAsset.value = "$ " + assetValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});
+                updatedAsset.marketPrice = "$ " + asset.marketPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});
             }
 
             if(wallet !== 'overview'){
                 if(asset.symbol === 'USD'){
                     updatedAsset.marketPrice = "- - -";
-                    updatedAsset.value = totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});;
+                    updatedAsset.value = "$ " + totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});;
                     updatedAsset.ROI = "- - -";
                     updatedAsset.RoiColor = '#FFFFFF';
                 } else {
@@ -76,10 +76,10 @@ const getPortfolioData = async (req, res) => {
 
             if(wallet !== 'overview' || asset.symbol !== 'USD'){
                 updatedAsset.symbol = asset.symbol;
-                updatedAsset.tradingBalance = asset.tradingBalance;
-                updatedAsset.holdingBalance = asset.holdingBalance;
-                updatedAsset.fundingBalance = asset.fundingBalance;
-                updatedAsset.totalBalance = totalBalance;
+                updatedAsset.tradingBalance = asset.tradingBalance.toLocaleString("en-US");
+                updatedAsset.holdingBalance = asset.holdingBalance.toLocaleString("en-US");
+                updatedAsset.fundingBalance = asset.fundingBalance.toLocaleString("en-US");
+                updatedAsset.totalBalance = totalBalance.toLocaleString("en-US");
             }
 
             return updatedAsset;
@@ -103,7 +103,7 @@ const getPortfolioData = async (req, res) => {
             percentages = updatedAssets
                 .map(asset => ({
                     coinName: asset.symbol,
-                    percentage: (!portfolioValue) ? 0 : (asset.value / portfolioValue) * 100
+                    percentage: (!portfolioValue) ? 0 : (parseFloat(asset.value.replace(/[^0-9.]/g, '')) / portfolioValue) * 100
                 }))
 
                 .concat({ 
@@ -304,6 +304,7 @@ const receiveFromEx = async (req, res) => {
         AvgPurchasePrice = (coin === 'USD') ? 1 : AvgPurchasePrice;
 
         const userId = await WalletAddressService.getUserId(receivingWallet);
+        const sender = await WalletAddressService.getUserName(sendingWallet);
 
         if(!userId){ return res.status(400).json({message: 'Invalid Wallet Address'}); }
 
@@ -350,6 +351,20 @@ const receiveFromEx = async (req, res) => {
         }
         
         await queryRunner.commitTransaction();
+
+
+        await axios.post("http://localhost:8002/notification/send/app", {
+            userId: userId,
+            title: "Asset Received",
+            body: `You have received ${req.body.quantity} ${req.body.coin} from ${sender}`,
+            onClick: "http://localhost:3000/portfolio/fundingWallet"
+        }).then(() => {
+            console.log("\nNotification sent");
+        }).catch((error) => {
+            console.log("\nError sending notification:", error.message);
+        });
+
+
         res.status(200).json({message: "Asset Updated"}); 
     } 
     

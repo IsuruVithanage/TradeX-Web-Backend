@@ -4,27 +4,32 @@ module.exports = new EntitySchema({
     name: "UserDetail",
     tableName: "userdetail",
     columns: {
+        walletId: {
+            primary: true,
+            type: "int",
+            generated: true,
+        },
         userId: {
             type: "int",
             nullable: false,
-            generated: true,
         },
         userName: {
-            primary: true,
             type: "varchar",
             length: 25,
             nullable: false,
         },
         password: {
             type: "varchar",
-            length:100,
+            length: 100,
             nullable: false,
         },
-        seedphrase: {
+        seedPhrase: {
             type: "varchar",
             nullable: false,
         },
-        
-      
+        walletAddress: {
+            type: "varchar",
+            nullable: true,
+        },
     },
 })
