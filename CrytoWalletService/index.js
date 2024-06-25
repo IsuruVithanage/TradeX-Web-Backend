@@ -21,7 +21,7 @@ app.use(cors( {
 app.use("/wallet", walletRouter);
 app.use("/history", WalletHistoryRounter);
 app.use("/walletLogin",  WalletLoginRounter);
-app.use("/seedphrase",  SeedPhraseRoutes);
+app.use("/seedPhrase",  SeedPhraseRoutes);
 
 
 

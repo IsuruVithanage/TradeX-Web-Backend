@@ -76,13 +76,13 @@ const refreshToken = (req, res) => {
 
 const register = async (req, res) => {
     try{
-        const {userId, username, password, seedphrase} = req.body;
+        const {userId, userName, password, seedPhrase} = req.body;
 
-        if(!userId || !username || !password || !seedphrase){
+        if(!userId || !userName || !password || !seedPhrase){
             return res.status(400).json({"message": "Please fill all the fields"})
         }
 
-        const user = await userRepo.findOne({  where: {  "userName": username} });
+        const user = await userRepo.findOne({  where: {userName} });
 
         if(user){
             return res.status(400).json({message: "User Name Already taken"})
@@ -92,16 +92,16 @@ const register = async (req, res) => {
         .then(async(hash) => {
             userRepo.save({
                 "userId": userId,	
-                "userName": username, 
+                "userName": userName, 
                 "password": hash,
-                "seedphrase":seedphrase
+                "seedPhrase":seedPhrase
             }).then(async(userData)=>{
 
                 await address.generateWalletAddress({body: { walletId: userData.walletId }});
         
                 res.status(200).json({message: "Wallet Created Successfully", user: userData})
             }).catch((error)=>{
-                console.log("Error in saving registerd user", error)
+                console.log("Error in saving register user", error)
                 res.status(500).json({message: "Failed to create Wallet. Please try again."});
             })
         }).catch((error)=>{
@@ -140,9 +140,53 @@ const checkUserName = async (req, res) => {
     }
 };
 
+
+
+const resetPassword = async (req, res) => {
+    try{
+        const {userId, password, userName, seedPhrase} = req.body;
+
+        console.log("resetPassword", req.body)
+
+        if(!userId || !password || !userName || !seedPhrase){
+            return res.status(400).json({message: "Please fill all the fields"})
+        }
+
+        bcrypt.hash(password, 10)
+        .then(async(hash) => {
+            const user = await userRepo.findOne({ where:{userId, userName, seedPhrase}})
+
+            if(!user){
+                return res.status(400).json({message: "Invalid User name or Seed Phrase. Please try again."})
+            }
+
+            user.password = hash;
+
+            await userRepo.save(user)
+            .then((userData)=>{
+                res.status(200).json({message: "Password Reset Successfully", user: userData});
+
+            }).catch((error)=>{
+                console.log("Error in saving recover user", error)
+                res.status(500).json({message: "Failed to reset password. Please try again."});
+
+            })
+        }).catch((error)=>{
+            console.log("bcrypt error in reset password", error)
+            res.status(400).json({message: "Failed to reset password. Please try again."});
+        })
+    }
+
+    catch(error){
+        console.log("error in reset password", error)
+        res.status(500).json({message: "Failed to reset password. Please try again."});
+    }
+};
+
 module.exports = {
    register,
    login,
+   resetPassword,
    checkUserName,
    refreshToken
 }

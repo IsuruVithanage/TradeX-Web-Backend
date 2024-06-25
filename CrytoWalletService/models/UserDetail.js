@@ -23,7 +23,7 @@ module.exports = new EntitySchema({
             length: 100,
             nullable: false,
         },
-        seedphrase: {
+        seedPhrase: {
             type: "varchar",
             nullable: false,
         },
