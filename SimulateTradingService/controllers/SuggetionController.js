@@ -27,7 +27,7 @@ Please format your response in JSON like this:
   "bestPrice": 1000,
   "time":1716257160,
   "profitFromBestPrice": 100,
-  "suggestions": [""],
+  "suggestions": ["Suggestion 1", "Suggestion 2"],
   "resources": [
         "https://www.coindesk.com/',
         "https://www.investopedia.com/articles/basics/03/dollarcostaveraging.asp"

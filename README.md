@@ -14,6 +14,22 @@ tradex-backend
 │  └─ vcs.xml
 ├─ .vscode
 │  └─ settings.json
+├─ apiGateway
+│  ├─ config
+│  │  └─ models
+│  │     └─ application.json
+│  │     └─ credentials.json
+│  │     └─ users.json
+│  │  └─ gateway.config.yml
+│  │  └─ sync.config.yml
+│  ├─ plugins
+│  │  └─ checkRolePlugin
+│  │     └─ policies
+│  │        └─ checkRole.js
+│  │     └─ manifest.js
+│  ├─ server.js
+│  ├─ package-lock.json
+│  ├─ package.json
 ├─ AdminService
 │  ├─ .gitignore
 │  ├─ config
