@@ -24,26 +24,29 @@ const startRealtimeMonitoring = async() => {
         });
 
 
-
         setInterval( async() => {
-            alerts = await getAllRunningAlerts();
-
             if(ws.readyState === 3 && alerts.length > 0){
                 await connectWebSocket();
             }
-
-            updateStreams();
-
         }, 3000);
 
-        
+        let count = 0;
+
          
-        setInterval(async() => {
-            if(ws.readyState === 1){
-                checkAlerts(); 
-                //console.log(marketPrice);
+        while (true) {
+            if (ws.readyState === 1) {
+                await checkAlerts(count);
             }
-        }, 1000);
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            if (count % 3 === 0) {
+                alerts = await getAllRunningAlerts();
+                updateStreams();
+            }
+
+            count++;
+        }
     }
 
     catch (error) {
@@ -86,65 +89,73 @@ const updateStreams = () => {
 
 
 
-const checkAlerts = () => {
-    try{
-        alerts.forEach((alert) => {
-            const {deviceToken, userId, coin, condition, price, emailActiveStatus, runningStatus} = alert;
-            const currentPrice = marketPrice[coin];
+const checkAlerts = async (count) => {
+    return new Promise(async (resolve) => {
+        try {
+            for (const alert of alerts) {
+                const { deviceToken, alertId, userId, coin, condition, price, emailActiveStatus, runningStatus } = alert;
+                const currentPrice = marketPrice[coin];
 
-            if (currentPrice !== undefined && runningStatus) {
-                if( 
-                    ( condition === 'Above' && currentPrice > price ) ||
-                    ( condition === 'Below' && currentPrice < price ) ||
-                    ( condition === 'Equals' && currentPrice === price )
-                ){  
+                if (currentPrice !== undefined && runningStatus) {
+                    if (
+                        (condition === 'Above' && currentPrice > price) ||
+                        (condition === 'Below' && currentPrice < price) ||
+                        (condition === 'Equals' && currentPrice === price)
+                    ) {
+                        const coinName = coinList[coin].name;
+                        const localPrice = "$ " + currentPrice.toLocaleString();
+                        alert.runningStatus = false;
 
-                    const coinName = coinList[coin].name;
-                    const localPrice = "$ " + currentPrice.toLocaleString();
-                    alert.runningStatus = false;
-
-                    editAlert({query: {alertId: alert.alertId}, body: {runningStatus: false}})
-                    .then(async() => {
-                        sendNotification({ 
-                            params: {type: emailActiveStatus ? 'push,email' : 'push' }, 
-                            body: {
-                                userId: userId,
-                                deviceToken: deviceToken,
-                                title: coinName + "  -  " + localPrice,
-                                body: "Hello there! " + coinName + " is now at " + localPrice,
-                                onClick: 'http://localhost:3000/alert',
-                                emailHeader: `
-                                    <img width="5%" height="5%" style="margin: auto 1% auto 0;"
-                                    src="${coinList[coin].img}" alt="${coinName}"/>
-                                    ${coinName} is now at ${localPrice}
-                                `,
-                                emailBody: `
-                                    <p style="margin-top: 7%;">Hello Trader,</p>
-                                    <p>
-                                        We wanted to inform you that <span  style="font-weight: bold;">${coinName} (${coin})</span>
-                                        has now reached a price of <span  style="font-weight: bold;">${localPrice}</span>. 
-                                        Stay updated on market prices and make your best decisions.
-                                    </p>
-                                    <p>Good luck and happy trading!</p><br>
-                                    <p style="margin: 0;">Best regards,</p>
-                                    <p style="margin-top: 0;">TradeX Team.</p>
-                                `,
-                            }
-                        })
-                        .catch (() => {
-                            editAlert({query: {alertId: alert.alertId}, body: {runningStatus: true}});
-                            console.log('\x1b[31mNotification sending failed\x1b[0m for alertID:', alert.alertId);
-                        });
-                    });
+                        try {
+                            await editAlert({ body: { alertId, runningStatus: false } });
+                            await sendNotification({
+                                params: { type: emailActiveStatus ? 'push,email' : 'push' },
+                                body: {
+                                    userId: userId,
+                                    deviceToken: deviceToken,
+                                    title: coinName + "  -  " + localPrice,
+                                    body: "Hello there! " + coinName + " is now at " + localPrice,
+                                    onClick: 'http://localhost:3000/alert',
+                                    emailHeader: `
+                                        <img width="5%" height="5%" style="margin: auto 1% auto 0;"
+                                        src="${coinList[coin].img}" alt="${coinName}"/>
+                                        ${coinName} is now at ${localPrice}
+                                    `,
+                                    emailBody: `
+                                        <p style="margin-top: 7%;">Hello Trader,</p>
+                                        <p>
+                                            We wanted to inform you that <span  style="font-weight: bold;">${coinName} (${coin})</span>
+                                            has now reached a price of <span  style="font-weight: bold;">${localPrice}</span>. 
+                                            Stay updated on market prices and make your best decisions.
+                                        </p>
+                                        <p>Good luck and happy trading!</p><br>
+                                        <p style="margin: 0;">Best regards,</p>
+                                        <p style="margin-top: 0;">TradeX Team.</p>
+                                    `,
+                                }
+                            })
+                            .then(() => {
+                                console.log('\x1b[32mAlert sent\x1b[0m for alertID:', alertId);
+                            })
+                            .catch(async () => {
+                                await editAlert({ body: { alertId, runningStatus: true } });
+                                console.log('\x1b[31mNotification sending failed\x1b[0m for alertID:', alertId);
+                            });
+                        } catch (error) {
+                            console.log('\x1b[31mError updating alert\x1b[0m for alertID:', alertId);
+                        }
+                    }
                 }
             }
-        });
-    }
 
-    catch (error) {
-        console.log('Check alerts error:', error);
-    }
-}
+            resolve();
+        } catch (error) {
+            console.log('Check alerts error:', error);
+            resolve();
+        }
+    });
+};
+
 
 
 
