@@ -407,7 +407,7 @@ const releaseAsset = async (req, res) => {
                 assetToRelease.holdingBalance -= quantity;
                 assetToRelease.tradingBalance += quantity;
 
-                const updatedAsset = await assetService.saveAsset(assetToRelease);
+                const updatedAsset = await assetService.saveAsset(null, assetToRelease);
                 
                 res.status(200).json({
                     coin: updatedAsset.symbol,
@@ -449,7 +449,7 @@ const deductAsset = async (req, res) => {
             else{
                 assetToDeduct.holdingBalance -= req.body.quantity;
 
-                const updatedAsset = await assetService.saveAsset(assetToDeduct);
+                const updatedAsset = await assetService.saveAsset(null, assetToDeduct);
 
                 res.status(200).json({
                     coin: updatedAsset.symbol,
@@ -471,6 +471,8 @@ const deductAsset = async (req, res) => {
 
 
 const executeTrade = async (req, res) => {
+    const queryRunner = dataSource.createQueryRunner();
+
     try {
         const { userId, coin, quantity, price, category, type } = req.body;
 
@@ -556,9 +558,22 @@ const executeTrade = async (req, res) => {
             }         
         }
 
+        try{
+            queryRunner.connect();
+            queryRunner.startTransaction();
 
-        await assetService.saveAsset(assetToUpdate);
-        await assetService.saveAsset(usdAsset);
+            await assetService.saveAsset(queryRunner, assetToUpdate);
+            await assetService.saveAsset(queryRunner, usdAsset);
+        }
+
+        catch (error) {
+            await queryRunner.rollbackTransaction();
+            console.log("\nError in executing orders:", error.message);
+            return res.status(500).json({ message: "Transaction failed in portfolio" });
+        }
+        
+
+        await queryRunner.commitTransaction();
 
         res.status(200).json(
             await getBalance({params:{userId: userId, coin: `${coin},USD`}}, null)
@@ -568,6 +583,10 @@ const executeTrade = async (req, res) => {
     catch (error) {
         console.log("\nError adding asset:", error);
         res.status(500).json({message: error.message});
+    }
+
+    finally {
+        await queryRunner.release();
     }
 };
 
@@ -586,7 +605,7 @@ const allocateUSD = async (req, res) => {
 
         await assetService.deleteAll(userId);
 
-        await assetService.saveAsset({
+        await assetService.saveAsset(null, {
             userId: userId,
             symbol: 'USD',
             AvgPurchasePrice: 1,
