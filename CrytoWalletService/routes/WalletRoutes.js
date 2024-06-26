@@ -3,7 +3,7 @@ const controller = require("../controllers/WalletController");
 const generateAddress = require("../controllers/WalletAddress").generateWalletAddress;
 const router = express.Router();
 
-router.get("/:userId", controller.getAllBalances);
+router.get("/:walletId", controller.getAllBalances);
 
 router.put("/", controller.transferBalance);
 

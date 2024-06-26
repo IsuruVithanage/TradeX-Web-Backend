@@ -105,15 +105,17 @@ const getAssetsWithMarketPrice = async (userId, coins) => {
 
 
 
-const saveAsset = async (asset) => {
+const saveAsset = async (queryRunner, asset) => {
     try {
-        const savedAsset = await assetRepo.save(asset);
+        const savedAsset = !queryRunner ? 
+            await assetRepo.save(asset) :
+            await queryRunner.manager.withRepository(assetRepo).save(asset);
         return savedAsset;
     }
 
     catch (error) {
         console.log("\nError saving asset:", error);
-        return null;
+        throw new Error("Error saving Asset")
     }
 }
 

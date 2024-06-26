@@ -5,18 +5,17 @@ const jwt = require('jsonwebtoken');
 
 
 const register = async (req, res) => {
-    const {userName, password, email, isVerified, hasTakenQuiz, level} = req.body;
+    const {username, password, email} = req.body;
     try {
         const hash = await bcrypt.hash(password, 10);
         const userRepository = dataSource.getRepository("User");
         const user = userRepository.create({
-            userName: userName,
+            userName: username,
             email: email,
             password: hash,
-            isVerified: isVerified,
             issue: "",
-            hasTakenQuiz: hasTakenQuiz,
-            level: level,
+            hasTakenQuiz: false,
+            level: "",
             role: "User",
         });
         await userRepository.save(user);
@@ -45,7 +44,7 @@ const register = async (req, res) => {
         res.json({ message: "Logged in", accessToken , user: userDetail});
 
     } catch (err) {
-        res.status(400).json({error: err.message});
+        res.status(400).json({message: "Error registering user"});
     }
 };
 
@@ -55,7 +54,7 @@ const login = async (req, res) => {
     const user = await userRepository.findOne({ where: { email: email } });
 
     if (!user) {
-        return res.status(400).json({ error: "User doesn't exist" });
+        return res.status(400).json({ error: "Incorrect E-mail address" });
     }
 
     const dbPassword = user.password;
@@ -89,18 +88,25 @@ const login = async (req, res) => {
     res.json({ message: "Logged in", accessToken , user: userDetail});
 };
 
-const refreshToken = (req, res) => {
-    const refreshToken = req.cookies["refresh-token"];
+const refreshToken = async (req, res) => {
+    const userRepository = dataSource.getRepository("User");
+    const refreshToken = req.cookies['refresh-token'];
     if (!refreshToken) {
-        return res.status(401).json({ error: "Refresh token not found" });
+        return res.status(401).json({ error: 'Refresh token not found' });
     }
 
     try {
-        const user = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const user = await userRepository.findOne({ where: { userId: decoded.userId } });
+
+        if (!user) {
+            return res.status(403).json({ error: 'User not found' });
+        }
+
         const newAccessToken = createAccessToken(user);
         res.json({ accessToken: newAccessToken });
     } catch (err) {
-        return res.status(403).json({ error: "Invalid refresh token" });
+        return res.status(403).json({ error: 'Invalid refresh token' });
     }
 };
 
@@ -115,17 +121,6 @@ const logout = (req, res) => {
 };
 
 
-const getAllUsers = async (req, res) => {
-    const userRepo = dataSource.getRepository("User");
-    try {
-        const users = await userRepo.find();
-        res.json(users);
-    } catch (error) {
-        console.error("Error fetching all users:", error);
-        res.status(500).json({message: "Internal server error"});
-    }
-
-}
 
 const updateUserHasTakenQuiz = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
@@ -175,6 +170,8 @@ const updateUserVerifyStatus = async (req, res) => {
 };
 
 
+
+
 const profile = async (req, res) => {
     res.json("profile");
 };
@@ -221,5 +218,4 @@ module.exports = {
     updateUserVerifyStatus,
     refreshToken,
     logout,
-    getAllUsers
 };

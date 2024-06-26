@@ -2,17 +2,15 @@ const dataSource = require("../config/config");
 const WalletHistoryRepo = dataSource.getRepository("WalletHistory");
 
 const getWalletHistory = async (req, res) => {
-
-    
     try {
-        if (!req.query.userId) {
+        if (!req.query.walletId) {
             res.status(404).json({ message: 'User Id not found' });
         } 
         
         else {
             const WalletHistoryData = await WalletHistoryRepo.find({
                 where: {
-                    userId: req.query.userId,
+                    walletId: req.query.walletId,
                 },
                 order: {
                     historyId: 'DESC',
@@ -30,9 +28,8 @@ const getWalletHistory = async (req, res) => {
     }
 }
 
-const updateWalletHistory = async (historyData) => {
-    console.log(historyData)
-    await WalletHistoryRepo.save(historyData);
+const updateWalletHistory = async (queryRunner, historyData) => {
+    await queryRunner.manager.withRepository(WalletHistoryRepo).save(historyData);
     return;
 }
 
