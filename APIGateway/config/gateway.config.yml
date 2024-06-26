@@ -114,7 +114,7 @@ pipelines:
               checkCredentialExistence: false
       - checkRole:
           - action:
-              roles: [ 'Admin', 'User' ]
+              roles: [ 'Admin', 'Trader', 'User' ]
       - proxy:
           - action:
               serviceEndpoint: order-service
