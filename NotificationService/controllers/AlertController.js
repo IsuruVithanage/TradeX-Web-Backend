@@ -92,17 +92,14 @@ const addAlert = async (req, res) => {
 
 const editAlert = async (req, res) => {
     try {
-        const { userId, runningStatus } = req.body;
+        const { alertId, userId } = req.body;
+        const returnStatus = req.query && req.query.returnStatus;
         
-        if(!req.query.alertId){
+        if(!alertId){
             return res.status(400).json({message: 'Invalid alert data'});
         }
 
-        const alertToUpdate = await alertRepo.findOne({
-            where: {
-                alertId: req.query.alertId,
-            },
-        })
+        const alertToUpdate = await alertRepo.findOne({ where: { alertId }})
 
         if (!alertToUpdate) {
             res.status(404).json({message: 'Alert not found'});
@@ -116,7 +113,7 @@ const editAlert = async (req, res) => {
                 return true;
             }
             else{
-                await getAlerts({ query: { userId, runningStatus }}, res );
+                await getAlerts({ query: { userId, runningStatus: returnStatus }}, res );
             }
         }
     } 

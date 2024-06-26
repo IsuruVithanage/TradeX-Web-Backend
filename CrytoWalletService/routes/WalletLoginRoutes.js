@@ -7,7 +7,9 @@ router.post("/register", controller.register);
 
 router.post("/login", controller.login);
 
-router.get("/profile", controller.profile);
+router.post("/reset", controller.resetPassword);
+
+router.get("/checkUsername/:userName", controller.checkUserName);
 
 router.post("/refreshToken", controller.refreshToken);
 

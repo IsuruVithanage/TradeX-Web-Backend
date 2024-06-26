@@ -8,6 +8,7 @@ const axios = require("axios");
 
 const getPortfolioData = async (req, res) => {
     try {
+        console.log("hgchcg",req.query,req.params);
         const userId = req.query.userId;	
         const wallet = req.params.wallet;
         let usdBalance = 0;
@@ -56,14 +57,14 @@ const getPortfolioData = async (req, res) => {
             else{
                 const assetValue = (asset.marketPrice || 1) *  totalBalance;
                 portfolioValue += assetValue;
-                updatedAsset.value = assetValue;
-                updatedAsset.marketPrice = "$ " + asset.marketPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 10,});
+                updatedAsset.value = "$ " + assetValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});
+                updatedAsset.marketPrice = "$ " + asset.marketPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});
             }
 
             if(wallet !== 'overview'){
                 if(asset.symbol === 'USD'){
                     updatedAsset.marketPrice = "- - -";
-                    updatedAsset.value = totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});;
+                    updatedAsset.value = "$ " + totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2,});;
                     updatedAsset.ROI = "- - -";
                     updatedAsset.RoiColor = '#FFFFFF';
                 } else {
@@ -76,10 +77,10 @@ const getPortfolioData = async (req, res) => {
 
             if(wallet !== 'overview' || asset.symbol !== 'USD'){
                 updatedAsset.symbol = asset.symbol;
-                updatedAsset.tradingBalance = asset.tradingBalance;
-                updatedAsset.holdingBalance = asset.holdingBalance;
-                updatedAsset.fundingBalance = asset.fundingBalance;
-                updatedAsset.totalBalance = totalBalance;
+                updatedAsset.tradingBalance = asset.tradingBalance.toLocaleString("en-US");
+                updatedAsset.holdingBalance = asset.holdingBalance.toLocaleString("en-US");
+                updatedAsset.fundingBalance = asset.fundingBalance.toLocaleString("en-US");
+                updatedAsset.totalBalance = totalBalance.toLocaleString("en-US");
             }
 
             return updatedAsset;
@@ -103,7 +104,7 @@ const getPortfolioData = async (req, res) => {
             percentages = updatedAssets
                 .map(asset => ({
                     coinName: asset.symbol,
-                    percentage: (!portfolioValue) ? 0 : (asset.value / portfolioValue) * 100
+                    percentage: (!portfolioValue) ? 0 : (parseFloat(asset.value.replace(/[^0-9.]/g, '')) / portfolioValue) * 100
                 }))
 
                 .concat({ 
@@ -290,6 +291,7 @@ const receiveFromEx = async (req, res) => {
     const queryRunner = dataSource.createQueryRunner();
 
     try {
+        console.log("nng",req.body)
         let { coin, quantity, AvgPurchasePrice, receivingWallet, sendingWallet } = req.body;
         if( 
             !receivingWallet || 
@@ -304,6 +306,7 @@ const receiveFromEx = async (req, res) => {
         AvgPurchasePrice = (coin === 'USD') ? 1 : AvgPurchasePrice;
 
         const userId = await WalletAddressService.getUserId(receivingWallet);
+        const sender = await WalletAddressService.getUserName(sendingWallet);
 
         if(!userId){ return res.status(400).json({message: 'Invalid Wallet Address'}); }
 
@@ -350,6 +353,20 @@ const receiveFromEx = async (req, res) => {
         }
         
         await queryRunner.commitTransaction();
+
+
+        await axios.post("http://localhost:8002/notification/send/app", {
+            userId: userId,
+            title: "Asset Received",
+            body: `You have received ${req.body.quantity} ${req.body.coin} from ${sender}`,
+            onClick: "http://localhost:3000/portfolio/fundingWallet"
+        }).then(() => {
+            console.log("\nNotification sent");
+        }).catch((error) => {
+            console.log("\nError sending notification:", error.message);
+        });
+
+
         res.status(200).json({message: "Asset Updated"}); 
     } 
     
@@ -390,7 +407,7 @@ const releaseAsset = async (req, res) => {
                 assetToRelease.holdingBalance -= quantity;
                 assetToRelease.tradingBalance += quantity;
 
-                const updatedAsset = await assetService.saveAsset(assetToRelease);
+                const updatedAsset = await assetService.saveAsset(null, assetToRelease);
                 
                 res.status(200).json({
                     coin: updatedAsset.symbol,
@@ -432,7 +449,7 @@ const deductAsset = async (req, res) => {
             else{
                 assetToDeduct.holdingBalance -= req.body.quantity;
 
-                const updatedAsset = await assetService.saveAsset(assetToDeduct);
+                const updatedAsset = await assetService.saveAsset(null, assetToDeduct);
 
                 res.status(200).json({
                     coin: updatedAsset.symbol,
@@ -454,6 +471,8 @@ const deductAsset = async (req, res) => {
 
 
 const executeTrade = async (req, res) => {
+    const queryRunner = dataSource.createQueryRunner();
+
     try {
         const { userId, coin, quantity, price, category, type } = req.body;
 
@@ -539,9 +558,22 @@ const executeTrade = async (req, res) => {
             }         
         }
 
+        try{
+            queryRunner.connect();
+            queryRunner.startTransaction();
 
-        await assetService.saveAsset(assetToUpdate);
-        await assetService.saveAsset(usdAsset);
+            await assetService.saveAsset(queryRunner, assetToUpdate);
+            await assetService.saveAsset(queryRunner, usdAsset);
+        }
+
+        catch (error) {
+            await queryRunner.rollbackTransaction();
+            console.log("\nError in executing orders:", error.message);
+            return res.status(500).json({ message: "Transaction failed in portfolio" });
+        }
+        
+
+        await queryRunner.commitTransaction();
 
         res.status(200).json(
             await getBalance({params:{userId: userId, coin: `${coin},USD`}}, null)
@@ -551,6 +583,10 @@ const executeTrade = async (req, res) => {
     catch (error) {
         console.log("\nError adding asset:", error);
         res.status(500).json({message: error.message});
+    }
+
+    finally {
+        await queryRunner.release();
     }
 };
 
@@ -569,7 +605,7 @@ const allocateUSD = async (req, res) => {
 
         await assetService.deleteAll(userId);
 
-        await assetService.saveAsset({
+        await assetService.saveAsset(null, {
             userId: userId,
             symbol: 'USD',
             AvgPurchasePrice: 1,
