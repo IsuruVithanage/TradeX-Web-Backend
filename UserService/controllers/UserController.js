@@ -5,18 +5,17 @@ const jwt = require('jsonwebtoken');
 
 
 const register = async (req, res) => {
-    const {userName, password, email, isVerified, hasTakenQuiz, level} = req.body;
+    const {username, password, email} = req.body;
     try {
         const hash = await bcrypt.hash(password, 10);
         const userRepository = dataSource.getRepository("User");
         const user = userRepository.create({
-            userName: userName,
+            userName: username,
             email: email,
             password: hash,
-            isVerified: isVerified,
             issue: "",
-            hasTakenQuiz: hasTakenQuiz,
-            level: level,
+            hasTakenQuiz: false,
+            level: "",
             role: "User",
         });
         await userRepository.save(user);
@@ -45,7 +44,7 @@ const register = async (req, res) => {
         res.json({ message: "Logged in", accessToken , user: userDetail});
 
     } catch (err) {
-        res.status(400).json({error: err.message});
+        res.status(400).json({message: "Error registering user"});
     }
 };
 
@@ -55,7 +54,7 @@ const login = async (req, res) => {
     const user = await userRepository.findOne({ where: { email: email } });
 
     if (!user) {
-        return res.status(400).json({ error: "User doesn't exist" });
+        return res.status(400).json({ error: "Incorrect E-mail address" });
     }
 
     const dbPassword = user.password;
@@ -156,7 +155,6 @@ const updateUserVerifyStatus = async (req, res) => {
             return res.status(404).json({message: "User not found"});
         }
 
-        user.isVerified = status;
         if (status === "Yes") {
             user.role = "Trader";
         }

@@ -107,7 +107,9 @@ const getAssetsWithMarketPrice = async (userId, coins) => {
 
 const saveAsset = async (queryRunner, asset) => {
     try {
-        const savedAsset = await queryRunner.manager.withRepository(assetRepo).save(asset);
+        const savedAsset = !queryRunner ? 
+            await assetRepo.save(asset) :
+            await queryRunner.manager.withRepository(assetRepo).save(asset);
         return savedAsset;
     }
 
