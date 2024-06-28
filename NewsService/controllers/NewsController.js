@@ -100,7 +100,7 @@ const getAllNews = async (req, res) => {
     }
     catch(error){
         console.log("error getting news", error);
-        res.status(500).json({message: "error getting news"})
+        res.status(500).json({message: "Error getting news"})
     }
 };
 
@@ -174,8 +174,8 @@ const getFavNews  = async (req, res)  => {
         res.status(200).json(news);
     }
     catch(error){
-        console.log ("error getting favourite news", error);
-        res.status(500).json({message:"error getting favourite news"});
+        console.log ("Error getting favourite news", error);
+        res.status(500).json({message:"Error getting favourite news"});
     }
 }
 
@@ -185,7 +185,7 @@ const addToFav = async (req, res) => {
         const {userId,newsId} = req.body;
         
         if(!userId || !newsId ){
-            return res.status(400).json({message:"inavalid request"});
+            return res.status(400).json({message:"Inavalid request"});
         }
         
         const isFaved = await favRepo.findOne({where:{userId,newsId}});
@@ -239,7 +239,7 @@ const like = async (req, res) => {
         }
 
         const isLiked = await likeRepo.findOne({where:{userId,newsId}});
-        const news = await newsRepo.findOne({where:{newsId}})
+        const news = await newsRepo.findOne({where:{newsId}});
 
         if(!news){
             return res.status(404).json({message:"News not found"});
