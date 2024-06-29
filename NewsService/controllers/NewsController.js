@@ -182,10 +182,11 @@ const getFavNews = async (req, res) => {
 const addToFav = async (req, res) => {
     try {
         const addToFav = req.params.addToFav === "true";
-        const {userId, newsId} = req.body;
 
-        if (!userId || !newsId) {
-            return res.status(400).json({message: "Inavalid request"});
+        const {userId,newsId} = req.body;
+        
+        if(!userId || !newsId ){
+            return res.status(400).json({message:"Inavalid request"});
         }
 
         const isFaved = await favRepo.findOne({where: {userId, newsId}});
@@ -228,16 +229,16 @@ const addToFav = async (req, res) => {
     }
 }
 
-const socketStart = async () => {
+
+const webSocketStart = async() => {
     try {
-        wss = new WebSocket.Server({port: 8009});
+        wss = new WebSocket.Server({port: 8082});
         wss.on('connection', (ws) => {
             console.log('WebSocket connection established with client');
         });
     } catch (error) {
         console.log("Error starting webSocket", error);
     }
-
 }
 
 const like = async (req, res) => {
@@ -247,8 +248,8 @@ const like = async (req, res) => {
             return res.status(400).json({message: "invalid request"});
         }
 
-        const isLiked = await likeRepo.findOne({where: {userId, newsId}});
-        const news = await newsRepo.findOne({where: {newsId}});
+        const isLiked = await likeRepo.findOne({where:{userId,newsId}});
+        const news = await newsRepo.findOne({where:{newsId}});
 
         if (!news) {
             return res.status(404).json({message: "News not found"});
@@ -268,6 +269,16 @@ const like = async (req, res) => {
             .select('COUNT(*)', 'likeCount')
             .where('like.newsId = :newsId', {newsId})
             .getRawOne();
+
+            likeDetail = {
+                "newsId": newsId,
+                "likeCount": likeCount
+            }
+              
+            
+        wss.clients.forEach((client) => {
+            client.send(JSON.stringify({type: 'liked', likeDetail}));
+        });
 
         res.status(200).json(likeCount);
     } catch (error) {
@@ -304,6 +315,17 @@ const dislike = async (req, res) => {
             .select('COUNT(*)', 'dislikeCount')
             .where('dislike.newsId = :newsId', {newsId})
             .getRawOne();
+
+
+            disLikeDetail = {
+                "newsId": newsId,
+                "likeCount": dislikeCount
+            }
+              
+            
+        wss.clients.forEach((client) => {
+            client.send(JSON.stringify({type: 'disLiked', disLikeDetail}));
+        });
 
         res.status(200).json(dislikeCount);
     } catch (error) {
@@ -375,5 +397,5 @@ module.exports = {
     getFavNews,
     like,
     dislike,
-    socketStart
+    webSocketStart
 }

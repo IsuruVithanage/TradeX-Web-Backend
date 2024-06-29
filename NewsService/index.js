@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
 const newsRouter = require("./routes/NewsRoutes");
-const {socketStart} = require("./controllers/NewsController");
+const {webSocketStart} = require("./controllers/NewsController");
 
 app.use(express.json());
 app.use(cors({
@@ -32,7 +32,7 @@ dataSource.initialize()
 
     .then(() => {
         console.log("Database connected!!");
-        socketStart();
+        webSocketStart();
 
         app.listen(8008, () => {
             console.log("User Service running on Port 8008");
