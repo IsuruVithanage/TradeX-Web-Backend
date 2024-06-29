@@ -54,14 +54,14 @@ const login = async (req, res) => {
     const user = await userRepository.findOne({ where: { email: email } });
 
     if (!user) {
-        return res.status(400).json({ error: "Incorrect E-mail address" });
+        return res.status(400).json({ message: "Incorrect E-mail address" });
     }
 
     const dbPassword = user.password;
     const match = await bcrypt.compare(password, dbPassword);
 
     if (!match) {
-        return res.status(400).json({ error: "Wrong Username and Password Combination!" });
+        return res.status(400).json({ message: "Wrong Username and Password Combination!" });
     }
 
     const accessToken = createAccessToken(user);
@@ -155,9 +155,9 @@ const updateUserVerifyStatus = async (req, res) => {
             return res.status(404).json({message: "User not found"});
         }
 
-        if (status === "Yes") {
-            user.role = "Trader";
-        }
+
+        user.role = status;
+
 
         await userRepo.save(user);
 
@@ -167,8 +167,6 @@ const updateUserVerifyStatus = async (req, res) => {
         res.status(500).json({message: "Internal server error"});
     }
 };
-
-
 
 
 const profile = async (req, res) => {
@@ -216,5 +214,5 @@ module.exports = {
     updateUserHasTakenQuiz,
     updateUserVerifyStatus,
     refreshToken,
-    logout,
+    logout
 };

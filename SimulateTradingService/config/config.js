@@ -10,7 +10,7 @@ const dataSource = new typeorm.DataSource({
     password: process.env.RDS_PASSWORD,
     database: "trade_service_db",
     synchronize: true,
-    logging : true,
+    logging : false,
     ssl: {rejectUnauthorized: false},
     entities: [path.join(__dirname , ".." , "models/**/*.js")],
 })

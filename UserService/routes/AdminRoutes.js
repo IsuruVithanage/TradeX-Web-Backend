@@ -13,6 +13,10 @@ router.get("/getUsersWithVerificationIssues", controller.getUsersWithVerificatio
 
 router.get("/getAllUsers", controller.getAllUsers);
 
+router.get("/getUserDetailsbyId/:id", controller.getUserDetailsbyId);
+
+router.get("/getAllUserDetails", controller.getAllUserDetails);
+
 router.post("/getUserVerificationDetails", controller.getUserVerificationDetails);
 
 router.post("/changeUserRole", controller.changeUserRole);

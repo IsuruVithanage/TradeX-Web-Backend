@@ -7,7 +7,6 @@ module.exports = new EntitySchema({
         AdminId: {
             primary: true,
             type: "int",
-            generated: true,
         },
         AdminName: {
             type: "varchar",
@@ -17,7 +16,7 @@ module.exports = new EntitySchema({
         },
         password: {
             type: "varchar",
-          },
+        },
         NIC: {
             type: "varchar",
         },
