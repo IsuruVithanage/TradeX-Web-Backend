@@ -155,9 +155,9 @@ const updateUserVerifyStatus = async (req, res) => {
             return res.status(404).json({message: "User not found"});
         }
 
-        if (status === "Yes") {
-            user.role = "Trader";
-        }
+
+        user.role = status;
+
 
         await userRepo.save(user);
 
@@ -167,8 +167,6 @@ const updateUserVerifyStatus = async (req, res) => {
         res.status(500).json({message: "Internal server error"});
     }
 };
-
-
 
 
 const profile = async (req, res) => {
@@ -216,5 +214,5 @@ module.exports = {
     updateUserHasTakenQuiz,
     updateUserVerifyStatus,
     refreshToken,
-    logout,
+    logout
 };
