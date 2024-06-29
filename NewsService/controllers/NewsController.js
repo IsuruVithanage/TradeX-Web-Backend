@@ -9,6 +9,8 @@ const Like = require("../models/Like");
 const Dislike = require('../models/Dislike');
 const Favourite = require("../models/Favourite");
 const axios = require('axios');
+const WebSocket = require('ws');
+let wss;
 
 setInterval(() => {
     axios.get('https://newsapi.org/v2/everything?q=bitcoin&apiKey=bc6db274836c4c21aa4569104f316c17')
@@ -231,6 +233,17 @@ const addToFav = async (req, res) => {
    }
 }
 
+const webSocketStart = async() => {
+    try {
+        wss = new WebSocket.Server({port: 8082});
+        wss.on('connection', (ws) => {
+            console.log('WebSocket connection established with client');
+        });
+    } catch (error) {
+        console.log("Error starting webSocket", error);
+    }
+}
+
 const like = async (req, res) => {
     try{
         const {isLike, userId, newsId} = req.body;
@@ -260,6 +273,16 @@ const like = async (req, res) => {
             .select('COUNT(*)', 'likeCount')
             .where('like.newsId = :newsId', { newsId })
             .getRawOne();
+
+            likeDetail = {
+                "newsId": newsId,
+                "likeCount": likeCount
+            }
+              
+            
+        wss.clients.forEach((client) => {
+            client.send(JSON.stringify({type: 'liked', likeDetail}));
+        });
 
         res.status(200).json(likeCount);
     }
@@ -299,6 +322,17 @@ const dislike = async (req, res) => {
             .select('COUNT(*)', 'dislikeCount')
             .where('dislike.newsId = :newsId', { newsId })
             .getRawOne();
+
+
+            disLikeDetail = {
+                "newsId": newsId,
+                "likeCount": dislikeCount
+            }
+              
+            
+        wss.clients.forEach((client) => {
+            client.send(JSON.stringify({type: 'disLiked', disLikeDetail}));
+        });
 
         res.status(200).json(dislikeCount);
     }
@@ -373,5 +407,6 @@ module.exports = {
     addToFav,
     getFavNews,
     like,
-    dislike
+    dislike,
+    webSocketStart
 }
