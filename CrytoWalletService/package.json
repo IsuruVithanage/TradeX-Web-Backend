@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "start": "nodemon index.js",
-    "test:wallet": "jest --config ../jest.wallet.config.js"
+    "test:wallet": "jest --config ../TestConfigs/jest.wallet.config.js"
   },
   "author": "",
   "license": "ISC",

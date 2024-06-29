@@ -64,7 +64,7 @@ const checkOrders = () => {
                     await updateOrderTime(order.orderId, time[order.coin]);
                     console.log(`Order ${order.orderId} status updated to 'Completed'`);
 
-                    fetch('http://localhost:8002/alert/send/push', {
+                    fetch('http://localhost:8002/notification/send/push', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -107,7 +107,7 @@ const checkStoLimitOrders = () => {
                     await updateOrderCategory(order.orderId, 'Limit');
                     console.log(`Order ${order.orderId} stop limit completed'`);
 
-                    fetch('http://localhost:8002/alert/send/push', {
+                    fetch('http://localhost:8002/notification/send/push', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

@@ -1,6 +1,6 @@
 module.exports = {
     testEnvironment: 'node',
-    roots: ['./PortfolioService'],
+    roots: ['../SimulateTradingService'],
     testMatch: ['**/__tests__/**/*.js?(x)', '**/?(*.)+(spec|test).js?(x)'],
     moduleFileExtensions: ['js', 'json'],
 };
