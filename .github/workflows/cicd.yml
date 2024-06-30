@@ -12,17 +12,9 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Build and Push Docker Images
-        run: |
-          docker-compose -f docker-compose.yml build
-          docker-compose -f docker-compose.yml push
-
   deploy:
     needs: build
-    runs-on: aws-ec2
+    runs-on: ubuntu-latest
     steps:
       - name: Install SSH Key
         uses: webfactory/ssh-agent@v0.5.3
@@ -44,8 +36,16 @@ jobs:
           fi
 
           cd $PROJECT_DIR  # Navigate to the project directory
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker-compose pull
+          
+          # Ensure Docker Compose is installed
+          if ! command -v docker-compose &> /dev/null
+          then
+              sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+          fi
+
+          # Build and run the Docker containers
           docker-compose down
+          docker-compose build
           docker-compose up -d
           EOF
