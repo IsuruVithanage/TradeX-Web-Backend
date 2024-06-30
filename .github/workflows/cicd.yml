@@ -3,7 +3,7 @@ name: Deploy Microservices Application
 on:
   push:
     branches:
-      - ec2  # Replace with your branch name
+      - ec2  
 
 jobs:
   build:
