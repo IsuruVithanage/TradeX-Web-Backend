@@ -24,12 +24,6 @@ jobs:
       - name: Install SSH Key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  # Ensure this secret contains the correct private key
-
-      - name: SSH into EC2 and Deploy
-              - name: Install SSH Key
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
       - name: SSH into EC2 and Deploy
