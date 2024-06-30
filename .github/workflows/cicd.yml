@@ -27,8 +27,14 @@ jobs:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  # Ensure this secret contains the correct private key
 
       - name: SSH into EC2 and Deploy
+              - name: Install SSH Key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: SSH into EC2 and Deploy
         run: |
-          ssh -tt -o StrictHostKeyChecking=no ubuntu@ec2-65-0-131-78.ap-south-1.compute.amazonaws.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@ec2-65-0-131-78.ap-south-1.compute.amazonaws.com << 'EOF'
           # Define the project directory
           PROJECT_DIR="/home/ubuntu/my-project"  # Adjust this path to your project directory
 
