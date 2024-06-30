@@ -3,16 +3,30 @@ name: Deploy Microservices Application
 on:
   push:
     branches:
-      - ec2  
+      - ec2  # Replace with your branch name
 
 jobs:
-  needs: build
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Build and Push Docker Images
+        run: |
+          docker-compose -f docker-compose.yml build
+          docker-compose -f docker-compose.yml push
+
+
+  deploy:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Install SSH Key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  # Ensure this secret contains the correct private key
+
       - name: SSH into EC2 and Deploy
         run: |
           ssh -tt -o StrictHostKeyChecking=no ubuntu@ec2-65-0-131-78.ap-south-1.compute.amazonaws.com << 'EOF'
