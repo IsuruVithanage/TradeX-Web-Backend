@@ -1,0 +1,104 @@
+
+services:
+  api-gateway:
+    build: ./APIGateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - admin-service
+      - crypto-wallet-service
+      - educational-service
+      - forum-service
+      - summary-service
+      - news-service
+      - portfolio-service
+      - order-service
+      - user-service
+      - watchlist-service
+      - notification-service
+    networks:
+      - mynetwork
+
+  admin-service:
+    build: ./AdminService
+    ports:
+      - "8003:8003"
+    networks:
+      - mynetwork
+
+  crypto-wallet-service:
+    build: ./CrytoWalletService
+    ports:
+      - "8006:8006"
+    networks:
+      - mynetwork
+
+  educational-service:
+    build: ./EducationalService
+    ports:
+      - "8009:8009"
+    networks:
+      - mynetwork
+
+  forum-service:
+    build: ./ForumService
+    ports:
+      - "8010:8010"
+    networks:
+      - mynetwork
+
+  news-service:
+    build: ./NewsService
+    ports:
+      - "8008:8008"
+    networks:
+      - mynetwork
+
+  portfolio-service:
+    build: ./PortfolioService
+    ports:
+      - "8011:8011"
+    networks:
+      - mynetwork
+
+  order-service:
+    build: ./SimulateTradingService
+    ports:
+      - "8005:8005"
+      - "8081:8081"
+    networks:
+      - mynetwork
+
+  user-service:
+    build: ./UserService
+    ports:
+      - "8004:8004"
+    networks:
+      - mynetwork
+
+  summary-service:
+    build: ./SummaryService
+    ports:
+      - "8013:8013"
+    networks:
+      - mynetwork
+
+  watchlist-service:
+    build: ./WatchListService
+    ports:
+      - "8007:8007"
+    networks:
+      - mynetwork
+
+  notification-service:
+    build: ./NotificationService
+    ports:
+      - "8002:8002"
+    networks:
+      - mynetwork
+
+
+
+networks:
+  mynetwork:
+    driver: bridge

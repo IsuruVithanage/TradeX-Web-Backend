@@ -26,10 +26,10 @@ apiEndpoints:
   admin-api:
     host: 'localhost'
     paths: '/admin/*'
-  alert-api:
+  notification-api:
     host: 'localhost'
     paths:
-      - '/alert/*'
+      - '/notification/*'
       - '/notification/*'
   wallet-api:
     host: 'localhost'
@@ -62,27 +62,27 @@ apiEndpoints:
 
 serviceEndpoints:
   order-service:
-    url: 'http://localhost:8005'
+    url: 'http://order-service:8005'
   suggestion-service:
-    url: 'http://localhost:8005'
+    url: 'http://suggestion-service:8005'
   user-service:
-    url: 'http://localhost:8004'
+    url: 'http://user-service:8004'
   admin-service:
-    url: 'http://localhost:8003'
-  alert-service:
-    url: 'http://localhost:8002'
+    url: 'http://admin-service:8003'
+  notification-service:
+    url: 'http://notification-service:8002'
   wallet-service:
-    url: 'http://localhost:8006'
+    url: 'http://wallet-service:8006'
   education-service:
-    url: 'http://localhost:8009'
+    url: 'http://education-service:8009'
   forum-service:
-    url: 'http://localhost:8010'
+    url: 'http://forum-service:8010'
   news-service:
-    url: 'http://localhost:8008'
+    url: 'http://news-service:8008'
   portfolio-service:
-    url: 'http://localhost:8011'
+    url: 'http://portfolio-service:8011'
   watchList-service:
-    url: 'http://localhost:8007'
+    url: 'http://watchList-service:8007'
 
 policies:
   - basic-auth
@@ -157,13 +157,13 @@ pipelines:
           - action:
               serviceEndpoint: admin-service
               changeOrigin: true
-  alert-pipeline:
+  notification-pipeline:
     apiEndpoints:
-      - alert-api
+      - notification-api
     policies:
       - proxy:
           - action:
-              serviceEndpoint: alert-service
+              serviceEndpoint: notification-service
               changeOrigin: true
   wallet-pipeline:
     apiEndpoints:
