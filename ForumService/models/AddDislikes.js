@@ -1,15 +1,18 @@
 const EntitySchema = require("typeorm").EntitySchema;
 
 module.exports = new EntitySchema({
-  name: "Forum-addlikes",
-  tableName: "forum-addlikes",
+  name: "Dislike",
+  tableName: "dislike",
   columns: {
     questionId: {
-      primary: true,
       type: "int",
+      nullable: false,
+      primary: true,
     },
     userId: {
       type: "int",
+      nullable: false,
+      primary: true,
     },
   },
 });
