@@ -12,7 +12,7 @@ const getAllBalances = async (req, res) => {
         // Extract userId from request parameters
         const walletId = req.params.walletId;	
         let usdBalance = 0;
-        let portfolioValue = 0;
+        let walletValue = 0;
 
         // Check if userId is provided
         if (!walletId || walletId === 'undefined') {
@@ -58,11 +58,11 @@ const getAllBalances = async (req, res) => {
             // Calculate portfolio value and USD balance
             if (asset.coin === 'USD') {
                 usdBalance = asset.balance;
-                portfolioValue += asset.balance;
+                walletValue += asset.balance;
             } else {
                 updatedAsset.marketPrice = `$ ${asset.marketPrice}`;
                 updatedAsset.value = ((asset.marketPrice > 0) ? asset.marketPrice : 1) * asset.balance;
-                portfolioValue += updatedAsset.value;
+                walletValue += updatedAsset.value;
 
                 const ROI = (asset.marketPrice - asset.AvgPurchasePrice) * (100 / asset.AvgPurchasePrice);
                 updatedAsset.ROI = `${ROI.toFixed(2)} %`;
@@ -79,7 +79,7 @@ const getAllBalances = async (req, res) => {
         // Return response with portfolio data
         res.status(200).json({
             usdBalance: usdBalance,
-            portfolioValue: portfolioValue,
+            walletValue: walletValue,
             assets: updatedAssets,
             address: await address.getWalletAddress(walletId)
         }); 
