@@ -14,19 +14,44 @@ const getUserCount = async (req, res) => {
 
 const getPendingUsers = async (req, res) => {
   const userRepo = dataSource.getRepository("User");
+
   try {
-    const pendingUsers = await userRepo.find({
-      where: {
-        role: "PendingTrader",
-      },
-    });
-    res.json(pendingUsers);
+      const users = await userRepo.createQueryBuilder('user')
+          .leftJoin(
+              "UserVerificationDetail",
+              'user_verification_detail',
+              'user_verification_detail.userId = user.userId'
+          )
+          .select([
+              'user.userId AS "userId"',
+              'user.userName AS "userName"',
+              'user.email AS "email"',
+              'user.issue AS "issue"',
+              'user.hasTakenQuiz AS "hasTakenQuiz"',
+              'user.level AS "level"',
+              'user.role AS "role"',
+              'user_verification_detail.firstName AS "firstName"',
+              'user_verification_detail.lastName AS "lastName"',
+              'user_verification_detail.age AS "age"',
+              'user_verification_detail.phoneNumber AS "phoneNumber"',
+              'user_verification_detail.nic AS "nic"',
+              'user_verification_detail.dateOfBirth AS "dateOfBirth"',
+              'user_verification_detail.userImg AS "userImg"',
+              'user_verification_detail.nicImg1 AS "nicImg1"',
+              'user_verification_detail.nicImg2 AS "nicImg2"',
+              'user_verification_detail.requestDate AS "requestDate"'
+          ])
+          .where('user.role = :role', { role: "PendingTrader" })
+          .andWhere('user.issue = :issue', { issue: "" })
+          .orderBy('user.userId', 'ASC')
+          .getRawMany();
+
+      res.status(200).json(users);
   } catch (error) {
-    console.error("Error retrieving pending traders:", error);
-    res.status(500).json({ message: "Internal server error" });
+      console.log("error getting pending traders", error);
+      res.status(500).json({ message: "error getting pending traders" });
   }
 };
-
 
 const getVerifiedUserCount = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
@@ -43,20 +68,61 @@ const getVerifiedUserCount = async (req, res) => {
     }
 };
 
+// const getUsersWithVerificationIssues = async (req, res) => {
+//   const userRepo = dataSource.getRepository("User");
+
+//   try {
+//     const user = await userRepo.find({ where: { issue: Not("") } });
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User with an issue not found" });
+//     }
+
+//     res.json(user);
+//   } catch (error) {
+//     console.error("Error finding user", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 const getUsersWithVerificationIssues = async (req, res) => {
   const userRepo = dataSource.getRepository("User");
 
   try {
-    const user = await userRepo.find({ where: { issue: Not("") } });
+      const users = await userRepo.createQueryBuilder('user')
+          .leftJoin(
+              "UserVerificationDetail",
+              'user_verification_detail',
+              'user_verification_detail.userId = user.userId'
+          )
+          .select([
+              'user.userId AS "userId"',
+              'user.userName AS "userName"',
+              'user.email AS "email"',
+              'user.issue AS "issue"',
+              'user.hasTakenQuiz AS "hasTakenQuiz"',
+              'user.level AS "level"',
+              'user.role AS "role"',
+              'user_verification_detail.firstName AS "firstName"',
+              'user_verification_detail.lastName AS "lastName"',
+              'user_verification_detail.age AS "age"',
+              'user_verification_detail.phoneNumber AS "phoneNumber"',
+              'user_verification_detail.nic AS "nic"',
+              'user_verification_detail.dateOfBirth AS "dateOfBirth"',
+              'user_verification_detail.userImg AS "userImg"',
+              'user_verification_detail.nicImg1 AS "nicImg1"',
+              'user_verification_detail.nicImg2 AS "nicImg2"',
+              'user_verification_detail.requestDate AS "requestDate"'
+          ])
+          .where('user.role = :role', { role: "PendingTrader" })
+          .andWhere('user.issue != :issue', { issue: "" })
+          .orderBy('user.userId', 'ASC')
+          .getRawMany();
 
-    if (!user) {
-      return res.status(404).json({ message: "User with an issue not found" });
-    }
-
-    res.json(user);
+      res.status(200).json(users);
   } catch (error) {
-    console.error("Error finding user", error);
-    res.status(500).json({ message: "Internal server error" });
+      console.log("error getting pending traders", error);
+      res.status(500).json({ message: "error getting pending traders" });
   }
 };
 
@@ -101,6 +167,9 @@ const changeUserRole = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     user.role = status;
+    if(user.issue !== ""){
+      user.issue = "";
+    }
 
     await userRepo.save(user);
 
@@ -217,6 +286,24 @@ const getUserDetailsbyId = async (req, res) => {
     }
 };
 
+const deleteUser = async (req, res) => {
+  const userRepo = dataSource.getRepository("User");
+  try {
+    const { id } = req.params;
+    const user = await userRepo.findOne({ where: { userId: id } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await userRepo.remove(user);
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 module.exports = {
     getUserCount,
@@ -228,5 +315,6 @@ module.exports = {
     getUserDetailsbyId,
     getAllUserDetails,
     addIssue,
-    changeUserRole
+    changeUserRole,
+    deleteUser
 };
