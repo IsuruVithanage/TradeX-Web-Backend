@@ -7,12 +7,14 @@ module.exports = new EntitySchema({
         AdminId: {
             primary: true,
             type: "int",
-            generated: true,
         },
         AdminName: {
             type: "varchar",
         },
-        Date: {
+        email: {
+            type: "varchar",
+        },
+        password: {
             type: "varchar",
         },
         NIC: {
@@ -21,8 +23,8 @@ module.exports = new EntitySchema({
         Contact: {
             type: "varchar",
         },
-        Age: {
-            type: "int",
+        role: {
+            type: "varchar",
         },
     },
 })

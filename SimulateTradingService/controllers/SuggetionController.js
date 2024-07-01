@@ -27,10 +27,16 @@ Please format your response in JSON like this:
   "bestPrice": 1000,
   "time":1716257160,
   "profitFromBestPrice": 100,
-  "suggestions": [""],
+  "suggestions": ["Suggestion 1", "Suggestion 2"],
   "resources": [
-        "https://www.coindesk.com/',
-        "https://www.investopedia.com/articles/basics/03/dollarcostaveraging.asp"
+        {
+          "title": "The Ultimate Guide to Limit Orders",
+          "url": "https://www.binance.com/en/support/faq/560002190722"
+        },
+        {
+          "title": "Dollar-Cost Averaging vs. Lump Sum Investing",
+          "url": "https://www.investopedia.com/articles/basics/03/dollarcostaveraging.asp"
+        },
     ]
 }.
 Ensure the bestPrice should be lower than the tradePrice.`;
@@ -47,8 +53,14 @@ Please format your response in JSON like this:
   "profitFromBestPrice": 100,
   "suggestions": [""],
   "resources": [
-        "https://www.coindesk.com/',
-        "https://www.investopedia.com/articles/basics/03/dollarcostaveraging.asp"
+        {
+          "title": "The Ultimate Guide to Limit Orders",
+          "url": "https://www.binance.com/en/support/faq/560002190722"
+        },
+        {
+          "title": "Dollar-Cost Averaging vs. Lump Sum Investing",
+          "url": "https://www.investopedia.com/articles/basics/03/dollarcostaveraging.asp"
+        },
     ]
 }.
 Ensure the bestPrice should be greater than the tradePrice. Make sure to calculate profit using boughtPrice`;

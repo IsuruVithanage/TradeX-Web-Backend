@@ -1,7 +1,7 @@
 const dataSource = require("../config/config");
 
 
-const getPortfolioValueData = async (userId, timezoneOffset) => {
+const getPortfolioValueData = async (userId) => {
     try {
         const queryResult = await dataSource.query(
         `   SELECT 'Hourly' AS "type", "time", "value"
@@ -71,11 +71,12 @@ const updateValueOf = async (dataToUpdate, intoTable) => {
             .insert()
             .into(`portfolio${intoTable}Value`)
             .values(dataToUpdate)
+            .orIgnore()
             .execute();
     }
 
     catch (error) {
-        console.log("\nError updating hourly value:", error);
+        console.log(`\nError inserting ${intoTable} value:`, error);
     }
 };
 

@@ -20,7 +20,7 @@ module.exports = new EntitySchema({
     password: {
       type: "varchar",
     },
-    isVerified: {
+    issue: {
       type: "varchar",
     },
     hasTakenQuiz: {
@@ -29,5 +29,9 @@ module.exports = new EntitySchema({
     level: {
       type: "varchar",
     },
+    role: {
+      type: "varchar",
+    },
   },
 });
+

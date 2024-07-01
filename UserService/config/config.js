@@ -14,7 +14,7 @@ const dataSource = new typeorm.DataSource({
   ssl: {
     rejectUnauthorized: false,
   },
-  entities: [path.join(__dirname, "..", "models/*/.js")],
+  entities: [path.join(__dirname, "..", "models/**/*.js")],
 });
 
 module.exports = dataSource;

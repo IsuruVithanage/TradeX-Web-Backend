@@ -1,7 +1,7 @@
-const express = require('express');
 const dataSource = require("../config/config");
 const { shuffle } = require("lodash"); // Import shuffle function from lodash
-const { request } = require('express');
+const seedPhraseRepo = dataSource.getRepository("UserDetail");
+
 
 const words = [
     "word1",
@@ -23,41 +23,36 @@ const shuffleWords = () => {
     const shuffledWords = shuffle(words);
     return shuffledWords.join(','); // Join shuffled words into a single string
 };
-const getSeedPreseById = async (req,res) => {
-    try {
-        console.log(req.body);
-        const id = req.body.userId;
-        const seedPhraseRepo = dataSource.getRepository("SeedPhrase");
-        const words = await seedPhraseRepo.find({where: {userId:id}});
-        res.json(words);
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
 
-const saveSeedPrase = async (req, res) => {
-    const seedPhraseRepo = dataSource.getRepository("SeedPhrase");
+const getSeedPhraseByUseName = async (req, res) => {
     try {
-        const saveSeedPrase = await seedPhraseRepo.save(req.body);
-        res.json(saveSeedPrase);
-    } catch (error) {
-        console.error("Error saving order:", error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
+        const userName = req.params.userName;
 
-const checkSimilarities = async (shuffledWords) => {
-    const seedPhraseRepo = dataSource.getRepository("SeedPhrase");
-    // Query the database to check for similarities with shuffledWords
-    const seedPhrases = await seedPhraseRepo.find();
-    for (const seedPhrase of seedPhrases) {
-        // Compare the shuffled words with the seed phrase records
-        if (seedPhrase.words === shuffledWords) {
-            return true; // Similarities found
+        if(!userName) {
+            return res.status(400).json({message: "Please fill all the fields"});
         }
+
+        const user = await seedPhraseRepo.findOne({where: {userName}});
+
+        if(!user) {
+            return res.status(400).json({message: "Invalid Username"});
+        }
+
+        console.log('Seed Phrase:', user.seedPhrase);
+
+        res.status(200).json({seedPhrase: user.seedPhrase});
+    } catch (error) {
+        console.error('Error fetching seedPhrase:', error);
+        res.status(500).json({ message: 'An error occurred. Please try again.'});
     }
-    return false; // No similarities found
+};
+
+
+const checkSimilarities = async (seedPhrase) => {
+    // Query the database to check for similarities with shuffledWords
+    const similarSeedPhrase = await seedPhraseRepo.findOne({ where: {seedPhrase}});
+
+    return !similarSeedPhrase ? false : true;
 };
 
 const getUniqueShuffledWords = async (req, res) => {
@@ -67,11 +62,15 @@ const getUniqueShuffledWords = async (req, res) => {
         shuffledWords = shuffleWords();
         similaritiesFound = await checkSimilarities(shuffledWords);
     }
-    res.json({ words: shuffledWords.split(',') }); // Split the string back into an array before sending to frontend
+    res.json(shuffledWords);
+};
+
+const getWords = async (req, res) => {
+    res.status(200).json(words);
 };
 
 module.exports = {
     getUniqueShuffledWords,
-    getSeedPreseById,
-    saveSeedPrase
+    getSeedPhraseByUseName,
+    getWords
 };

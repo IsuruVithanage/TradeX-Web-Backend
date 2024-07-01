@@ -3,6 +3,7 @@ const cors = require("cors");
 const app = express();
 const dataSource = require("./config/config");
 const userRouter = require("./routes/UserRoutes");
+const adminRouter = require("./routes/AdminRoutes");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const { refreshToken } = require("./controllers/UserController");
@@ -21,6 +22,7 @@ app.use(
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use("/user", userRouter);
+app.use("/admin", adminRouter);
 
 // Handle 404 errors
 app.use((req, res) => {

@@ -3,16 +3,6 @@ const controller = require("../controllers/UserController");
 const router = express.Router();
 
 //GET Requests
-router.get("/getUserCount", controller.getUserCount);
-
-router.get("/getPendingUsers", controller.getPendingUsers);
-
-router.get("/getVerifiedUserCount", controller.getVerifiedUserCount);
-
-router.get(
-  "/getUsersWithVerificationIssues",
-  controller.getUsersWithVerificationIssues
-);
 
 router.get("/profile", controller.profile);
 
