@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "start": "nodemon index.js",
-    "test:forum": "jest --config ../jest.forum.config.js"
+    "test:forum": "jest --config ../TestConfigs/jest.forum.config.js"
   },
   "author": "",
   "license": "ISC",
