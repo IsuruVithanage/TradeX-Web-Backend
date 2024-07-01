@@ -11,26 +11,40 @@ const saveAdmin = async (req, res) => {
     const AdminRepo = dataSource.getRepository("Admin");
 
     try {
-    
-        const { AdminName, Date, NIC, Contact, Age } = req.body;
+        const { AdminName, email, password, NIC, Contact } = req.body;
 
-        
+        // Retrieve the last admin to generate a new ID
+        const lastAdmin = await AdminRepo.createQueryBuilder("admin")
+            .orderBy("admin.AdminId", "DESC")
+            .getOne();
+
+        let newAdminId;
+        if (lastAdmin) {
+            const lastIdNum = parseInt(lastAdmin.AdminId.slice(1), 10);
+            const newIdNum = lastIdNum + 1;
+            newAdminId = `A${newIdNum.toString().padStart(3, '0')}`;
+        } else {
+            newAdminId = "A001";
+        }
+
+        // Create the new admin with the generated ID
         const newAdmin = AdminRepo.create({
+            AdminId: newAdminId,
             AdminName,
-            Date,
+            email,
+            password,
             NIC,
             Contact,
-            Age
+            role: "Admin"
         });
 
-    
+        // Save the new admin
         const savedAdmin = await AdminRepo.save(newAdmin);
 
-    
         res.status(201).json(savedAdmin);
     } catch (error) {
         console.error("Error saving admin:", error);
-        res.status(500).json({message: 'Internal server error'});
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 

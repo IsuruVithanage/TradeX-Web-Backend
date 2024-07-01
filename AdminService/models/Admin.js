@@ -1,4 +1,4 @@
-const EntitySchema = require("typeorm").EntitySchema
+const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
     name: "Admin",
@@ -6,7 +6,7 @@ module.exports = new EntitySchema({
     columns: {
         AdminId: {
             primary: true,
-            type: "int",
+            type: "varchar",
         },
         AdminName: {
             type: "varchar",
@@ -27,4 +27,22 @@ module.exports = new EntitySchema({
             type: "varchar",
         },
     },
-})
+    hooks: {
+        beforeInsert: async function(admin) {
+            if (!admin.AdminId) {
+                const adminRepo = admin.getRepository();
+                const lastAdmin = await adminRepo.createQueryBuilder("admin")
+                    .orderBy("admin.AdminId", "DESC")
+                    .getOne();
+
+                if (lastAdmin) {
+                    const lastIdNum = parseInt(lastAdmin.AdminId.slice(1), 10);
+                    const newIdNum = lastIdNum + 1;
+                    admin.AdminId = `A${newIdNum.toString().padStart(3, '0')}`;
+                } else {
+                    admin.AdminId = "A001";
+                }
+            }
+        }
+    }
+});
