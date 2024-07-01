@@ -135,11 +135,37 @@ const favorite = async (req, res) => {
     }
 }
 
+const addEduResources = async (req, res) => {
+    try {
+        const { title, description, image, url } = req.body;
+
+        if (!title || !description || !image || !url) {
+            return res.status(400).json({ message: "Invalid request" });
+        }
+
+        const isExist = await eduRepo.findOne({ where: { url } });
+
+        if (isExist) {
+            return res.status(400).json({ message: "Resource already exists" });
+        }
+
+        await eduRepo.save({ title, description, image, url });
+        res.status(200).json({ message: "Resource added successfully" });
+    } catch (error) {
+        console.log("Error saving resource", error);
+        res.status(500).json({ message: "Error saving resource" });
+    }
+};
+
+
+
 
 
 module.exports = {
     getAllEduResources,
     saveEduResources,
     favorite,
-    getFavEduResources
+    getFavEduResources,
+    addEduResources
+
 }

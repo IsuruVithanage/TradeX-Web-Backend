@@ -10,7 +10,5 @@ router.post("/", controller.saveEduResources);
 
 router.post("/favorite", controller.favorite);
 
-router.post("/addResource", controller.saveEduResources);
-
 
 module.exports = router
