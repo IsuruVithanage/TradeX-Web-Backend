@@ -35,7 +35,7 @@ dataSource.initialize()
         webSocketStart();
 
         app.listen(8008, () => {
-            console.log("User Service running on Port 8008");
+            console.log("News Service running on Port 8008");
         })
     })
 
