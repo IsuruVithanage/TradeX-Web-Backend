@@ -8,14 +8,14 @@ const words = [
     "banana",
     "cherry",
     "date",
-    "elderberry",
+    "car",
     "fig",
     "grape",
-    "honeydew",
+    "bike",
     "kiwi",
     "lemon",
     "mango",
-    "nectarine"
+    "phone"
 ];
 
 const shuffleWords = () => {
