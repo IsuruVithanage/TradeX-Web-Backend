@@ -79,9 +79,7 @@ const login = async (req, res) => {
         id: user.userId,
         userName: user.userName,
         email: user.email,
-        isVerified: user.isVerified,
         hasTakenQuiz: user.hasTakenQuiz,
-        level: user.level,
         role: user.role,
     }
 

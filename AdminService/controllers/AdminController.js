@@ -6,6 +6,44 @@ const getAllAdmins = async (req, res) => {
     res.json(await AdminRepo.find());
 };
 
+const login = async (req, res) => {
+    const userRepository = dataSource.getRepository("Admin");
+    const { email, password } = req.body;
+    const user = await userRepository.findOne({ where: { email: email } });
+
+    if (!user) {
+        return res.status(400).json({ message: "Incorrect E-mail address" });
+    }
+
+    const dbPassword = user.password;
+    const match = await bcrypt.compare(password, dbPassword);
+
+    if (!match) {
+        return res.status(400).json({ message: "Wrong Username and Password Combination!" });
+    }
+
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+
+
+    res.cookie("refresh-token", refreshToken, {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+    });
+
+    const userDetail = {
+        id: user.AdminId,
+        userName: user.AdminName,
+        email: user.email,
+        hasTakenQuiz: user.hasTakenQuiz,
+        role: user.role,
+    }
+
+    res.json({ message: "Logged in", accessToken , user: userDetail});
+};
+
 
 const saveAdmin = async (req, res) => {
     const AdminRepo = dataSource.getRepository("Admin");
