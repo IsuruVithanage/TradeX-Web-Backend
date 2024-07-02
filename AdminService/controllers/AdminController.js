@@ -83,6 +83,8 @@ const saveAdmin = async (req, res) => {
             role: "Admin"
         });
 
+        await AdminRepo.save(newAdmin);
+
 
         await AdminRepo.save(newAdmin);
 

@@ -205,9 +205,18 @@ const addIssue = async (req, res) => {
         receiverEmail: user.email,
         title: "TradeX Account Verification Issue",
         emailHeader: "TradeX Account Verification Issue",
-        emailBody: `Your Account is not verified successfully because ${issue}. You have to send verification details again to verify your account.`,
+        emailBody: `
+            <p>Dear ${user.userName},</p>
+            <p>We regret to inform you that your TradeX account verification was not successful due to the following issue:</p>
+            <p style="color: gray; font-weight: bold;">${issue}</p>
+            <p>To complete the verification process, please send us the necessary details again.</p>
+            <p>Thank you for your understanding.</p>
+            <br>
+            <p>Best Regards,</p>
+            <p>TradeX Team</p>
+          `,
         body: `Account not verified because ${issue}`,
-        userId: userId,
+        userId: user.userId,
         onClick: "http://localhost:3000/verify",
       })
       .then(() => {
