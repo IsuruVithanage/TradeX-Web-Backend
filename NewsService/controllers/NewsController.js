@@ -18,7 +18,9 @@ setInterval(() => {
             saveNews(res.data.articles)
         })
         .catch((error) => {
-            console.log(error);
+            error.response ? 
+            console.log(error.response.data.message) :
+            console.log(error.message);
         })
 }, 600000);
 
