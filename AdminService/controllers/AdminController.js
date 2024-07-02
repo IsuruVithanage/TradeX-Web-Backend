@@ -73,20 +73,6 @@ const saveAdmin = async (req, res) => {
             role: "Admin"
         });
 
-        axios.post ("http://localhost:8002/notification/send/email",{
-            receiverEmail: email,
-            title:"TradeX Admin Password",
-            emailHeader: "Receiving admin account password",
-            emailBody:"Your TradeX Admin Account Password is : " + password
-
-        }).then(()=>{
-            console.log("Email sent");
-        }).catch((error) =>{
-            console.log("Email sending failed");
-        })
-
-        // Save the new admin
-        const savedAdmin = await AdminRepo.save(newAdmin);
 
         await axios.post("http://localhost:8002/notification/send/email", {
             receiverEmail: email,
@@ -109,13 +95,13 @@ const saveAdmin = async (req, res) => {
                 <span>Best Regards,</span><br>
                 <span>TradeX Team</span><br>
             `
-        }).then((res) => {
+        }).then(() => {
             console.log("Email sent to new admin");
         }).catch((error) => {
             console.error("Error sending email to new admin:", error);
         });
 
-        res.status(201).json(savedAdmin);
+        res.status(201).json(newAdmin);
     } catch (error) {
         console.error("Error saving admin:", error);
         res.status(500).json({ message: 'Internal server error' });
