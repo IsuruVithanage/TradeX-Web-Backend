@@ -1,14 +1,14 @@
 const dataSource = require("../config/config");
-const {Not, IsNull} = require('typeorm');
+const { Not, IsNull } = require("typeorm");
 
 const getUserCount = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
     try {
         const userCount = await userRepo.count();
-        res.json({count: userCount});
+        res.json({ count: userCount });
     } catch (error) {
         console.error("Error fetching user count:", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 
@@ -41,17 +41,17 @@ const getPendingUsers = async (req, res) => {
                 'user_verification_detail.nicImg2 AS "nicImg2"',
                 'user_verification_detail.requestDate AS "requestDate"'
             ])
-            .where('user.role = :role', {role: "User"})
+            .where('user.role = :role', { role: "PendingTrader" })
+            .andWhere('user.issue = :issue', { issue: "" })
             .orderBy('user.userId', 'ASC')
             .getRawMany();
 
         res.status(200).json(users);
     } catch (error) {
         console.log("error getting pending traders", error);
-        res.status(500).json({message: "error getting pending traders"});
+        res.status(500).json({ message: "error getting pending traders" });
     }
 };
-
 
 const getVerifiedUserCount = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
@@ -67,6 +67,23 @@ const getVerifiedUserCount = async (req, res) => {
         res.status(500).json({message: "Internal server error"});
     }
 };
+
+// const getUsersWithVerificationIssues = async (req, res) => {
+//   const userRepo = dataSource.getRepository("User");
+
+//   try {
+//     const user = await userRepo.find({ where: { issue: Not("") } });
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User with an issue not found" });
+//     }
+
+//     res.json(user);
+//   } catch (error) {
+//     console.error("Error finding user", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 
 const getUsersWithVerificationIssues = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
@@ -97,15 +114,15 @@ const getUsersWithVerificationIssues = async (req, res) => {
                 'user_verification_detail.nicImg2 AS "nicImg2"',
                 'user_verification_detail.requestDate AS "requestDate"'
             ])
-            .where('user.role = :role', {role: "PendingTrader"})
-            .andWhere('user.issue != :issue', {issue: ""})
+            .where('user.role = :role', { role: "PendingTrader" })
+            .andWhere('user.issue != :issue', { issue: "" })
             .orderBy('user.userId', 'ASC')
             .getRawMany();
 
         res.status(200).json(users);
     } catch (error) {
         console.log("error getting pending traders", error);
-        res.status(500).json({message: "error getting pending traders"});
+        res.status(500).json({ message: "error getting pending traders" });
     }
 };
 
@@ -116,29 +133,75 @@ const getAllUsers = async (req, res) => {
         res.json(users);
     } catch (error) {
         console.error("Error fetching all users:", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
-
-}
+};
 
 const getUserVerificationDetails = async (req, res) => {
     const userRepo = dataSource.getRepository("UserVerificationDetail");
     const userId = req.body.id;
 
     try {
-        const user = await userRepo.findOne({where: {userId: userId}});
+        const user = await userRepo.findOne({ where: { userId: userId } });
 
         if (!user) {
-            return res.status(404).json({message: "User not found"});
+            return res.status(404).json({ message: "User not found" });
         }
 
         res.json(user);
     } catch (error) {
         console.error("Error finding user:", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 
+const changeUserRole = async (req, res) => {
+    const userRepo = dataSource.getRepository("User");
+    const userId = req.body.id;
+    const status = req.body.status;
+
+    try {
+        const user = await userRepo.findOne({ where: { userId: userId } });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        user.role = status;
+        if(user.issue !== ""){
+            user.issue = "";
+        }
+
+        await userRepo.save(user);
+
+        res.json({ message: "User user role updated successfully" });
+    } catch (error) {
+        console.error("Error changing user role:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+const addIssue = async (req, res) => {
+    const userRepo = dataSource.getRepository("User");
+    const userId = req.body.id;
+    const issue = req.body.issue;
+
+    try {
+        const user = await userRepo.findOne({ where: { userId: userId } });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        user.issue = issue;
+        user.role = "User";
+
+        await userRepo.save(user);
+
+        res.json({ message: "User issue added successfully" });
+    } catch (error) {
+        console.error("Error adding issue:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 const getAllUserDetails = async (req, res) => {
     const userRepo = dataSource.getRepository("User");
@@ -175,7 +238,7 @@ const getAllUserDetails = async (req, res) => {
         res.status(200).json(users);
     } catch (error) {
         console.log("error getting users with verification details", error);
-        res.status(500).json({message: "error getting users with verification details"});
+        res.status(500).json({ message: "error getting users with verification details" });
     }
 };
 
@@ -209,17 +272,35 @@ const getUserDetailsbyId = async (req, res) => {
                 'user_verification_detail.nicImg2 AS "nicImg2"',
                 'user_verification_detail.requestDate AS "requestDate"'
             ])
-            .where('user.userId = :userId', {userId})
+            .where('user.userId = :userId', { userId })
             .getRawOne();
 
         if (!user) {
-            return res.status(404).json({message: "User not found"});
+            return res.status(404).json({ message: "User not found" });
         }
 
         res.status(200).json(user);
     } catch (error) {
         console.log("error getting user by ID", error);
-        res.status(500).json({message: "error getting user by ID"});
+        res.status(500).json({ message: "error getting user by ID" });
+    }
+};
+
+const deleteUser = async (req, res) => {
+    const userRepo = dataSource.getRepository("User");
+    try {
+        const { id } = req.params;
+        const user = await userRepo.findOne({ where: { userId: id } });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        await userRepo.remove(user);
+        res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 
@@ -232,5 +313,8 @@ module.exports = {
     getAllUsers,
     getUserVerificationDetails,
     getUserDetailsbyId,
-    getAllUserDetails
+    getAllUserDetails,
+    addIssue,
+    changeUserRole,
+    deleteUser
 };

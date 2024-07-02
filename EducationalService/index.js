@@ -3,10 +3,12 @@ const cors = require('cors');
 const app = express();
 const dataSource = require("./config/config");
 const eduRouter = require("./routes/EduRoutes");
+const adminRouter = require("./routes/AdminRoutes");
 
 app.use(express.json());
 app.use(cors());
 app.use("/education",eduRouter);
+app.use("/admin",adminRouter);
 
 app.use((req, res) => {
     console.log(`${req.originalUrl} Endpoint Not found`);
