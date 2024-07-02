@@ -54,7 +54,7 @@ const checkOrders = () => {
                     console.log('Order matched:', order);
 
                     const requestBody = {
-                        userId: 1,
+                        userId: order.userId,
                         title: 'TradeX',
                         body: `Your order for ${order.coin} has been completed at ${marketPrice[order.coin]}.`,
                         onClick: 'http://localhost:3000/simulate'
@@ -75,7 +75,7 @@ const checkOrders = () => {
                             if (!response.ok) {
                                 throw new Error('Failed to send alert');
                             }
-                            console.log('Alert sent successfully');
+                            console.log('Alert sent successfully for user:', order.userId);
                             wss.clients.forEach((client) => {
                                 client.send(JSON.stringify({type: 'order_completed', order}));
                             });
@@ -96,9 +96,10 @@ const checkStoLimitOrders = () => {
         stopLimitOrders.forEach(async (order) => {
             if (marketPrice[order.coin] !== undefined && order.category === 'Stop Limit') {
                 if (order.stopLimit <= marketPrice[order.coin]) {
+                    
 
                     const requestBody = {
-                        userId: 1,
+                        userId: order.userId,
                         title: 'TradeX',
                         body: `Your stop limit order for ${order.coin} has been completed.`,
                         onClick: 'http://localhost:3000/simulate'
@@ -118,7 +119,7 @@ const checkStoLimitOrders = () => {
                             if (!response.ok) {
                                 throw new Error('Failed to send alert');
                             }
-                            console.log('Alert sent successfully');
+                            console.log('Alert sent successfully to user:', order.userId);
                             wss.clients.forEach((client) => {
                                 client.send(JSON.stringify({type: 'stopLimit_completed', order}));
                             });
@@ -138,37 +139,37 @@ const connectWebSocket = () => {
     return new Promise((resolve, reject) => {
         try {
             const first10Coins = coinList.slice(0, 10);
-            first10Coins.forEach((coinSymbol) => {
-                const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${coinSymbol.toLowerCase()}@miniTicker`);
+            const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${first10Coins.map((coinSymbol) => coinSymbol.toLowerCase() + '@miniTicker').join('/')}`);	
 
-                ws.on('open', () => {
-                    console.log(`WebSocket connection established for ${coinSymbol}`);
-                    resolve();
-                });
+            ws.on('open', () => {
+                console.log(`WebSocket connection established`);
+                resolve();
+            });
 
-                ws.on('message', (data) => {
-                    try {
-                        const priceData = JSON.parse(data);
-                        if (priceData && priceData.s && priceData.c) {
-                            marketPrice[priceData.s.slice(0, -4)] = parseFloat(priceData.c);
+            ws.on('message', (data) => {
+                try {
+                    const priceData = JSON.parse(data);
 
-                            const date = new Date(priceData.E);
-                            date.setSeconds(0, 0); // Set milliseconds to 0
-                            time[priceData.s.slice(0, -4)] = date.getTime();
-                        }
-                    } catch (error) {
-                        console.error('Error parsing message:', error);
+                    if (priceData && priceData.data.s && priceData.data.c) {
+                        const coin = priceData.data.s.slice(0, -4);
+                        marketPrice[coin] = parseFloat(priceData.data.c);
+
+                        const date = new Date(priceData.data.E);
+                        date.setSeconds(0, 0); // Set milliseconds to 0
+                        time[coin] = date.getTime();
                     }
-                });
+                } catch (error) {
+                    console.error('Error parsing message:', error);
+                }
+            });
 
-                ws.on('error', (error) => {
-                    console.error(`WebSocket error for ${coinSymbol}:`, error);
-                    reject();
-                });
+            ws.on('error', (error) => {
+                console.error(`WebSocket error for ${coinSymbol}:`, error);
+                reject();
+            });
 
-                ws.on('close', () => {
-                    console.log(`WebSocket connection closed for ${coinSymbol}`);
-                });
+            ws.on('close', () => {
+                console.log(`WebSocket connection closed for ${coinSymbol}`);
             });
         } catch (error) {
             console.log('WebSocket connection error:', error);

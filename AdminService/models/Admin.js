@@ -1,4 +1,4 @@
-const EntitySchema = require("typeorm").EntitySchema
+const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
     name: "Admin",
@@ -6,7 +6,7 @@ module.exports = new EntitySchema({
     columns: {
         AdminId: {
             primary: true,
-            type: "int",
+            type: "varchar",
         },
         AdminName: {
             type: "varchar",
@@ -27,4 +27,4 @@ module.exports = new EntitySchema({
             type: "varchar",
         },
     },
-})
+});

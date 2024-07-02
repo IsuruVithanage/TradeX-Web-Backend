@@ -7,7 +7,10 @@ const router = express.Router();
 router.get("/profile", controller.profile);
 
 //POST Requests
-router.post("/saveUserVerificationDetails", controller.saveUserVerificationDetails);
+router.post(
+  "/saveUserVerificationDetails",
+  controller.saveUserVerificationDetails
+);
 
 router.post("/register", controller.register);
 
@@ -24,8 +27,5 @@ router.delete("/:id", controller.deleteUser);
 
 //PUT Requests
 router.put("/updateUserHasTakenQuiz/:id", controller.updateUserHasTakenQuiz);
-
-
-
 
 module.exports = router;
