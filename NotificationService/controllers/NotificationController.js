@@ -21,7 +21,6 @@ const saveDeviceToken = async (req, res) => {
 }
 
 
-
 const getAppNotifications = async (req, res) => {
     try {
         if(!req.query.userId){
