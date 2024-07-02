@@ -22,7 +22,7 @@ setInterval(() => {
             console.log(error.response.data.message) :
             console.log(error.message);
         })
-}, 60000);
+}, 600000);
 
 
 const getAllNews = async (req, res) => {

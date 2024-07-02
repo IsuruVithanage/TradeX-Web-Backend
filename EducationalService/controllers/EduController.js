@@ -100,6 +100,7 @@ const saveEduResources = async (req, res) => {
 const favorite = async (req, res) => {
     try{
         const {eduId,userId,isFavorite} = req.body;
+        console.log(req.body);
 
         if(!eduId || !userId || isFavorite === undefined ){
             return res.status(400).json ({message:"invalid request"});

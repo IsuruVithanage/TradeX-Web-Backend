@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const dataSource = require("../config/config");
-const axios = require("axios");
+const axios = require('axios');
 const { createAccessToken, createRefreshToken } = require("../JWT");
 
 const getAllAdmins = async (req, res) => {
@@ -72,6 +72,18 @@ const saveAdmin = async (req, res) => {
             Contact,
             role: "Admin"
         });
+
+        axios.post ("http://localhost:8002/notification/send/email",{
+            receiverEmail: email,
+            title:"TradeX Admin Password",
+            emailHeader: "Receiving admin account password",
+            emailBody:"Your TradeX Admin Account Password is : " + password
+
+        }).then(()=>{
+            console.log("Email sent");
+        }).catch((error) =>{
+            console.log("Email sending failed");
+        })
 
         // Save the new admin
         const savedAdmin = await AdminRepo.save(newAdmin);
