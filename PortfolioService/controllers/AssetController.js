@@ -8,7 +8,6 @@ const axios = require("axios");
 
 const getPortfolioData = async (req, res) => {
     try {
-        console.log("hgchcg",req.query,req.params);
         const userId = req.query.userId;	
         const wallet = req.params.wallet;
         let usdBalance = 0;
@@ -557,6 +556,9 @@ const executeTrade = async (req, res) => {
                 usdAsset.tradingBalance += totalValue;
             }         
         }
+
+        console.log("assetToUpdate", assetToUpdate);	
+        console.log("usdAsset", usdAsset);
 
         try{
             queryRunner.connect();

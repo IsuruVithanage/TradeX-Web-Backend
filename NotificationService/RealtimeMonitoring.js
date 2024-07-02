@@ -14,6 +14,8 @@ let alerts = [];
 const startRealtimeMonitoring = async() => {
     try{
         console.log('Starting Realtime Monitoring...');
+        
+        await connectWebSocket();
 
         await axios.get('https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/Coin%20Images.json')
         .then((response) => {
@@ -25,24 +27,29 @@ const startRealtimeMonitoring = async() => {
 
 
         setInterval( async() => {
-            if(ws.readyState === 3 && alerts.length > 0){
+            if(ws.readyState === 3){
                 await connectWebSocket();
             }
-        }, 3000);
+        }, 10000);
 
         let count = 0;
 
-         
         while (true) {
+            const startAt = new Date().getTime();
+
             if (ws.readyState === 1) {
                 await checkAlerts(count);
             }
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
             if (count % 3 === 0) {
                 alerts = await getAllRunningAlerts();
                 updateStreams();
+            }
+
+            const endAt = new Date().getTime();
+
+            if (endAt - startAt < 1000) {
+                await new Promise(resolve => setTimeout(resolve, 1000 - (endAt - startAt)));
             }
 
             count++;
@@ -89,72 +96,69 @@ const updateStreams = () => {
 
 
 
-const checkAlerts = async (count) => {
-    return new Promise(async (resolve) => {
-        try {
-            for (const alert of alerts) {
-                const { deviceToken, alertId, userId, coin, condition, price, emailActiveStatus, runningStatus } = alert;
-                const currentPrice = marketPrice[coin];
+const checkAlerts = (count) => new Promise(async (resolve) => {
+    try {
+        const alertPromises = alerts.map(async (alert) => {
+            const { deviceToken, alertId, userId, coin, condition, price, emailActiveStatus, runningStatus } = alert;
+            const currentPrice = marketPrice[coin];
 
-                if (currentPrice !== undefined && runningStatus) {
-                    if (
-                        (condition === 'Above' && currentPrice > price) ||
-                        (condition === 'Below' && currentPrice < price) ||
-                        (condition === 'Equals' && currentPrice === price)
-                    ) {
-                        const coinName = coinList[coin].name;
-                        const localPrice = "$ " + currentPrice.toLocaleString();
-                        alert.runningStatus = false;
+            if (currentPrice !== undefined && runningStatus) {
+                if (
+                    (condition === 'Above' && currentPrice > price) ||
+                    (condition === 'Below' && currentPrice < price) ||
+                    (condition === 'Equals' && currentPrice === price)
+                ) {
+                    const coinName = coinList[coin].name;
+                    const localPrice = "$ " + currentPrice.toLocaleString();
+                    alert.runningStatus = false;
 
-                        try {
-                            await editAlert({ body: { alertId, runningStatus: false } });
-                            await sendNotification({
-                                params: { type: emailActiveStatus ? 'push,email' : 'push' },
-                                body: {
-                                    userId: userId,
-                                    deviceToken: deviceToken,
-                                    title: coinName + "  -  " + localPrice,
-                                    body: "Hello there! " + coinName + " is now at " + localPrice,
-                                    onClick: 'http://localhost:3000/alert',
-                                    emailHeader: `
-                                        <img width="5%" height="5%" style="margin: auto 1% auto 0;"
-                                        src="${coinList[coin].img}" alt="${coinName}"/>
-                                        ${coinName} is now at ${localPrice}
-                                    `,
-                                    emailBody: `
-                                        <p style="margin-top: 7%;">Hello Trader,</p>
-                                        <p>
-                                            We wanted to inform you that <span  style="font-weight: bold;">${coinName} (${coin})</span>
-                                            has now reached a price of <span  style="font-weight: bold;">${localPrice}</span>. 
-                                            Stay updated on market prices and make your best decisions.
-                                        </p>
-                                        <p>Good luck and happy trading!</p><br>
-                                        <p style="margin: 0;">Best regards,</p>
-                                        <p style="margin-top: 0;">TradeX Team.</p>
-                                    `,
-                                }
-                            })
-                            .then(() => {
-                                console.log('\x1b[32mAlert sent\x1b[0m for alertID:', alertId);
-                            })
-                            .catch(async () => {
-                                await editAlert({ body: { alertId, runningStatus: true } });
-                                console.log('\x1b[31mNotification sending failed\x1b[0m for alertID:', alertId);
-                            });
-                        } catch (error) {
-                            console.log('\x1b[31mError updating alert\x1b[0m for alertID:', alertId);
-                        }
+                    try {
+                        await editAlert({ body: { alertId, runningStatus: false } });
+                        await sendNotification({
+                            params: { type: emailActiveStatus ? 'push,email' : 'push' },
+                            body: {
+                                userId: userId,
+                                deviceToken: deviceToken,
+                                title: coinName + "  -  " + localPrice,
+                                body: "Hello there! " + coinName + " is now at " + localPrice,
+                                onClick: 'http://localhost:3000/alert',
+                                emailHeader: `
+                                    <img width="5%" height="5%" style="margin: auto 1% auto 0;"
+                                    src="${coinList[coin].img}" alt="${coinName}"/>
+                                    ${coinName} is now at ${localPrice}
+                                `,
+                                emailBody: `
+                                    <p style="margin-top: 7%;">Hello Trader,</p>
+                                    <p>
+                                        We wanted to inform you that <span  style="font-weight: bold;">${coinName} (${coin})</span>
+                                        has now reached a price of <span  style="font-weight: bold;">${localPrice}</span>. 
+                                        Stay updated on market prices and make your best decisions.
+                                    </p>
+                                    <p>Good luck and happy trading!</p><br>
+                                    <p style="margin: 0;">Best regards,</p>
+                                    <p style="margin-top: 0;">TradeX Team.</p>
+                                `,
+                            }
+                        });
+                        console.log('\x1b[32mAlert sent\x1b[0m for alertID:', alertId);
+                    } catch (error) {
+                        console.log('\x1b[31mNotification sending failed\x1b[0m for alertID:', alertId);
                     }
                 }
             }
+        });
 
-            resolve();
-        } catch (error) {
-            console.log('Check alerts error:', error);
-            resolve();
-        }
-    });
-};
+        await Promise.all(alertPromises);
+        resolve();
+    } 
+    
+    catch (error) {
+        console.log('Check alerts error:', error);
+        resolve();
+    }
+});
+
+
 
 
 

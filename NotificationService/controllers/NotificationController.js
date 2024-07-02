@@ -117,6 +117,7 @@ const sendNotification = async (req, res) => {
                     await sendFcmNotification(deviceToken, type, title, body, icon, onClick);
                 }
             }
+            console.log('push Notification sent successfully');
         }
 
 
@@ -142,6 +143,7 @@ const sendNotification = async (req, res) => {
                 throw Object.assign(new Error('Receiver Email Address not found'), { status: 404 });
             } else {
                 await sendEmailNotification(title, emailHeader, emailBody, receiverEmail, attachments);
+                console.log('Email Notification sent successfully');
             }
         }
 
@@ -151,7 +153,6 @@ const sendNotification = async (req, res) => {
         } else {
             res.status(200).json({message: 'Notification sent successfully'});
         }
-        
     }
 
     catch (error) {
