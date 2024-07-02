@@ -9,48 +9,58 @@ const getAllAdmins = async (req, res) => {
 };
 
 const login = async (req, res) => {
-    const { email, password } = req.body;
-    const AdminRepo = dataSource.getRepository("Admin");
+    try{
+        const { email, password } = req.body;
+        const AdminRepo = dataSource.getRepository("Admin");
+        
+        const admin = await AdminRepo.findOne({ where: { email: email } });
+
+        if (!admin) {
+            return res.status(404).json({ message: "User nor found" });
+        }
+
+        const dbPassword = admin.password;
+        const isMatch = await bcrypt.compare(password, dbPassword);
+
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Wrong Username and Password Combination!" });
+        }
+
+        const accessToken = createAccessToken(admin);
+        const refreshToken = createRefreshToken(admin);
+
+
+        res.cookie("refresh-token", refreshToken, {
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+        });
+
+        const adminDetail = {
+            id: admin.AdminId,
+            userName: admin.AdminName,
+            email: admin.email,
+            hasTakenQuiz: true,
+            role: admin.role,
+        }
+
+        res.status(200).json({ message: "Logged in", accessToken , user: adminDetail});
+    }
+
+    catch (error) {
+        console.error("Error logging in:", error);
+        res.status(500).json({ message: 'Login Failed' });
+    }
     
-    const user = await AdminRepo.findOne({ where: { email: email } });
-
-    if (!user) {
-        return res.status(400).json({ message: "Incorrect E-mail address" });
-    }
-
-    const dbPassword = user.password;
-    const isMatch = await bcrypt.compare(password, dbPassword);
-
-    if (!isMatch) {
-        return res.status(400).json({ message: "Wrong Username and Password Combination!" });
-    }
-
-    const accessToken = createAccessToken(user);
-    const refreshToken = createRefreshToken(user);
-
-
-    res.cookie("refresh-token", refreshToken, {
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Lax',
-    });
-
-    const userDetail = {
-        id: user.AdminId,
-        userName: user.AdminName,
-        email: user.email,
-        hasTakenQuiz: user.hasTakenQuiz,
-        role: user.role,
-    }
-
-    res.json({ message: "Logged in", accessToken , user: userDetail});
 };
 
 
 const saveAdmin = async (req, res) => {
     try {
         const { AdminName, email, password, NIC, Contact } = req.body;
+        const hash = await bcrypt.hash(password, 10);
         const AdminRepo = dataSource.getRepository("Admin");        
 
         // Retrieve the last admin to generate a new ID
@@ -67,26 +77,17 @@ const saveAdmin = async (req, res) => {
             AdminId: newAdminId,
             AdminName,
             email,
-            password,
+            password: hash,
             NIC,
             Contact,
             role: "Admin"
         });
 
-        axios.post ("http://localhost:8002/notification/send/email",{
-            receiverEmail: email,
-            title:"TradeX Admin Password",
-            emailHeader: "Receiving admin account password",
-            emailBody:"Your TradeX Admin Account Password is : " + password
+        await AdminRepo.save(newAdmin);
 
-        }).then(()=>{
-            console.log("Email sent");
-        }).catch((error) =>{
-            console.log("Email sending failed");
-        })
 
-        // Save the new admin
-        const savedAdmin = await AdminRepo.save(newAdmin);
+        await AdminRepo.save(newAdmin);
+
 
         await axios.post("http://localhost:8002/notification/send/email", {
             receiverEmail: email,
@@ -109,13 +110,13 @@ const saveAdmin = async (req, res) => {
                 <span>Best Regards,</span><br>
                 <span>TradeX Team</span><br>
             `
-        }).then((res) => {
+        }).then(() => {
             console.log("Email sent to new admin");
         }).catch((error) => {
             console.error("Error sending email to new admin:", error);
         });
 
-        res.status(201).json(savedAdmin);
+        res.status(201).json(newAdmin);
     } catch (error) {
         console.error("Error saving admin:", error);
         res.status(500).json({ message: 'Internal server error' });
