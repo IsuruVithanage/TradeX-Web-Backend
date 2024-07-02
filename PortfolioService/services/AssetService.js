@@ -107,6 +107,11 @@ const getAssetsWithMarketPrice = async (userId, coins) => {
 
 const saveAsset = async (queryRunner, asset) => {
     try {
+        if(!asset){
+            console.log("\nError saving Asset, Asset is empty");
+            return 
+        }
+
         const savedAsset = !queryRunner ? 
             await assetRepo.save(asset) :
             await queryRunner.manager.withRepository(assetRepo).save(asset);
