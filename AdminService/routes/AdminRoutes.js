@@ -6,6 +6,8 @@ router.get("/getAllAdmins", controller.getAllAdmins);
 
 router.post("/saveAdmin", controller.saveAdmin);
 
+router.post("/login", controller.login);
+
 router.delete("/:id", controller.deleteAdmin);
 
 router.get("/getAdminCount", controller.getAdminCount);
