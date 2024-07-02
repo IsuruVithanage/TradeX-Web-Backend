@@ -166,7 +166,7 @@ pipelines:
               changeOrigin: true
       - proxy:
           - action:
-              serviceEndpoint: user-service
+              serviceEndpoint: admin-service
               changeOrigin: true
   admin-pipeline:
     apiEndpoints:

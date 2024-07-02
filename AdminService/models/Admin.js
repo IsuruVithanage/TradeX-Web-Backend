@@ -6,7 +6,7 @@ module.exports = new EntitySchema({
     columns: {
         AdminId: {
             primary: true,
-            type: "varchar",
+            type: "int",
         },
         AdminName: {
             type: "varchar",
