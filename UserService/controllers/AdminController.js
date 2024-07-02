@@ -1,5 +1,6 @@
 const dataSource = require("../config/config");
 const { Not, IsNull } = require("typeorm");
+const axios = require('axios');
 
 const getUserCount = async (req, res) => {
   const userRepo = dataSource.getRepository("User");
@@ -67,23 +68,6 @@ const getVerifiedUserCount = async (req, res) => {
         res.status(500).json({message: "Internal server error"});
     }
 };
-
-// const getUsersWithVerificationIssues = async (req, res) => {
-//   const userRepo = dataSource.getRepository("User");
-
-//   try {
-//     const user = await userRepo.find({ where: { issue: Not("") } });
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User with an issue not found" });
-//     }
-
-//     res.json(user);
-//   } catch (error) {
-//     console.error("Error finding user", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
 
 const getUsersWithVerificationIssues = async (req, res) => {
   const userRepo = dataSource.getRepository("User");
@@ -166,12 +150,23 @@ const changeUserRole = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    user.role = status;
+    user.role = "Trader";
     if(user.issue !== ""){
       user.issue = "";
     }
 
     await userRepo.save(user);
+
+    axios.post ("http://localhost:8002/notification/send/app",{
+      userId: userId,
+      title:"Verification Succes",
+      body: "Now you have verified account in TradeX",
+
+    }).then(()=>{
+      console.log("notification sent");
+    }).catch((error) =>{
+      console.log("notification sending failed");
+    })
 
     res.json({ message: "User user role updated successfully" });
   } catch (error) {
@@ -182,11 +177,13 @@ const changeUserRole = async (req, res) => {
 
 const addIssue = async (req, res) => {
   const userRepo = dataSource.getRepository("User");
+  const userVerifyRepo = dataSource.getRepository("UserVerificationDetail");
   const userId = req.body.id;
   const issue = req.body.issue;
 
   try {
     const user = await userRepo.findOne({ where: { userId: userId } });
+    const userVerify = await userVerifyRepo.findOne({ where: { userId: userId } });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -195,6 +192,22 @@ const addIssue = async (req, res) => {
     user.role = "User";
 
     await userRepo.save(user);
+    await userVerifyRepo.remove(userVerify);
+
+    axios.post ("http://localhost:8002/notification/send/email,app,push",{
+      receiverEmail: user.email,
+      title:"TradeX Account Verification Issue",
+      emailHeader: "TradeX Account Verification Issue",
+      emailBody: `Your Account is not verified successfully because ${issue}. You have to send verification details again to verify your account.`,
+      body:`Account not verified because ${issue}`,
+      userId: userId,
+      onClick: "http://localhost:3000/verify"
+
+    }).then(()=>{
+      console.log("Email sent");
+    }).catch((error) =>{
+      console.log("Email sending failed");
+    })
 
     res.json({ message: "User issue added successfully" });
   } catch (error) {
