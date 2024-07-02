@@ -73,6 +73,8 @@ const saveAdmin = async (req, res) => {
             role: "Admin"
         });
 
+        await AdminRepo.save(newAdmin);
+
 
         await axios.post("http://localhost:8002/notification/send/email", {
             receiverEmail: email,
