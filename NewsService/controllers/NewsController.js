@@ -20,7 +20,7 @@ setInterval(() => {
         .catch((error) => {
             console.log(error);
         })
-}, 600000);
+}, 6000000);
 
 
 const getAllNews = async (req, res) => {
