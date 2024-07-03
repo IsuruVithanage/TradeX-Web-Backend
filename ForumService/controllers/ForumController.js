@@ -1,6 +1,8 @@
 const express = require("express");
 const dataSource = require("../config/config");
 const { removeLike } = require("./AnswerController");
+const WebSocket = require("ws");
+let wss;
 
 const getAllQuestions = async (req, res) => {
   const QuestionRepo = dataSource.getRepository("Forum-question");
@@ -116,6 +118,16 @@ const deleteQuestion = async (req, res) => {
 //     next(error);
 //   }
 // };
+const webSocketStart = async () => {
+  try {
+    wss = new WebSocket.Server({ port: 8083 });
+    wss.on("connection", (ws) => {
+      console.log("WebSocket connection established with client");
+    });
+  } catch (error) {
+    console.log("Error starting webSocket", error);
+  }
+};
 
 const like = async (req, res) => {
   try {
@@ -149,6 +161,15 @@ const like = async (req, res) => {
     }
 
     const likeCount = await LikeRepo.count({ where: { questionId } });
+
+    likeDetail = {
+      questionId: questionId,
+      likeCount: likeCount,
+    };
+
+    wss.clients.forEach((client) => {
+      client.send(JSON.stringify({ type: "liked", likeDetail }));
+    });
 
     res.status(200).json({ likeCount });
   } catch (error) {
@@ -216,6 +237,15 @@ const dislike = async (req, res) => {
 
     const dislikeCount = await DislikeRepo.count({ where: { questionId } });
 
+    disLikeDetail = {
+      questionId: questionId,
+      likeCount: dislikeCount,
+    };
+
+    wss.clients.forEach((client) => {
+      client.send(JSON.stringify({ type: "disLiked", disLikeDetail }));
+    });
+
     res.status(200).json({ dislikeCount });
   } catch (error) {
     console.log(error);
@@ -277,4 +307,5 @@ module.exports = {
   removeLike,
   userIsLiked,
   userIsViewd,
+  webSocketStart,
 };
