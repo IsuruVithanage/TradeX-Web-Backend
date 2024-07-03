@@ -19,7 +19,8 @@
     "nodemon": "^3.1.0",
     "pg": "^8.11.3",
     "socket.io": "^4.7.5",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "ws": "^8.17.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
