@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.get("/profile", controller.profile);
 
+router.get("/getEmail/:id", controller.getEmailById);
+
 //POST Requests
 router.post(
   "/saveUserVerificationDetails",
