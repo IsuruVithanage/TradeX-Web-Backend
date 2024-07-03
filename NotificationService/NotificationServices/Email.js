@@ -6,7 +6,6 @@ const fs = require('fs');
 
 
 const sendEmailNotification = async (title, emailHeader, emailBody, receiverEmail, attachments) => {
-    console.log('Sending email notification to:', receiverEmail);
     try{
         const html = fs
             .readFileSync('./NotificationServices/emailTemplate.html', 'utf8')
