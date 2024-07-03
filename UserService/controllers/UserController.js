@@ -192,6 +192,28 @@ const deleteUser = async (req, res) => {
   }
 };
 
+
+const getEmailById = async (req, res) => {
+  try{
+    const userRepo = dataSource.getRepository("User");
+    const id = req.params.id;
+
+    const user = await userRepo.findOne({ where: { userId: id } });
+
+    if(!user){
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ email: user.email });
+  }
+
+  catch (error) {
+    console.error("Error getting email", error);
+    res.status(500).json({ message: "Getting Email failed" });
+  }
+
+}
+
 module.exports = {
   deleteUser,
   saveUserVerificationDetails,
@@ -202,4 +224,5 @@ module.exports = {
   updateUserVerifyStatus,
   refreshToken,
   logout,
+  getEmailById
 };

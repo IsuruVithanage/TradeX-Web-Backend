@@ -3,6 +3,7 @@ const notificationRepo = dataSource.getRepository("AppNotification");
 const deviceTokenRepo = dataSource.getRepository("DeviceToken");
 const sendFcmNotification = require("../NotificationServices/Firebase");
 const sendEmailNotification = require("../NotificationServices/Email");
+const axios = require('axios');
 const { sendWebSocketNotification } = require("../NotificationServices/WebSocket");
 const { In } = require('typeorm');
 
@@ -131,7 +132,12 @@ const sendNotification = async (req, res) => {
                     throw Object.assign(new Error('User ID not found'), { status: 404 });
                 }
 
-                receiverEmail = 'ashansalinda5@gmail.com'
+                const endpoint = userId > 0 ? 
+                    `http://localhost:8004/user/getEmail/${userId}` : 
+                    `http://localhost:8003/admin/getEmail/${userId}`;
+
+                receiverEmail = (await axios.get(endpoint)).data.email;
+
             }
 
             if(!receiverEmail){

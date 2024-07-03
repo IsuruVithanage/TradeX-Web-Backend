@@ -158,10 +158,33 @@ const getAdminCount = async (req, res) => {
 };
 
 
+const getEmailById = async (req, res) => {
+    try{
+        const AdminRepo = dataSource.getRepository("Admin");
+        const id = req.params.id;
+  
+        const admin = await AdminRepo.findOne({ where: { AdminId: id } });
+  
+        if(!admin){
+            return res.status(404).json({ message: "Admin not found" });
+        }
+        
+        res.status(200).json({ email: admin.email });
+    }
+    
+    catch (error) {
+        console.error("Error getting email", error);
+        res.status(500).json({ message: "Getting Email failed" });
+    }
+  
+  }
+
+
 module.exports = {
     getAllAdmins,
     saveAdmin,
     deleteAdmin,
     getAdminCount,
-    login
+    login,
+    getEmailById
 }
