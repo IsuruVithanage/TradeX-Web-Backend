@@ -14,6 +14,7 @@ const register = async (req, res) => {
       password: hash,
       issue: "",
       hasTakenQuiz: false,
+      level:"",
       role: "User",
     });
     await userRepository.save(user);
