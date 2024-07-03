@@ -21,7 +21,6 @@ const saveDeviceToken = async (req, res) => {
 }
 
 
-
 const getAppNotifications = async (req, res) => {
     try {
         if(!req.query.userId){
@@ -87,7 +86,6 @@ const markAsViewed = async (req, res) => {
 const sendNotification = async (req, res) => {
     try {
         const { userId, title, body, onClick, emailHeader, emailBody, attachments } = req.body;
-        const icon = 'https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/TradeX-mini-logo.png';
         let { deviceToken, receiverEmail } = req.body;
         const type = req.params.type;
 
@@ -97,25 +95,21 @@ const sendNotification = async (req, res) => {
         }
 
 
-        if(type.includes('push') || type.includes('app')){
-            const isSuccessful = await sendWebSocketNotification(type, userId, title, body, icon);
-
-            if(!isSuccessful){
-                if(!deviceToken){
-                    if(!userId){
-                        throw Object.assign(new Error('User ID not found'), { status: 404 });
-                    }
-
-                    const user = await deviceTokenRepo.findOne({where: { userId }});
-
-                    deviceToken = !user ? null : user.deviceToken;
+        if(type.includes('push')){
+            if(!deviceToken){
+                if(!userId){
+                    throw Object.assign(new Error('User ID not found'), { status: 404 });
                 }
 
-                if(!deviceToken){
-                    throw Object.assign(new Error('Device Token not found'), { status: 404 });
-                } else {
-                    await sendFcmNotification(deviceToken, type, title, body, icon, onClick);
-                }
+                const user = await deviceTokenRepo.findOne({where: { userId }});
+
+                deviceToken = !user ? null : user.deviceToken;
+            }
+
+            if(!deviceToken){
+                throw Object.assign(new Error('Device Token not found'), { status: 404 });
+            } else {
+                await sendFcmNotification(deviceToken, title, body, onClick);
             }
         }
 
@@ -124,6 +118,8 @@ const sendNotification = async (req, res) => {
             if(!userId){
                 throw Object.assign(new Error('User ID not found'), { status: 404 });
             }
+
+            await sendWebSocketNotification(userId);
 
             await addAppNotification({userId, title, body, onClick});
         }
@@ -151,7 +147,6 @@ const sendNotification = async (req, res) => {
         } else {
             res.status(200).json({message: 'Notification sent successfully'});
         }
-        
     }
 
     catch (error) {

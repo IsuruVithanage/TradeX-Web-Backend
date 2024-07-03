@@ -14,7 +14,6 @@ const register = async (req, res) => {
       password: hash,
       issue: "",
       hasTakenQuiz: false,
-      level: "",
       role: "User",
     });
     await userRepository.save(user);
@@ -30,14 +29,12 @@ const register = async (req, res) => {
     });
 
     const userDetail = {
-      id: user.userId,
-      userName: user.userName,
-      email: user.email,
-      isVerified: user.isVerified,
-      hasTakenQuiz: user.hasTakenQuiz,
-      level: user.level,
-      role: user.role,
-    };
+        id: user.userId,
+        userName: user.userName,
+        email: user.email,
+        hasTakenQuiz: user.hasTakenQuiz,
+        role: user.role,
+    }
 
     res.json({ message: "Logged in", accessToken, user: userDetail });
   } catch (err) {
@@ -77,9 +74,7 @@ const login = async (req, res) => {
     id: user.userId,
     userName: user.userName,
     email: user.email,
-    isVerified: user.isVerified,
     hasTakenQuiz: user.hasTakenQuiz,
-    level: user.level,
     role: user.role,
   };
 

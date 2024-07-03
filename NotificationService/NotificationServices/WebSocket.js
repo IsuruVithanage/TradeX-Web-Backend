@@ -30,7 +30,7 @@ const startWebSocketServer = (server) => {
 
 
 
-const sendWebSocketNotification = (type, userId, title, body, icon) => {
+const sendWebSocketNotification = (userId) => {
     try {
         return new Promise(async (resolve) => {
             if (!wss) {
@@ -43,31 +43,18 @@ const sendWebSocketNotification = (type, userId, title, body, icon) => {
             });
     
             if (!user) {
+                console.log("User not connected to WebSocket Server");
                 return resolve(false);
             }
 
-            const payload = {};
-            let alreadySent = false;
 
-            if(type.includes('push')){
-                payload.notification = { title, body, icon };
-            }
-
-            if (type.includes('app')) {
-                payload.data = { app: "App Notification" };
-            }
-
-            await wss.clients.forEach(async(client) => {
+            const sendingPromises = [...wss.clients].map(async(client) => {
                 if(client.userId === userId && client.readyState === WebSocket.OPEN){
-                    if(alreadySent && payload.notification){
-                        payload.notification.title = null;
-                    }
-
-                    alreadySent = true;
-                    await client.send(JSON.stringify(payload));
+                    await client.send(JSON.stringify({data:{ app: "App Notification" }}));
                 }
             })
 
+            await Promise.all(sendingPromises);
             return resolve(true);
         });
     }

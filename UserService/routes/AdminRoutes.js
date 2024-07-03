@@ -23,4 +23,6 @@ router.post("/changeUserRole", controller.changeUserRole);
 
 router.post("/addIssue", controller.addIssue);
 
+router.delete("/deleteUser/:id", controller.deleteUser);
+
 module.exports = router;
