@@ -86,7 +86,6 @@ const markAsViewed = async (req, res) => {
 const sendNotification = async (req, res) => {
     try {
         const { userId, title, body, onClick, emailHeader, emailBody, attachments } = req.body;
-        const icon = 'https://raw.githubusercontent.com/IsuruVithanage/TradeX-Web/dev/src/Assets/Images/TradeX-mini-logo.png';
         let { deviceToken, receiverEmail } = req.body;
         const type = req.params.type;
 
@@ -96,27 +95,22 @@ const sendNotification = async (req, res) => {
         }
 
 
-        if(type.includes('push') || type.includes('app')){
-            const isSuccessful = await sendWebSocketNotification(type, userId, title, body, icon);
-
-            if(!isSuccessful){
-                if(!deviceToken){
-                    if(!userId){
-                        throw Object.assign(new Error('User ID not found'), { status: 404 });
-                    }
-
-                    const user = await deviceTokenRepo.findOne({where: { userId }});
-
-                    deviceToken = !user ? null : user.deviceToken;
+        if(type.includes('push')){
+            if(!deviceToken){
+                if(!userId){
+                    throw Object.assign(new Error('User ID not found'), { status: 404 });
                 }
 
-                if(!deviceToken){
-                    throw Object.assign(new Error('Device Token not found'), { status: 404 });
-                } else {
-                    await sendFcmNotification(deviceToken, type, title, body, icon, onClick);
-                }
+                const user = await deviceTokenRepo.findOne({where: { userId }});
+
+                deviceToken = !user ? null : user.deviceToken;
             }
-            console.log('push Notification sent successfully');
+
+            if(!deviceToken){
+                throw Object.assign(new Error('Device Token not found'), { status: 404 });
+            } else {
+                await sendFcmNotification(deviceToken, title, body, onClick);
+            }
         }
 
 
@@ -124,6 +118,8 @@ const sendNotification = async (req, res) => {
             if(!userId){
                 throw Object.assign(new Error('User ID not found'), { status: 404 });
             }
+
+            await sendWebSocketNotification(userId);
 
             await addAppNotification({userId, title, body, onClick});
         }
@@ -142,7 +138,6 @@ const sendNotification = async (req, res) => {
                 throw Object.assign(new Error('Receiver Email Address not found'), { status: 404 });
             } else {
                 await sendEmailNotification(title, emailHeader, emailBody, receiverEmail, attachments);
-                console.log('Email Notification sent successfully');
             }
         }
 
